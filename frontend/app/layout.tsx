@@ -4,8 +4,8 @@ import React from 'react';
 
 // Metadata beschreibt Titel und Kurztext für die Demo-Seite.
 export const metadata: Metadata = {
-  title: 'EcoKart Demo',
-  description: 'Statische Produktübersicht mit Live-Ergänzung über das Admin-Backend.'
+  title: 'EcoKart Sportshop - Just Do It',
+  description: 'Premium Sport-Equipment und Performance-Ausrüstung für deine Ziele. Entdecke die neuesten Produkte.'
 };
 
 type RootLayoutProps = {
