@@ -41,13 +41,23 @@ else
     echo "💡 Tipp: Nutze 'npm install' falls Updates nötig sind"
 fi
 
+# Prüfe ob .env.local existiert
+if [ ! -f ".env.local" ]; then
+    echo "⚙️  Creating .env.local from .env.example..."
+    cp .env.example .env.local
+    echo "✅ .env.local created"
+fi
+
 echo ""
 echo "================================"
 echo "🎯 Starting Development Server..."
 echo "================================"
-echo "🌐 URL: http://localhost:3000"
+echo "🌐 Frontend: http://localhost:3000"
+echo "🔧 Backend:  http://localhost:4000 (separate starten)"
 echo "🔄 Hot Reload: Aktiviert"
 echo "⌨️  Stoppen: Ctrl+C"
+echo ""
+echo "💡 Tipp: Nutze ./start-all.sh für Full Stack"
 echo "================================"
 echo ""
 
