@@ -30,12 +30,12 @@ echo ""
 echo "================================"
 echo "🔐 Admin Panel Starting..."
 echo "================================"
-echo "📍 URL: http://localhost:5000"
+echo "📍 URL: http://localhost:6000"
 echo "👤 Login: admin@ecokart.com"
 echo "🔑 Pass: ecokart2025"
 echo "⌨️  Stop: Ctrl+C"
 echo "================================"
 echo ""
 
-# Start admin panel on port 5000
-PORT=5000 npm run dev
+# Start admin panel on port 6000
+PORT=6000 npm run dev
