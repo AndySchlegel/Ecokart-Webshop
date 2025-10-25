@@ -72,7 +72,7 @@ fi
 if [ ! -f ".env.local" ]; then
     cp .env.example .env.local
 fi
-PORT=6000 npm run dev &
+PORT=4001 npm run dev &
 ADMIN_PID=$!
 cd ..
 
@@ -81,7 +81,7 @@ echo "================================"
 echo "✅ Full Stack Running!"
 echo "================================"
 echo "🌐 Webshop:  http://localhost:3000"
-echo "🔐 Admin:    http://localhost:6000"
+echo "🔐 Admin:    http://localhost:4001"
 echo "🔧 Backend:  http://localhost:4000"
 echo ""
 echo "📊 API Health: http://localhost:4000/api/health"
