@@ -20,6 +20,7 @@ export function ArticleForm({ onSubmit }: ArticleFormProps) {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   function updateField<K extends keyof ArticleFormValues>(field: K, value: ArticleFormValues[K]) {
     setValues((current) => ({
@@ -32,6 +33,7 @@ export function ArticleForm({ onSubmit }: ArticleFormProps) {
     event.preventDefault();
     setIsLoading(true);
     setError(null);
+    setSuccess(false);
     try {
       await onSubmit(values);
       setValues({
@@ -40,6 +42,8 @@ export function ArticleForm({ onSubmit }: ArticleFormProps) {
         description: '',
         imageUrl: ''
       });
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unbekannter Fehler beim Speichern.');
     } finally {
@@ -48,62 +52,75 @@ export function ArticleForm({ onSubmit }: ArticleFormProps) {
   }
 
   return (
-    <section className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <div>
-        <h2 style={{ marginBottom: '0.5rem' }}>Neuen Artikel anlegen</h2>
-        <p style={{ margin: 0 }}>Die Eingaben werden direkt an das bestehende Admin-Backend weitergeleitet.</p>
-      </div>
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem' }}>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-          <span>Produktname</span>
-          <input
-            value={values.name}
-            onChange={(event) => updateField('name', event.target.value)}
-            required
-            style={{ padding: '0.65rem 1rem', borderRadius: '0.75rem', border: '1px solid #d4e1d4' }}
-          />
-        </label>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-          <span>Preis (€)</span>
-          <input
-            value={values.price}
-            onChange={(event) => updateField('price', event.target.value)}
-            type="number"
-            step="0.01"
-            required
-            style={{ padding: '0.65rem 1rem', borderRadius: '0.75rem', border: '1px solid #d4e1d4' }}
-          />
-        </label>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-          <span>Kurzbeschreibung</span>
-          <textarea
-            value={values.description}
-            onChange={(event) => updateField('description', event.target.value)}
-            rows={4}
-            required
-            style={{ padding: '0.65rem 1rem', borderRadius: '0.75rem', border: '1px solid #d4e1d4', resize: 'vertical' }}
-          />
-        </label>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-          <span>Bild-URL</span>
-          <input
-            value={values.imageUrl}
-            onChange={(event) => updateField('imageUrl', event.target.value)}
-            type="url"
-            required
-            placeholder="https://..."
-            style={{ padding: '0.65rem 1rem', borderRadius: '0.75rem', border: '1px solid #d4e1d4' }}
-          />
-        </label>
-        {error && (
-          <div style={{ color: '#9b1c1c' }}>
-            {error}
-          </div>
-        )}
-        <button className="button" type="submit" disabled={isLoading}>
-          {isLoading ? 'Speichere ...' : 'Artikel anlegen'}
+    <div className="card">
+      <h2>Neues Produkt anlegen</h2>
+      <p style={{ color: 'var(--text-gray)', marginBottom: '2rem' }}>
+        Füge ein neues Produkt zum Shop hinzu
+      </p>
+
+      {error && (
+        <div className="message message--error">
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="message message--success">
+          Produkt erfolgreich angelegt!
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        <div className="form-grid">
+          <label>
+            <span>Produktname</span>
+            <input
+              value={values.name}
+              onChange={(event) => updateField('name', event.target.value)}
+              required
+              placeholder="z.B. Air Performance Runner"
+            />
+          </label>
+
+          <label>
+            <span>Preis (€)</span>
+            <input
+              value={values.price}
+              onChange={(event) => updateField('price', event.target.value)}
+              type="number"
+              step="0.01"
+              required
+              placeholder="99.99"
+            />
+          </label>
+
+          <label className="form-grid--full">
+            <span>Kurzbeschreibung</span>
+            <textarea
+              value={values.description}
+              onChange={(event) => updateField('description', event.target.value)}
+              rows={4}
+              required
+              placeholder="Beschreibe das Produkt..."
+            />
+          </label>
+
+          <label className="form-grid--full">
+            <span>Bild-URL</span>
+            <input
+              value={values.imageUrl}
+              onChange={(event) => updateField('imageUrl', event.target.value)}
+              type="url"
+              required
+              placeholder="https://images.unsplash.com/..."
+            />
+          </label>
+        </div>
+
+        <button className="button" type="submit" disabled={isLoading} style={{ marginTop: '2rem' }}>
+          {isLoading ? 'Speichere...' : 'Produkt anlegen'}
         </button>
       </form>
-    </section>
+    </div>
   );
 }

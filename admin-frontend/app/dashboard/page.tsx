@@ -80,24 +80,24 @@ export default function DashboardPage() {
 
   return (
     <main className="page">
-      <header style={{ background: '#182f18', color: '#fff' }}>
-        <div className="page__content" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 0' }}>
+      <header>
+        <div className="page__content">
           <div>
-            <strong>EcoKart Admin Dashboard</strong>
+            <strong>ECOKART ADMIN</strong>
           </div>
-          <button onClick={handleLogout} className="button" style={{ background: '#c0392b' }}>
+          <button onClick={handleLogout} className="button button--logout">
             Abmelden
           </button>
         </div>
       </header>
       <section className="page__content" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         {isLoading && (
-          <div className="card">
-            <p>Lade Artikel ...</p>
+          <div className="card loading">
+            Lade Produkte
           </div>
         )}
         {error && (
-          <div className="card" style={{ border: '1px solid #f0dada', background: '#fff5f5', color: '#8c2c2c' }}>
+          <div className="message message--error">
             {error}
           </div>
         )}

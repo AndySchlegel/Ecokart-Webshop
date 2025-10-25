@@ -32,6 +32,17 @@
       "stock": 25,
       "createdAt": "2025-01-15T10:00:00Z",
       "updatedAt": "2025-01-15T10:00:00Z"
+    },
+    {
+      "id": "8130aa99-281d-4974-ae8f-4c370f13cf35",
+      "name": "Ultra Boost Elite",
+      "price": 179.99,
+      "description": "Revolutionary running shoe with energy return technology",
+      "imageUrl": "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?auto=format&fit=crop&w=800&q=80",
+      "category": "shoes",
+      "stock": 100,
+      "createdAt": "2025-10-25T13:02:56.392Z",
+      "updatedAt": "2025-10-25T13:02:56.392Z"
     }
   ]
 }

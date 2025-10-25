@@ -25,7 +25,10 @@ export async function fetchArticles() {
     throw new Error('ADMIN_API_URL ist nicht gesetzt.');
   }
   const response = await fetch(API_URL, {
-    cache: 'no-store'
+    cache: 'no-store',
+    headers: {
+      'Content-Type': 'application/json'
+    }
   });
   if (!response.ok) {
     throw new Error(`Artikel können nicht geladen werden: ${response.status}`);
@@ -36,12 +39,13 @@ export async function fetchArticles() {
 }
 
 export async function createArticle(article: ArticlePayload) {
-  ensureConfig();
-  const response = await fetch(API_URL!, {
+  if (!API_URL) {
+    throw new Error('ADMIN_API_URL ist nicht gesetzt.');
+  }
+  const response = await fetch(API_URL, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY!
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify(article)
   });
@@ -49,19 +53,21 @@ export async function createArticle(article: ArticlePayload) {
     const reason = await response.text();
     throw new Error(`POST fehlgeschlagen: ${response.status} ${reason}`);
   }
-  const body = await response.json() as { item: Article };
-  return body.item;
+  const body = await response.json() as Article;
+  return body;
 }
 
 export async function deleteArticle(id: string) {
-  ensureConfig();
-  const response = await fetch(API_URL!, {
+  if (!API_URL) {
+    throw new Error('ADMIN_API_URL ist nicht gesetzt.');
+  }
+  // Backend erwartet DELETE /api/products/:id
+  const deleteUrl = `${API_URL.replace('/products', '')}/${id}`;
+  const response = await fetch(deleteUrl, {
     method: 'DELETE',
     headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY!
-    },
-    body: JSON.stringify({ id })
+      'Content-Type': 'application/json'
+    }
   });
   if (!response.ok) {
     const reason = await response.text();

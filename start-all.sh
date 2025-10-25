@@ -27,7 +27,7 @@ fi
 cleanup() {
     echo ""
     echo "🛑 Stopping all services..."
-    kill $BACKEND_PID $FRONTEND_PID 2>/dev/null
+    kill $BACKEND_PID $FRONTEND_PID $ADMIN_PID 2>/dev/null
     exit
 }
 
@@ -63,17 +63,34 @@ npm run dev &
 FRONTEND_PID=$!
 cd ..
 
+# Admin Panel starten
+echo "🔐 Starting Admin Panel..."
+cd admin-frontend
+if [ ! -d "node_modules" ]; then
+    npm install
+fi
+if [ ! -f ".env.local" ]; then
+    cp .env.example .env.local
+fi
+PORT=5000 npm run dev &
+ADMIN_PID=$!
+cd ..
+
 echo ""
 echo "================================"
 echo "✅ Full Stack Running!"
 echo "================================"
-echo "🌐 Frontend: http://localhost:3000"
+echo "🌐 Webshop:  http://localhost:3000"
+echo "🔐 Admin:    http://localhost:5000"
 echo "🔧 Backend:  http://localhost:4000"
+echo ""
 echo "📊 API Health: http://localhost:4000/api/health"
-echo "📦 Products: http://localhost:4000/api/products"
+echo "📦 Products:   http://localhost:4000/api/products"
+echo ""
+echo "👤 Admin Login: admin@ecokart.com / ecokart2025"
 echo ""
 echo "⌨️  Press Ctrl+C to stop all services"
 echo "================================"
 
-# Warte auf beide Prozesse
-wait $BACKEND_PID $FRONTEND_PID
+# Warte auf alle Prozesse
+wait $BACKEND_PID $FRONTEND_PID $ADMIN_PID

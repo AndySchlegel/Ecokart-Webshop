@@ -36,37 +36,43 @@ export default function LoginPage() {
   return (
     <main className="page">
       <section className="page__content">
-        <div className="card" style={{ maxWidth: '460px', margin: '6rem auto 0' }}>
-          <h1>EcoKart Admin Login</h1>
-          <p>Bitte mit den Demo-Zugangsdaten anmelden, um Artikel zu pflegen.</p>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '2rem' }}>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+        <div className="card" style={{ maxWidth: '500px', margin: '6rem auto 0' }}>
+          <h1>ADMIN LOGIN</h1>
+          <p>
+            Melde dich an, um Produkte zu verwalten
+          </p>
+          <div className="message message--info" style={{ fontSize: '0.875rem' }}>
+            <strong>Demo-Login:</strong><br />
+            admin@ecokart.com / ecokart2025
+          </div>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '2rem' }}>
+            <label>
               <span>E-Mail</span>
               <input
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
                 type="email"
                 required
-                style={{ padding: '0.75rem 1rem', borderRadius: '0.75rem', border: '1px solid #d4e1d4' }}
+                placeholder="admin@ecokart.com"
               />
             </label>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <label>
               <span>Passwort</span>
               <input
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 type="password"
                 required
-                style={{ padding: '0.75rem 1rem', borderRadius: '0.75rem', border: '1px solid #d4e1d4' }}
+                placeholder="••••••••"
               />
             </label>
             {error && (
-              <div style={{ color: '#9b1c1c' }}>
+              <div className="message message--error">
                 {error}
               </div>
             )}
             <button className="button" type="submit" disabled={isLoading}>
-              {isLoading ? 'Bitte warten ...' : 'Anmelden'}
+              {isLoading ? 'Anmeldung läuft...' : 'Anmelden'}
             </button>
           </form>
         </div>
