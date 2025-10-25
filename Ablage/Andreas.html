@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoKart AWS Architecture - Technical Presentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        .presentation-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .slide {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #232F3E;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #FF9900;
+        }
+
+        h2 {
+            color: #232F3E;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            margin-top: 30px;
+        }
+
+        h3 {
+            color: #FF9900;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            margin-top: 20px;
+        }
+
+        .subtitle {
+            color: #586069;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+        }
+
+        .key-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .metric-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #FF9900;
+        }
+
+        .metric-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #232F3E;
+        }
+
+        .metric-label {
+            color: #586069;
+            margin-top: 5px;
+        }
+
+        .architecture-diagram {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 30px 0;
+            min-height: 400px;
+        }
+
+        .network-layer {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .layer-title {
+            font-weight: bold;
+            color: #232F3E;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .service-box {
+            background: linear-gradient(135deg, #232F3E 0%, #FF9900 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .service-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .service-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .service-details {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .vpc-diagram {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .subnet {
+            padding: 20px;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .public-subnet {
+            background: rgba(52, 168, 83, 0.1);
+            border: 2px solid #34a853;
+        }
+
+        .private-subnet {
+            background: rgba(66, 133, 244, 0.1);
+            border: 2px solid #4285f4;
+        }
+
+        .subnet-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .subnet-cidr {
+            color: #666;
+            font-family: monospace;
+            margin-bottom: 15px;
+        }
+
+        .security-group {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .sg-rule {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .sg-rule:last-child {
+            border-bottom: none;
+        }
+
+        .cost-breakdown {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .cost-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .cost-table th {
+            background: #232F3E;
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+
+        .cost-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .cost-table tr:last-child td {
+            border-bottom: none;
+            font-weight: bold;
+            background: #f8f9fa;
+        }
+
+        .recommendation-box {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .recommendation-box h3 {
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .benefits-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .benefits-list li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .benefits-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .implementation-timeline {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .implementation-timeline::before {
+            content: "";
+            position: absolute;
+            top: 25px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #FF9900;
+            z-index: 0;
+        }
+
+        .timeline-step {
+            background: white;
+            border: 3px solid #FF9900;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            position: relative;
+            z-index: 1;
+        }
+
+        .timeline-label {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            font-size: 0.9em;
+        }
+
+        .comparison-highlight {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .flow-arrow {
+            text-align: center;
+            font-size: 2em;
+            color: #FF9900;
+            margin: 20px 0;
+        }
+
+        @media print {
+            .slide {
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <!-- Title Slide -->
+        <div class="slide">
+            <h1>EcoKart AWS Architecture Recommendation</h1>
+            <div class="subtitle">Container-Optimized Serverless Infrastructure for Sustainable E-Commerce</div>
+            
+            <div class="key-metrics">
+                <div class="metric-card">
+                    <div class="metric-value">€656/month</div>
+                    <div class="metric-label">Total Infrastructure Cost</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">0.10%</div>
+                    <div class="metric-label">Infrastructure to Revenue Ratio</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">99.9%</div>
+                    <div class="metric-label">Monthly Availability SLA</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">500K</div>
+                    <div class="metric-label">Monthly Visitor Capacity</div>
+                </div>
+            </div>
+
+            <div class="recommendation-box">
+                <h3>Executive Summary</h3>
+                <p>The recommended container-optimized architecture with AWS Fargate and Aurora Serverless v2 provides the optimal balance between cost efficiency, operational simplicity, and scalability for EcoKart. This solution eliminates server management overhead while maintaining enterprise-grade performance and security, perfectly aligned with your team size of 2.5 FTE DevOps and business requirements.</p>
+            </div>
+        </div>
+
+        <!-- Architecture Overview -->
+        <div class="slide">
+            <h1>Architecture Overview</h1>
+            
+            <div class="architecture-diagram">
+                <div class="network-layer">
+                    <div class="layer-title">Edge Layer - Global Content Delivery</div>
+                    <div class="service-grid">
+                        <div class="service-box">
+                            <div class="service-name">CloudFront CDN</div>
+                            <div class="service-details">Global distribution, DDoS protection</div>
+                        </div>
+                        <div class="service-box">
+                            <div class="service-name">S3 Static Assets</div>
+                            <div class="service-details">300GB assets, Next.js static export</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="network-layer">
+                    <div class="layer-title">Application Layer - Container Orchestration</div>
+                    <div class="service-grid">
+                        <div class="service-box">
+                            <div class="service-name">Application Load Balancer</div>
+                            <div class="service-details">2x ALB (Public + Internal)</div>
+                        </div>
+                        <div class="service-box">
+                            <div class="service-name">API Gateway</div>
+                            <div class="service-details">Partner API rate limiting</div>
+                        </div>
+                        <div class="service-box">
+                            <div class="service-name">ECS Fargate</div>
+                            <div class="service-details">Serverless containers, auto-scaling</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-arrow">↓</div>
+
+                <div class="network-layer">
+                    <div class="layer-title">Data Layer - Managed Database Services</div>
+                    <div class="service-grid">
+                        <div class="service-box">
+                            <div class="service-name">Aurora PostgreSQL Serverless v2</div>
+                            <div class="service-details">500GB, auto-scaling compute</div>
+                        </div>
+                        <div class="service-box">
+                            <div class="service-name">ElastiCache Redis</div>
+                            <div class="service-details">Session store, product cache</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h2>Key Architectural Decisions</h2>
+            <p>This architecture leverages AWS managed services to minimize operational overhead while maximizing scalability and reliability. The serverless approach with Fargate eliminates the need for EC2 instance management, patching, and capacity planning. Aurora Serverless v2 provides automatic database scaling based on workload, ensuring cost efficiency during low-traffic periods while handling peak loads seamlessly.</p>
+        </div>
+
+        <!-- Network Architecture -->
+        <div class="slide">
+            <h1>Network Architecture & VPC Design</h1>
+            <div class="subtitle">Region: eu-north-1 (Stockholm) - GDPR Compliant</div>
+
+            <h2>VPC Configuration: 10.0.0.0/16</h2>
+            
+            <div class="vpc-diagram">
+                <div class="subnet public-subnet">
+                    <div class="subnet-title">Public Subnets (Multi-AZ)</div>
+                    <div class="subnet-cidr">10.0.1.0/24 (AZ-1a)</div>
+                    <div class="subnet-cidr">10.0.2.0/24 (AZ-1b)</div>
+                    <div class="subnet-cidr">10.0.3.0/24 (AZ-1c)</div>
+                    <ul>
+                        <li>NAT Gateways (3x for HA)</li>
+                        <li>Application Load Balancers</li>
+                        <li>Bastion Host (optional)</li>
+                        <li>Internet Gateway attachment</li>
+                    </ul>
+                </div>
+
+                <div class="subnet private-subnet">
+                    <div class="subnet-title">Private Subnets (Multi-AZ)</div>
+                    <div class="subnet-cidr">10.0.10.0/24 (AZ-1a)</div>
+                    <div class="subnet-cidr">10.0.11.0/24 (AZ-1b)</div>
+                    <div class="subnet-cidr">10.0.12.0/24 (AZ-1c)</div>
+                    <ul>
+                        <li>ECS Fargate Tasks</li>
+                        <li>ElastiCache Nodes</li>
+                        <li>VPC Endpoints (S3, ECR, Secrets Manager)</li>
+                        <li>Internal ALB</li>
+                    </ul>
+                </div>
+
+                <div class="subnet private-subnet">
+                    <div class="subnet-title">Database Subnets (Multi-AZ)</div>
+                    <div class="subnet-cidr">10.0.20.0/24 (AZ-1a)</div>
+                    <div class="subnet-cidr">10.0.21.0/24 (AZ-1b)</div>
+                    <div class="subnet-cidr">10.0.22.0/24 (AZ-1c)</div>
+                    <ul>
+                        <li>Aurora Writer Instance</li>
+                        <li>Aurora Read Replicas</li>
+                        <li>Automated Backup Storage</li>
+                        <li>Cross-region replication endpoint</li>
+                    </ul>
+                </div>
+
+                <div class="subnet public-subnet">
+                    <div class="subnet-title">Management Subnet</div>
+                    <div class="subnet-cidr">10.0.99.0/24</div>
+                    <ul>
+                        <li>VPN Gateway</li>
+                        <li>Direct Connect Virtual Interface</li>
+                        <li>CloudWatch VPC Endpoints</li>
+                        <li>Systems Manager endpoints</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2>Network Flow & Routing</h2>
+            <p>Traffic flows from CloudFront to the public ALB in the public subnets. The ALB routes requests to Fargate tasks running in private subnets. Database connections are restricted to the database subnet group with no direct internet access. All outbound internet traffic from private subnets routes through NAT Gateways for security and compliance.</p>
+        </div>
+
+        <!-- Security Architecture -->
+        <div class="slide">
+            <h1>Security Architecture</h1>
+            
+            <h2>Security Groups Configuration</h2>
+            
+            <div class="security-group">
+                <h3>ALB Security Group (sg-alb-public)</h3>
+                <div class="sg-rule">
+                    <span>Ingress: 443/tcp from 0.0.0.0/0</span>
+                    <span>HTTPS from Internet</span>
+                </div>
+                <div class="sg-rule">
+                    <span>Ingress: 80/tcp from 0.0.0.0/0</span>
+                    <span>HTTP redirect to HTTPS</span>
+                </div>
+                <div class="sg-rule">
+                    <span>Egress: 8080/tcp to sg-fargate</span>
+                    <span>To Fargate tasks</span>
+                </div>
+            </div>
+
+            <div class="security-group">
+                <h3>Fargate Tasks Security Group (sg-fargate)</h3>
+                <div class="sg-rule">
+                    <span>Ingress: 8080/tcp from sg-alb-public</span>
+                    <span>From public ALB</span>
+                </div>
+                <div class="sg-rule">
+                    <span>Ingress: 8080/tcp from sg-alb-internal</span>
+                    <span>From internal ALB</span>
+                </div>
+                <div class="sg-rule">
+                    <span>Egress: 5432/tcp to sg-aurora</span>
+                    <span>To Aurora PostgreSQL</span>
+                </div>
+                <div class="sg-rule">
+                    <span>Egress: 6379/tcp to sg-elasticache</span>
+                    <span>To ElastiCache Redis</span>
+                </div>
+                <div class="sg-rule">
+                    <span>Egress: 443/tcp to 0.0.0.0/0</span>
+                    <span>External API calls via NAT</span>
+                </div>
+            </div>
+
+            <div class="security-group">
+                <h3>Aurora Database Security Group (sg-aurora)</h3>
+                <div class="sg-rule">
+                    <span>Ingress: 5432/tcp from sg-fargate</span>
+                    <span>From Fargate tasks only</span>
+                </div>
+                <div class="sg-rule">
+                    <span>Ingress: 5432/tcp from sg-bastion</span>
+                    <span>Admin access (restricted)</span>
+                </div>
+            </div>
+
+            <div class="security-group">
+                <h3>ElastiCache Security Group (sg-elasticache)</h3>
+                <div class="sg-rule">
+                    <span>Ingress: 6379/tcp from sg-fargate</span>
+                    <span>From Fargate tasks only</span>
+                </div>
+            </div>
+
+            <h2>Additional Security Measures</h2>
+            <div class="comparison-highlight">
+                <ul class="benefits-list">
+                    <li>AWS WAF on CloudFront for DDoS protection and SQL injection prevention</li>
+                    <li>All data encrypted at rest using AWS KMS customer-managed keys</li>
+                    <li>TLS 1.2+ enforcement for all data in transit</li>
+                    <li>IAM roles with least-privilege access for all services</li>
+                    <li>AWS Secrets Manager for database credentials and API keys</li>
+                    <li>VPC Flow Logs enabled for network monitoring</li>
+                    <li>AWS CloudTrail for API audit logging</li>
+                    <li>Multi-factor authentication required for AWS console access</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Service Topology -->
+        <div class="slide">
+            <h1>Containerized Microservices Topology</h1>
+            
+            <h2>ECS Fargate Task Configuration</h2>
+            
+            <div class="service-grid">
+                <div class="network-layer">
+                    <div class="layer-title">Frontend Service</div>
+                    <ul>
+                        <li><strong>Task Definition:</strong> 2 tasks minimum</li>
+                        <li><strong>Resources:</strong> 0.5 vCPU, 1GB RAM</li>
+                        <li><strong>Auto-scaling:</strong> 2-10 tasks</li>
+                        <li><strong>Trigger:</strong> 70% CPU utilization</li>
+                        <li><strong>Container:</strong> Next.js application</li>
+                    </ul>
+                </div>
+
+                <div class="network-layer">
+                    <div class="layer-title">Product Catalog Service</div>
+                    <ul>
+                        <li><strong>Task Definition:</strong> 3 tasks minimum</li>
+                        <li><strong>Resources:</strong> 1 vCPU, 2GB RAM</li>
+                        <li><strong>Auto-scaling:</strong> 3-15 tasks</li>
+                        <li><strong>Cache:</strong> ElastiCache integration</li>
+                        <li><strong>Database:</strong> Read replica preferred</li>
+                    </ul>
+                </div>
+
+                <div class="network-layer">
+                    <div class="layer-title">Order Management Service</div>
+                    <ul>
+                        <li><strong>Task Definition:</strong> 3 tasks minimum</li>
+                        <li><strong>Resources:</strong> 1 vCPU, 2GB RAM</li>
+                        <li><strong>Auto-scaling:</strong> 3-20 tasks</li>
+                        <li><strong>Peak capacity:</strong> 20 orders/minute</li>
+                        <li><strong>Transaction:</strong> ACID compliance</li>
+                    </ul>
+                </div>
+
+                <div class="network-layer">
+                    <div class="layer-title">User Authentication Service</div>
+                    <ul>
+                        <li><strong>Task Definition:</strong> 2 tasks minimum</li>
+                        <li><strong>Resources:</strong> 0.5 vCPU, 1GB RAM</li>
+                        <li><strong>Integration:</strong> AWS Cognito</li>
+                        <li><strong>Session:</strong> Redis-backed</li>
+                        <li><strong>Security:</strong> MFA support</li>
+                    </ul>
+                </div>
+
+                <div class="network-layer">
+                    <div class="layer-title">Payment Processing Service</div>
+                    <ul>
+                        <li><strong>Task Definition:</strong> 2 tasks minimum</li>
+                        <li><strong>Resources:</strong> 0.5 vCPU, 1GB RAM</li>
+                        <li><strong>Compliance:</strong> PCI DSS isolation</li>
+                        <li><strong>Encryption:</strong> End-to-end</li>
+                        <li><strong>Audit:</strong> Full transaction logging</li>
+                    </ul>
+                </div>
+
+                <div class="network-layer">
+                    <div class="layer-title">Inventory Management Service</div>
+                    <ul>
+                        <li><strong>Task Definition:</strong> 2 tasks minimum</li>
+                        <li><strong>Resources:</strong> 0.5 vCPU, 1GB RAM</li>
+                        <li><strong>Updates:</strong> Real-time stock levels</li>
+                        <li><strong>Integration:</strong> Warehouse systems</li>
+                        <li><strong>Cache:</strong> 5-minute TTL</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2>Service Discovery & Load Balancing</h2>
+            <p>AWS Cloud Map provides service discovery for internal service-to-service communication. Each service registers with Cloud Map on startup, enabling dynamic endpoint resolution. The Application Load Balancer uses path-based routing to direct traffic to appropriate service target groups.</p>
+        </div>
+
+        <!-- Cost Analysis -->
+        <div class="slide">
+            <h1>Cost Analysis & Business Justification</h1>
+            
+            <div class="cost-breakdown">
+                <div>
+                    <h2>Monthly Cost Breakdown</h2>
+                    <table class="cost-table">
+                        <thead>
+                            <tr>
+                                <th>Service</th>
+                                <th>Monthly Cost (EUR)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Aurora PostgreSQL Serverless v2</td>
+                                <td>€579</td>
+                            </tr>
+                            <tr>
+                                <td>AWS Fargate (ECS)</td>
+                                <td>€65</td>
+                            </tr>
+                            <tr>
+                                <td>Application Load Balancers (2x)</td>
+                                <td>€43</td>
+                            </tr>
+                            <tr>
+                                <td>ElastiCache Redis</td>
+                                <td>€30</td>
+                            </tr>
+                            <tr>
+                                <td>CloudFront CDN</td>
+                                <td>€7</td>
+                            </tr>
+                            <tr>
+                                <td>API Gateway</td>
+                                <td>€5</td>
+                            </tr>
+                            <tr>
+                                <td>S3 Storage</td>
+                                <td>€7</td>
+                            </tr>
+                            <tr>
+                                <td>Data Transfer & Other</td>
+                                <td>€20</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Monthly Cost</strong></td>
+                                <td><strong>€656</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div>
+                    <h2>Financial Metrics</h2>
+                    <div class="metric-card">
+                        <div class="metric-value">€0.033</div>
+                        <div class="metric-label">Cost per Order</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">0.1%</div>
+                        <div class="metric-label">Infrastructure to Revenue Ratio</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">40%</div>
+                        <div class="metric-label">Operational Cost Reduction vs EC2</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">3 months</div>
+                        <div class="metric-label">ROI Break-even Point</div>
+                    </div>
+                </div>
+            </div>
+
+            <h2>Comparison with Alternative Approaches</h2>
+            <table class="cost-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>EC2-Based (Option 1)</th>
+                        <th>Recommended (Option 2)</th>
+                        <th>EKS Premium (Option 3)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Monthly Cost</td>
+                        <td>€489</td>
+                        <td style="background: #e8f5e9;"><strong>€656</strong></td>
+                        <td>€1,800</td>
+                    </tr>
+                    <tr>
+                        <td>Operational Overhead</td>
+                        <td>High (server management)</td>
+                        <td style="background: #e8f5e9;"><strong>Low (serverless)</strong></td>
+                        <td>Very High (Kubernetes)</td>
+                    </tr>
+                    <tr>
+                        <td>Auto-scaling Capability</td>
+                        <td>Limited</td>
+                        <td style="background: #e8f5e9;"><strong>Excellent</strong></td>
+                        <td>Excellent</td>
+                    </tr>
+                    <tr>
+                        <td>Deployment Speed</td>
+                        <td>5-10 minutes</td>
+                        <td style="background: #e8f5e9;"><strong>2-3 minutes</strong></td>
+                        <td>3-5 minutes</td>
+                    </tr>
+                    <tr>
+                        <td>Team Fit (2.5 FTE)</td>
+                        <td>Challenging</td>
+                        <td style="background: #e8f5e9;"><strong>Optimal</strong></td>
+                        <td>Overwhelming</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Implementation Roadmap -->
+        <div class="slide">
+            <h1>Implementation Roadmap</h1>
+            
+            <div class="implementation-timeline">
+                <div class="timeline-step">
+                    <span>1</span>
+                    <div class="timeline-label">Week 1-2<br>Foundation</div>
+                </div>
+                <div class="timeline-step">
+                    <span>2</span>
+                    <div class="timeline-label">Week 3<br>Core Services</div>
+                </div>
+                <div class="timeline-step">
+                    <span>3</span>
+                    <div class="timeline-label">Week 4<br>Integration</div>
+                </div>
+                <div class="timeline-step">
+                    <span>4</span>
+                    <div class="timeline-label">Week 5<br>Testing</div>
+                </div>
+                <div class="timeline-step">
+                    <span>5</span>
+                    <div class="timeline-label">Week 6<br>Go-Live</div>
+                </div>
+            </div>
+
+            <h2>Phase 1: Foundation Setup (Weeks 1-2)</h2>
+            <ul>
+                <li>Configure VPC with subnets across three availability zones</li>
+                <li>Set up NAT Gateways and Internet Gateway</li>
+                <li>Create security groups and network ACLs</li>
+                <li>Deploy Aurora Serverless v2 cluster with Multi-AZ configuration</li>
+                <li>Configure ElastiCache Redis cluster</li>
+                <li>Set up S3 buckets with lifecycle policies</li>
+                <li>Enable CloudTrail, VPC Flow Logs, and CloudWatch</li>
+            </ul>
+
+            <h2>Phase 2: Core Services Deployment (Week 3)</h2>
+            <ul>
+                <li>Create ECS cluster and task definitions</li>
+                <li>Build and push Docker images to ECR</li>
+                <li>Deploy Application Load Balancers</li>
+                <li>Configure auto-scaling policies for Fargate tasks</li>
+                <li>Set up API Gateway with rate limiting</li>
+                <li>Implement service discovery with Cloud Map</li>
+            </ul>
+
+            <h2>Phase 3: Integration & Security (Week 4)</h2>
+            <ul>
+                <li>Configure AWS WAF rules on CloudFront</li>
+                <li>Set up Secrets Manager for credentials management</li>
+                <li>Implement IAM roles and policies</li>
+                <li>Configure backup strategies and retention policies</li>
+                <li>Set up monitoring dashboards and alarms</li>
+                <li>Implement CI/CD pipeline with CodePipeline</li>
+            </ul>
+
+            <h2>Phase 4: Testing & Optimization (Week 5)</h2>
+            <ul>
+                <li>Conduct load testing (target: 2,000 concurrent users)</li>
+                <li>Perform security penetration testing</li>
+                <li>Validate auto-scaling behavior under load</li>
+                <li>Test disaster recovery procedures</li>
+                <li>Optimize container resource allocations</li>
+                <li>Verify GDPR compliance measures</li>
+            </ul>
+
+            <h2>Phase 5: Production Launch (Week 6)</h2>
+            <ul>
+                <li>Execute blue-green deployment strategy</li>
+                <li>Configure production monitoring and alerting</li>
+                <li>Implement on-call rotation schedules</li>
+                <li>Document runbooks and operational procedures</li>
+                <li>Conduct team training sessions</li>
+                <li>Monitor and fine-tune based on real traffic</li>
+            </ul>
+        </div>
+
+        <!-- Operational Excellence -->
+        <div class="slide">
+            <h1>Operational Excellence & Monitoring</h1>
+            
+            <h2>CloudWatch Dashboard Configuration</h2>
+            <div class="service-grid">
+                <div class="network-layer">
+                    <div class="layer-title">Business Metrics</div>
+                    <ul>
+                        <li>Orders per minute</li>
+                        <li>Cart abandonment rate</li>
+                        <li>Payment success rate</li>
+                        <li>Revenue per hour</li>
+                        <li>Active user sessions</li>
+                    </ul>
+                </div>
+
+                <div class="network-layer">
+                    <div class="layer-title">Application Metrics</div>
+                    <ul>
+                        <li>API response times (p50, p95, p99)</li>
+                        <li>Request rate per endpoint</li>
+                        <li>Error rates by service</li>
+                        <li>Container CPU/Memory utilization</li>
+                        <li>Active Fargate tasks</li>
+                    </ul>
+                </div>
+
+                <div class="network-layer">
+                    <div class="layer-title">Infrastructure Metrics</div>
+                    <ul>
+                        <li>Aurora ACU consumption</li>
+                        <li>Database connections</li>
+                        <li>Cache hit ratio</li>
+                        <li>ALB target health</li>
+                        <li>Network throughput</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2>Alerting Strategy</h2>
+            <table class="cost-table">
+                <thead>
+                    <tr>
+                        <th>Alert Priority</th>
+                        <th>Condition</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Critical</strong></td>
+                        <td>Service unavailable, payment failures >5%</td>
+                        <td>PagerDuty immediate, auto-scale trigger</td>
+                    </tr>
+                    <tr>
+                        <td><strong>High</strong></td>
+                        <td>Response time >2s, error rate >1%</td>
+                        <td>Slack alert, on-call notification</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Medium</strong></td>
+                        <td>CPU >80%, memory >85%</td>
+                        <td>Email notification, review scaling</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Low</strong></td>
+                        <td>Unusual traffic patterns, cost anomalies</td>
+                        <td>Daily report, team review</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>Disaster Recovery & Business Continuity</h2>
+            <div class="comparison-highlight">
+                <ul class="benefits-list">
+                    <li><strong>RTO (Recovery Time Objective):</strong> 15 minutes</li>
+                    <li><strong>RPO (Recovery Point Objective):</strong> 5 minutes</li>
+                    <li><strong>Backup Strategy:</strong> Automated daily snapshots with 35-day retention</li>
+                    <li><strong>Multi-AZ Deployment:</strong> Automatic failover across availability zones</li>
+                    <li><strong>Cross-Region Replication:</strong> Asynchronous replication to eu-west-1</li>
+                    <li><strong>Runbook Documentation:</strong> Detailed procedures for all failure scenarios</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Final Recommendation -->
+        <div class="slide">
+            <h1>Why This Architecture Is Optimal for EcoKart</h1>
+            
+            <div class="recommendation-box">
+                <h3>Strategic Alignment</h3>
+                <p>This container-optimized serverless architecture perfectly aligns with EcoKart's business objectives and technical constraints. With only 2.5 FTE DevOps resources, the managed services approach eliminates approximately 40% of operational overhead compared to traditional EC2-based deployments.</p>
+            </div>
+
+            <h2>Key Success Factors</h2>
+            
+            <div class="key-metrics">
+                <div class="metric-card">
+                    <div class="metric-value">Scalability</div>
+                    <div class="metric-label">Handles 5x traffic growth without architecture changes</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">Compliance</div>
+                    <div class="metric-label">Full GDPR compliance with EU data residency</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">Performance</div>
+                    <div class="metric-label">Sub-100ms response times with global CDN</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">Reliability</div>
+                    <div class="metric-label">99.9% SLA achievable with Multi-AZ deployment</div>
+                </div>
+            </div>
+
+            <h2>Competitive Advantages</h2>
+            <ul class="benefits-list">
+                <li><strong>Rapid deployment cycles:</strong> 2-3 minute deployments with blue-green strategy</li>
+                <li><strong>Cost efficiency:</strong> Pay-per-use model scales costs with business growth</li>
+                <li><strong>Developer productivity:</strong> Focus on business logic, not infrastructure</li>
+                <li><strong>Future-proof:</strong> Easy migration path to additional regions or services</li>
+                <li><strong>Operational simplicity:</strong> No server patching, automatic OS updates</li>
+                <li><strong>Security by default:</strong> Managed services include security best practices</li>
+            </ul>
+
+            <h2>Risk Mitigation</h2>
+            <p>The serverless approach significantly reduces operational risks:</p>
+            <ul>
+                <li>No under-provisioning during traffic spikes (auto-scaling)</li>
+                <li>No over-provisioning during quiet periods (scales to zero)</li>
+                <li>Reduced security surface area (no SSH access needed)</li>
+                <li>Automated compliance updates (managed services)</li>
+                <li>Built-in high availability (Multi-AZ by default)</li>
+            </ul>
+
+            <div class="comparison-highlight">
+                <h3>Bottom Line</h3>
+                <p><strong>With an infrastructure cost of only 0.1% of revenue and the ability to handle 500K monthly visitors, this architecture provides exceptional value. The €167/month premium over the budget option is offset by reducing operational overhead equivalent to 1 FTE, resulting in a net annual saving of over €50,000 while delivering superior reliability and scalability.</strong></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

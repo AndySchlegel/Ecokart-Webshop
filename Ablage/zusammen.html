@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoKart AWS Architektur - 3 Varianten</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Amazon Ember', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #7FB069;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            color: #aaa;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #7FB069;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: #7FB069;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(127, 176, 105, 0.4);
+        }
+
+        .nav-btn.active {
+            background: #7FB069;
+            box-shadow: 0 5px 15px rgba(127, 176, 105, 0.4);
+        }
+
+        .variants-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .variant-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+
+        .variant-card:hover {
+            border-color: #7FB069;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .variant-card.recommended {
+            border: 3px solid #7FB069;
+            box-shadow: 0 0 30px rgba(127, 176, 105, 0.3);
+        }
+
+        .variant-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .variant-title {
+            font-size: 1.5em;
+            color: #7FB069;
+        }
+
+        .variant-cost {
+            font-size: 1.3em;
+            color: #FF6B6B;
+        }
+
+        .variant-subtitle {
+            font-size: 0.9em;
+            color: #aaa;
+            margin-bottom: 15px;
+        }
+
+        .architecture-diagram {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            min-height: 350px;
+        }
+
+        .flow-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .flow-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .component {
+            background: linear-gradient(135deg, #232F3E 0%, #FF9900 100%);
+            padding: 15px;
+            border-radius: 10px;
+            min-width: 130px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            border: 2px solid transparent;
+        }
+
+        .component:hover {
+            transform: scale(1.05);
+            border-color: #FF9900;
+            box-shadow: 0 5px 20px rgba(255, 153, 0, 0.5);
+            z-index: 100;
+        }
+
+        .component-icon {
+            font-size: 1.8em;
+            margin-bottom: 8px;
+        }
+
+        .component-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 0.95em;
+        }
+
+        .component-type {
+            font-size: 0.8em;
+            color: #ccc;
+        }
+
+        .arrow {
+            font-size: 1.8em;
+            color: #7FB069;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #FF9900;
+            border-radius: 8px;
+            padding: 15px;
+            min-width: 280px;
+            z-index: 1000;
+            display: none;
+            top: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .component:hover .tooltip {
+            display: block;
+            z-index: 1001;
+        }
+
+        .tooltip h4 {
+            color: #FF9900;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .tooltip ul {
+            list-style: none;
+            line-height: 1.6;
+            font-size: 0.9em;
+        }
+
+        .tooltip li::before {
+            content: "▸ ";
+            color: #7FB069;
+            font-weight: bold;
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .pros, .cons {
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .pros {
+            background: rgba(127, 176, 105, 0.1);
+            border-left: 4px solid #7FB069;
+        }
+
+        .cons {
+            background: rgba(255, 107, 107, 0.1);
+            border-left: 4px solid #FF6B6B;
+        }
+
+        .pros h4, .cons h4 {
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+
+        .pros h4 {
+            color: #7FB069;
+        }
+
+        .cons h4 {
+            color: #FF6B6B;
+        }
+
+        ul {
+            list-style: none;
+            line-height: 1.5;
+            font-size: 0.9em;
+        }
+
+        .pros li::before {
+            content: "✓ ";
+            color: #7FB069;
+            font-weight: bold;
+        }
+
+        .cons li::before {
+            content: "✗ ";
+            color: #FF6B6B;
+            font-weight: bold;
+        }
+
+        .recommendation {
+            background: rgba(127, 176, 105, 0.2);
+            border: 2px solid #7FB069;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .recommendation-badge {
+            display: inline-block;
+            background: #7FB069;
+            color: #1a1a2e;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .detail-view {
+            display: none;
+        }
+
+        .detail-view.active {
+            display: block;
+        }
+
+        .comparison-table {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 40px;
+        }
+
+        .comparison-table h2 {
+            color: #7FB069;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        th {
+            background: rgba(127, 176, 105, 0.2);
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background: rgba(255,255,255,0.02);
+        }
+
+        td:nth-child(2), td:nth-child(3), td:nth-child(4) {
+            text-align: center;
+        }
+
+        .check-green {
+            color: #7FB069;
+            font-weight: bold;
+        }
+
+        .check-red {
+            color: #FF6B6B;
+        }
+
+        @media (max-width: 1200px) {
+            .variants-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .component {
+                min-width: 110px;
+                padding: 12px;
+            }
+            
+            .pros-cons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 EcoKart AWS Architektur</h1>
+        <p>Cloud-Infrastruktur für nachhaltigen E-Commerce im DACH-Raum</p>
+    </div>
+
+    <div class="navigation">
+        <button class="nav-btn active" onclick="showView('overview')">📊 Variantenvergleich</button>
+        <button class="nav-btn" onclick="showView('detail')">🏗️ Detail-Architektur (Variante 2)</button>
+    </div>
+
+    <div id="overview-view" class="overview-view">
+        <div class="variants-container">
+            <!-- Variante 1: EC2-basiert -->
+            <div class="variant-card">
+                <div class="variant-header">
+                    <div class="variant-title">Option 1: Budget-Conscious</div>
+                    <div class="variant-cost">$489/Monat</div>
+                </div>
+                <div class="variant-subtitle">EC2-basierte Architektur mit Savings Plans</div>
+
+                <div class="architecture-diagram">
+                    <div class="flow-container">
+                        <div class="flow-row">
+                            <div class="component">
+                                <div class="component-icon">👤</div>
+                                <div class="component-name">User</div>
+                                <div class="component-type">End User</div>
+                            </div>
+                        </div>
+
+                        <div class="arrow">↓</div>
+
+                        <div class="flow-row">
+                            <div class="component">
+                                <div class="component-icon">🌐</div>
+                                <div class="component-name">CloudFront</div>
+                                <div class="component-type">CDN</div>
+                                <div class="tooltip">
+                                    <h4>Amazon CloudFront</h4>
+                                    <ul>
+                                        <li>Global CDN für Assets</li>
+                                        <li>SSL/TLS Terminierung</li>
+                                        <li>DDoS-Schutz (Shield Standard)</li>
+                                        <li>250 GB Assets Caching</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="arrow">↓</div>
+
+                        <div class="flow-row">
+                            <div class="component">
+                                <div class="component-icon">⚖️</div>
+                                <div class="component-name">ALB</div>
+                                <div class="component-type">Load Balancer</div>
+                                <div class="tooltip">
+                                    <h4>Application Load Balancer</h4>
+                                    <ul>
+                                        <li>Layer 7 Load Balancing</li>
+                                        <li>Health Checks</li>
+                                        <li>SSL Offloading</li>
+                                        <li>Multi-AZ: ~$19/Monat</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="arrow">↓</div>
+
+                        <div class="flow-row">
+                            <div class="component">
+                                <div class="component-icon">🖥️</div>
+                                <div class="component-name">EC2</div>
+                                <div class="component-type">3x t3.large + 2x t3.medium</div>
+                                <div class="tooltip">
+                                    <h4>Amazon EC2</h4>
+                                    <ul>
+                                        <li>3x t3.large Webserver</li>
+                                        <li>2x t3.medium Backend</li>
+                                        <li>3-Year Savings Plans</li>
+                                        <li>~$51/Monat gesamt</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="arrow">↓</div>
+
+                        <div class="flow-row">
+                            <div class="component">
+                                <div class="component-icon">💾</div>
+                                <div class="component-name">RDS PostgreSQL</div>
+                                <div class="component-type">db.t3.large Multi-AZ</div>
+                                <div class="tooltip">
+                                    <h4>RDS PostgreSQL</h4>
+                                    <ul>
+                                        <li>500 GB gp2 Storage</li>
+                                        <li>Multi-AZ für HA</li>
+                                        <li>Automated Backups</li>
+                                        <li>~$379/Monat</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="component">
+                                <div class="component-icon">⚡</div>
+                                <div class="component-name">ElastiCache</div>
+                                <div class="component-type">2x t3.micro</div>
+                                <div class="tooltip">
+                                    <h4>ElastiCache Redis</h4>
+                                    <ul>
+                                        <li>Session Management</li>
+                                        <li>Produkt-Cache (120k SKUs)</li>
+                                        <li>2 Nodes Redundanz</li>
+                                        <li>~$31/Monat</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>✓ Vorteile</h4>
+                        <ul>
+                            <li>Niedrigste Kosten</li>
+                            <li>Vorhersehbar (Savings Plans)</li>
+                            <li>Einfache Architektur</li>
+                            <li>Gut für stabilen Traffic</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>✗ Nachteile</h4>
+                        <ul>
+                            <li>Manuelles Patching</li>
+                            <li>Höherer Ops-Aufwand</li>
+                            <li>Schlechteres Auto-Scaling</li>
+                            <li>Längere Deployments</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Variante 2: Container-optimiert -->
+            <div class="variant-card recommended">
+                <div class="variant-header">
+                    <div class="variant-title">Option 2: Balanced</div>
+                    <div class="variant-cost">$656/Monat</div>
+                </div>
+                <div class="variant-subtitle">Container-optimiert mit Fargate & Aurora Serverless</div>
+
+                <div class="architecture-diagram">
+                    <div class="flow-container">
+                        <div class="flow-row">
+                            <div class="component">
+                                <div class="component-icon">👤</div>
+                                <div class="component-name">User</div>
+                                <div class="component-type">End User</div>
+                            </div>
+                        </div>
+
+                        <div class="arrow">↓</div>
+
+                        <div class="flow-row">
+                            <div class="component">
+                                <div class="component-icon">🌐</div>
+                                <div class="component-name">CloudFront</div>
+                                <div class="component-type">CDN + S3</div>
+                                <div class="tooltip">
+                                    <h4>CloudFront + S3</h4>
+                                    <ul>
+                                        <li>S3: 300 GB Static Assets</li>
+                                        <li>Next.js Static Export</li>
+                                        <li>Global Distribution</li>
+                                        <li>~$7/Monat kombiniert</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="arrow">↓</div>
+
+                        <div class="flow-row">
+                            <div class="component">
+                                <div class="component-icon">⚖️</div>
+                                <div class="component-name">ALB</div>
+                                <div class="component-type">2x Load Balancer</div>
+                                <div class="tooltip">
+                                    <h4>Application Load Balancer</h4>
+                                    <ul>
+                                        <li>Public ALB für API</li>
+                                        <li>Internal ALB für Services</li>
+                                        <li>Path-based Routing</li>
+                                        <li>~$43/Monat</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="arrow">↓</div>
+
+                        <div class="flow-row">
+                            <div class="component">
+                                <div class="component-icon">🐳</div>
+                                <div class="component-name">ECS Fargate</div>
+                                <div class="component-type">Serverless Container</div>
+                                <div class="tooltip">
+                                    <h4>AWS Fargate</h4>
+                                    <ul>
+                                        <li>Serverless Container Platform</li>
+                                        <li>Auto-Scaling (2-10 Tasks)</li>
+                                        <li>2 GB RAM, ARM CPU</li>
+                                        <li>Kein Server-Management</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="component">
+                                <div class="component-icon">📦</div>
+                                <div class="component-name">API Gateway</div>
+                                <div class="component-type">REST API</div>
+                                <div class="tooltip">
+                                    <h4>Amazon API Gateway</h4>
+                                    <ul>
+                                        <li>Rate Limiting für Partner-API</li>
+                                        <li>Request Validation</li>
+                                        <li>API Keys & Usage Plans</li>
+                                        <li>~$5/Monat</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="arrow">↓</div>
+
+                        <div class="flow-row">
+                            <div class="component">
+                                <div class="component-icon">🗄️</div>
+                                <div class="component-name">Aurora PostgreSQL</div>
+                                <div class="component-type">Serverless v2</div>
+                                <div class="tooltip">
+                                    <h4>Aurora PostgreSQL Serverless</h4>
+                                    <ul>
+                                        <li>500 GB Storage</li>
+                                        <li>Auto-Scaling Compute</li>
+                                        <li>Multi-AZ Replication</li>
+                                        <li>~$579/Monat</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="component">
+                                <div class="component-icon">⚡</div>
+                                <div class="component-name">ElastiCache</div>
+                                <div class="component-type">Redis t3.small</div>
+                                <div class="tooltip">
+                                    <h4>ElastiCache Redis</h4>
+                                    <ul>
+                                        <li>Session Store</li>
+                                        <li>API Response Cache</li>
+                                        <li>Product Catalog Cache</li>
+                                        <li>~$30/Monat</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>✓ Vorteile</h4>
+                        <ul>
+                            <li>Minimaler Ops-Aufwand</li>
+                            <li>Exzellentes Auto-Scaling</li>
+                            <li>Schnelle Deployments</li>
+                            <li>Beste Developer Experience</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>✗ Nachteile</h4>
+                        <ul>
+                            <li>+34% teurer als Option 1</li>
+                            <li>Container-Know-how nötig</li>
+                            <li>Komplexere Architektur</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="recommendation">
+                    <div class="recommendation-badge">⭐ EMPFEHLUNG</div>
+                    <p><strong>Beste Wahl:</strong> Optimales Preis-Leistungs-Verhältnis durch minimalen Betriebsaufwand und maximale Skalierbarkeit. Perfekt für euer Team-Setup!</p>
+                </div>
+            </div>
+
+            <!-- Variante 3: Premium Performance -->
+            <div class="variant-card">
+                <div class="variant-header">
+                    <div class="variant-title">Option 3: Premium</div>
+                    <div class="variant-cost">$1.800/Monat</div>
+                </div>
+                <div class="variant-subtitle">EKS High-Availability für Enterprise-Scale</div>
+
+                <div class="architecture-diagram">
+                    <div class="flow-container">
+                        <div class="flow-row">
+                            <div class="component">
+                                <div class="component-icon">👤</div>
+                                <div class="component-name">User</div>
+                                <div class="component-type">End User</div>
+                            </div>
+                        </div>
+
+                        <div class="arrow">↓</div>
+
+                        <div class="flow-row">
+                            <div class="component">
+                                <div class="component-icon">🌐</div>
+                                <div class="component-name">CloudFront</div>
+                                <div class="component-type">CDN + WAF</div>
+                                <div class="tooltip">
+                                    <h4>CloudFront + WAF</h4>
+                                    <ul>
+                                        <li>5 TB Transfer/Monat</li>
+                                        <li>WAF für Advanced Security</li>
+                                        <li>DDoS Protection</li>
+                                        <li>~$450/Monat kombiniert</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="arrow">↓</div>
+
+                        <div class="flow-row">
+                            <div class="component">
+                                <div class="component-icon">⚖️</div>
+                                <div class="component-name">ALB + NLB</div>
+                                <div class="component-type">3x Load Balancer</div>
+                                <div class="tooltip">
+                                    <h4>Multi-Tier Load Balancing</h4>
+                                    <ul>
+                                        <li>2x ALB (Public + Internal)</li>
+                                        <li>1x NLB für TCP Services</li>
+                                        <li>Cross-Zone Balancing</li>
+                                        <li>~$65/Monat</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="arrow">↓</div>
+
+                        <div class="flow-row">
+                            <div class="component">
+                                <div class="component-icon">☸️</div>
+                                <div class="component-name">EKS</div>
+                                <div class="component-type">Kubernetes Cluster</div>
+                                <div class="tooltip">
+                                    <h4>Amazon EKS</h4>
+                                    <ul>
+                                        <li>Managed Kubernetes</li>
+                                        <li>3x m5.large Worker Nodes</li>
+                                        <li>Auto-Scaling Groups</li>
+                                        <li>~$640/Monat (Cluster + Nodes)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="component">
+                                <div class="component-icon">🔍</div>
+                                <div class="component-name">OpenSearch</div>
+                                <div class="component-type">Search Engine</div>
+                                <div class="tooltip">
+                                    <h4>Amazon OpenSearch</h4>
+                                    <ul>
+                                        <li>1x t3.small.search</li>
+                                        <li>Produktsuche & Analytics</li>
+                                        <li>Logs & Monitoring</li>
+                                        <li>~$50/Monat</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="arrow">↓</div>
+
+                        <div class="flow-row">
+                            <div class="component">
+                                <div class="component-icon">🗄️</div>
+                                <div class="component-name">Aurora PostgreSQL</div>
+                                <div class="component-type">Writer + Reader</div>
+                                <div class="tooltip">
+                                    <h4>Aurora HA Cluster</h4>
+                                    <ul>
+                                        <li>1x db.r6g.large Writer</li>
+                                        <li>1x db.r6g.medium Reader</li>
+                                        <li>500 GB Storage</li>
+                                        <li>~$395/Monat</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="component">
+                                <div class="component-icon">⚡</div>
+                                <div class="component-name">ElastiCache</div>
+                                <div class="component-type">2x t3.medium</div>
+                                <div class="tooltip">
+                                    <h4>ElastiCache Redis Cluster</h4>
+                                    <ul>
+                                        <li>Multi-AZ Replication</li>
+                                        <li>Automatic Failover</li>
+                                        <li>Enhanced Performance</li>
+                                        <li>~$60/Monat</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>✓ Vorteile</h4>
+                        <ul>
+                            <li>Maximale Skalierbarkeit</li>
+                            <li>Enterprise-Grade Security</li>
+                            <li>Advanced Monitoring</li>
+                            <li>Multi-Region ready</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>✗ Nachteile</h4>
+                        <ul>
+                            <li>3,7x teurer als Option 1</li>
+                            <li>Kubernetes-Komplexität</li>
+                            <li>Benötigt 5-10 FTE DevOps</li>
+                            <li>Overkill für 100k Besucher</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="comparison-table">
+            <h2>💡 Detaillierte Entscheidungsmatrix</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Kriterium</th>
+                        <th>Option 1: Budget</th>
+                        <th>Option 2: Balanced ⭐</th>
+                        <th>Option 3: Premium</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Monatliche Kosten</strong></td>
+                        <td class="check-green">✓ $489</td>
+                        <td>$656 (+34%)</td>
+                        <td class="check-red">$1.800 (+268%)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Betriebsaufwand (2,5 FTE)</strong></td>
+                        <td class="check-red">Hoch (Server-Mgmt)</td>
+                        <td class="check-green">✓ Niedrig (Serverless)</td>
+                        <td class="check-red">Sehr Hoch (K8s)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Skalierbarkeit</strong></td>
+                        <td>Mittel (ASG)</td>
+                        <td class="check-green">✓ Exzellent (Auto)</td>
+                        <td class="check-green">✓ Exzellent (K8s)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Deployment-Speed</strong></td>
+                        <td class="check-red">5-10 min</td>
+                        <td class="check-green">✓ 2-3 min</td>
+                        <td>3-5 min</td>
+                    </tr>
+                    <tr>
+                        <td><strong>SLA-Erreichbarkeit (99,9%)</strong></td>
+                        <td class="check-green">✓ Gut</td>
+                        <td class="check-green">✓ Sehr Gut</td>
+                        <td class="check-green">✓ Exzellent</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Team-Fit (6 FTE Dev)</strong></td>
+                        <td>Anspruchsvoll</td>
+                        <td class="check-green">✓ Optimal</td>
+                        <td class="check-red">Überfordernd</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Time-to-Market</strong></td>
+                        <td>4-6 Wochen</td>
+                        <td class="check-green">✓ 2-3 Wochen</td>
+                        <td class="check-red">8-12 Wochen</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Sicherheit (DSGVO)</strong></td>
+                        <td class="check-green">✓ Gut</td>
+                        <td class="check-green">✓ Sehr Gut</td>
+                        <td class="check-green">✓ Enterprise</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Monitoring</strong></td>
+                        <td>CloudWatch Basic</td>
+                        <td class="check-green">✓ CloudWatch + X-Ray</td>
+                        <td>Full Observability Stack</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Kostenrisiko bei Traffic-Spikes</strong></td>
+                        <td class="check-red">Hoch (fixed capacity)</td>
+                        <td class="check-green">✓ Niedrig (auto-scale)</td>
+                        <td>Niedrig (over-provisioned)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Entwicklerproduktivität</strong></td>
+                        <td>Mittel</td>
+                        <td class="check-green">✓ Hoch (Docker lokal)</td>
+                        <td>Mittel (K8s Overhead)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Disaster Recovery</strong></td>
+                        <td>Manuell (RDS Snapshots)</td>
+                        <td class="check-green">✓ Automatisch</td>
+                        <td class="check-green">✓ Advanced (Multi-AZ)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Empfehlung für EcoKart</strong></td>
+                        <td>Wenn Budget kritisch</td>
+                        <td class="check-green">✓✓✓ BESTE WAHL</td>
+                        <td>Nur bei >500k Besuchern</td>
+                    </tr>
+                    <tr style="background: rgba(127, 176, 105, 0.1);">
+                        <td><strong>💰 Kosten pro Order</strong></td>
+                        <td>€0,024</td>
+                        <td class="check-green">✓ €0,033</td>
+                        <td>€0,090</td>
+                    </tr>
+                    <tr style="background: rgba(127, 176, 105, 0.1);">
+                        <td><strong>💼 % vom Umsatz</strong></td>
+                        <td class="check-green">✓ 0,08%</td>
+                        <td class="check-green">✓ 0,10%</td>
+                        <td class="check-red">0,30%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="background: rgba(127, 176, 105, 0.1); padding: 30px; border-radius: 15px; margin-top: 40px; border: 2px solid #7FB069;">
+            <h2 style="color: #7FB069; margin-bottom: 20px; text-align: center;">🎯 Finale Empfehlung: Option 2 (Balanced)</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
+                <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px;">
+                    <h3 style="color: #FF9900; margin-bottom: 10px;">💰 ROI-Analyse</h3>
+                    <p style="line-height: 1.6;">Die +$167/Monat Mehrkosten sparen <strong>~1 FTE DevOps</strong> (€60k/Jahr). Break-even nach <strong>3 Monaten</strong>!</p>
+                </div>
+                <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px;">
+                    <h3 style="color: #FF9900; margin-bottom: 10px;">⚡ Skalierung</h3>
+                    <p style="line-height: 1.6;">Automatisches Scaling von 2-10 Tasks bewältigt problemlos die <strong>20 Orders/min Peak</strong> bei Aktionen.</p>
+                </div>
+                <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px;">
+                    <h3 style="color: #FF9900; margin-bottom: 10px;">🔒 DSGVO-Konform</h3>
+                    <p style="line-height: 1.6;"><strong>eu-north-1</strong> primär, Aurora Multi-AZ, verschlüsselt at rest & in transit, 7-Jahre Backup möglich.</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: rgba(255, 255, 255, 0.05); padding: 30px; border-radius: 15px; margin-top: 40px;">
+            <h2 style="color: #7FB069; margin-bottom: 25px; text-align: center;">💼 Business Case: Warum Option 2 wirtschaftlich sinnvoll ist</h2>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px;">
+                <div style="background: linear-gradient(135deg, rgba(127, 176, 105, 0.1) 0%, rgba(127, 176, 105, 0.05) 100%); padding: 25px; border-radius: 12px; border-left: 4px solid #7FB069;">
+                    <h3 style="color: #7FB069; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.5em;">💰</span> Kosten-Nutzen-Rechnung
+                    </h3>
+                    <div style="line-height: 1.8; color: #ddd;">
+                        <p><strong>Umsatzpotential:</strong><br>20.000 Orders × €30 durchschnitt = <span style="color: #7FB069; font-weight: bold;">€600.000/Monat</span></p>
+                        <p style="margin-top: 10px;"><strong>Infrastruktur-Kosten:</strong><br>€615/Monat = <span style="color: #7FB069; font-weight: bold;">0,1% vom Umsatz</span></p>
+                        <p style="margin-top: 10px;"><strong>Pro Transaktion:</strong><br><span style="color: #7FB069; font-weight: bold; font-size: 1.2em;">€0,03</span> pro Bestellung<br><span style="font-size: 0.9em; color: #aaa;">(exzellente Unit Economics!)</span></p>
+                    </div>
+                </div>
+
+                <div style="background: linear-gradient(135deg, rgba(255, 153, 0, 0.1) 0%, rgba(255, 153, 0, 0.05) 100%); padding: 25px; border-radius: 12px; border-left: 4px solid #FF9900;">
+                    <h3 style="color: #FF9900; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.5em;">✅</span> Compliance & Sicherheit
+                    </h3>
+                    <ul style="line-height: 1.8; list-style: none; padding: 0; color: #ddd;">
+                        <li style="margin-bottom: 8px;">✓ <strong>DSGVO-konform:</strong> EU-Datenresidenz (eu-north-1)</li>
+                        <li style="margin-bottom: 8px;">✓ <strong>WAF:</strong> Erforderliche Sicherheitsstandards</li>
+                        <li style="margin-bottom: 8px;">✓ <strong>Retention:</strong> 7-Jahre Aufbewahrung implementiert</li>
+                        <li style="margin-bottom: 8px;">✓ <strong>SLA:</strong> 99,9% erreichbar mit Multi-AZ</li>
+                    </ul>
+                </div>
+
+                <div style="background: linear-gradient(135deg, rgba(100, 149, 237, 0.1) 0%, rgba(100, 149, 237, 0.05) 100%); padding: 25px; border-radius: 12px; border-left: 4px solid #6495ED;">
+                    <h3 style="color: #6495ED; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.5em;">👥</span> Team-Fit & Skalierbarkeit
+                    </h3>
+                    <ul style="line-height: 1.8; list-style: none; padding: 0; color: #ddd;">
+                        <li style="margin-bottom: 8px;">✓ <strong>Managebar:</strong> Serverless = kein Server-Management</li>
+                        <li style="margin-bottom: 8px;">✓ <strong>Team-Size:</strong> Perfekt für 2,5 FTE DevOps</li>
+                        <li style="margin-bottom: 8px;">✓ <strong>Auto-Scaling:</strong> Peaks bis 20 Orders/min abgedeckt</li>
+                        <li style="margin-bottom: 8px;">✓ <strong>Migration-Path:</strong> Einfacher Wechsel zu EKS möglich</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="background: rgba(127, 176, 105, 0.15); padding: 20px; border-radius: 10px; margin-top: 25px; border: 2px dashed #7FB069; text-align: center;">
+                <p style="font-size: 1.1em; line-height: 1.8;">
+                    <strong style="color: #7FB069;">Bottom Line:</strong> Mit nur <strong>0,1% des Umsatzes</strong> für Infrastruktur bei gleichzeitiger <strong>Reduzierung des Ops-Aufwands um 40%</strong> ist Option 2 die wirtschaftlich und technisch beste Wahl für EcoKart.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div id="detail-view" class="detail-view">
+        <div style="text-align: center; padding: 60px 20px;">
+            <h2 style="color: #7FB069; margin-bottom: 30px; font-size: 2.5em;">🏗️ Detaillierte Architektur</h2>
+            <div style="background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 15px; max-width: 800px; margin: 0 auto;">
+                <div style="font-size: 4em; margin-bottom: 20px;">🚧</div>
+                <h3 style="color: #FF9900; margin-bottom: 20px;">Option 2: Container-optimierte Architektur</h3>
+                <p style="color: #aaa; line-height: 1.8; margin-bottom: 20px;">
+                    Nachdem ihr euch für <strong>Option 2 (Balanced)</strong> entschieden habt, erstelle ich die vollständige Detail-Architektur mit:
+                </p>
+                <ul style="text-align: left; max-width: 500px; margin: 20px auto; line-height: 2;">
+                    <li>✅ VPC-Design (Public/Private Subnets, Multi-AZ)</li>
+                    <li>✅ Security Groups & Network ACLs</li>
+                    <li>✅ Vollständiger Datenfluss</li>
+                    <li>✅ CI/CD Pipeline (CodePipeline, ECR)</li>
+                    <li>✅ Monitoring & Logging (CloudWatch, X-Ray)</li>
+                    <li>✅ Backup & Disaster Recovery</li>
+                    <li>✅ DSGVO-Compliance Maßnahmen</li>
+                </ul>
+                <p style="color: #7FB069; font-weight: bold; margin-top: 30px;">
+                    Bereit für die Detail-Architektur? Gebt mir Bescheid! 🚀
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showView(view) {
+            const overviewView = document.getElementById('overview-view');
+            const detailView = document.getElementById('detail-view');
+            const buttons = document.querySelectorAll('.nav-btn');
+
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            if (view === 'overview') {
+                overviewView.style.display = 'block';
+                detailView.style.display = 'none';
+                buttons[0].classList.add('active');
+            } else {
+                overviewView.style.display = 'none';
+                detailView.style.display = 'block';
+                buttons[1].classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>
