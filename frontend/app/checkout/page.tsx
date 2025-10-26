@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function CheckoutPage() {
-  const { cart, cartTotal, isLoading: cartLoading } = useCart();
+  const { cart, cartTotal, isLoading: cartLoading, clearCart } = useCart();
   const { user, token } = useAuth();
   const router = useRouter();
 
@@ -76,6 +76,10 @@ export default function CheckoutPage() {
       }
 
       const order = await response.json();
+
+      // Clear cart after successful order
+      await clearCart();
+
       router.push(`/order-confirmation/${order.id}`);
     } catch (err: any) {
       setError(err.message || 'Bestellung konnte nicht abgeschlossen werden');

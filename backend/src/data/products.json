@@ -65,19 +65,6 @@
       "updatedAt": "2025-10-25T21:06:11.347Z"
     },
     {
-      "id": "air-legacy-001",
-      "name": "Skyline Elevate Retro",
-      "price": 229.99,
-      "description": "Premiumleder, satten Air-Support und ein Glow-in-the-Dark-Finish – der Skyline Elevate Retro bringt ikonische Jordan-DNA zurück auf die Straße.",
-      "imageUrl": "/pics/jordan-4657349_1280.jpg",
-      "category": "shoes",
-      "stock": 42,
-      "rating": 4.9,
-      "reviewCount": 412,
-      "createdAt": "2025-10-25T22:00:00.000Z",
-      "updatedAt": "2025-10-25T22:00:00.000Z"
-    },
-    {
       "id": "air-legacy-002",
       "name": "Urban Flight Pack",
       "price": 189.99,
@@ -241,7 +228,7 @@
       "imageUrl": "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=800&q=80",
       "category": "shoes",
       "stock": 29,
-      "rating": 5.0,
+      "rating": 5,
       "reviewCount": 892,
       "createdAt": "2025-10-25T22:26:00.000Z",
       "updatedAt": "2025-10-25T22:26:00.000Z"
@@ -303,7 +290,7 @@
       "name": "Elite Cushioned Crew Socks",
       "price": 19.99,
       "description": "3er-Pack Performance-Socken mit Arch-Support und Anti-Blister-Tech – maximaler Komfort von Toe bis Heel.",
-      "imageUrl": "https://images.unsplash.com/photo-1586350977774-4b040aa3b4c7?auto=format&fit=crop&w=800&q=80",
+      "imageUrl": "https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&w=800&q=80",
       "category": "accessories",
       "stock": 223,
       "rating": 4.5,

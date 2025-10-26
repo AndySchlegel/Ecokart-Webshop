@@ -114,6 +114,43 @@
       "status": "pending",
       "createdAt": "2025-10-25T18:23:25.013Z",
       "updatedAt": "2025-10-25T18:23:25.013Z"
+    },
+    {
+      "id": "4232da4b-5c59-42c7-bd14-c0f39e8ec32c",
+      "userId": "007009b5-f9fb-460b-ab12-f2f1e045c261",
+      "items": [
+        {
+          "productId": "prod-002",
+          "name": "Pro Training Set",
+          "price": 89.99,
+          "imageUrl": "https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&w=800&q=80",
+          "quantity": 1
+        },
+        {
+          "productId": "prod-003",
+          "name": "Elite Sport Jacket",
+          "price": 129.99,
+          "imageUrl": "https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=800&q=80",
+          "quantity": 1
+        },
+        {
+          "productId": "a175d30c-3da8-4719-866f-c11eafdbbc7f",
+          "name": "Air Jordan 4",
+          "price": 219.99,
+          "imageUrl": "https://cdn.pixabay.com/photo/2019/11/27/16/47/jordan-4657349_1280.jpg",
+          "quantity": 1
+        }
+      ],
+      "total": 439.97,
+      "shippingAddress": {
+        "street": "trrttr 3",
+        "city": "dhfhf",
+        "zipCode": "12345",
+        "country": "Deutschland"
+      },
+      "status": "pending",
+      "createdAt": "2025-10-26T08:27:35.513Z",
+      "updatedAt": "2025-10-26T08:27:35.513Z"
     }
   ]
 }

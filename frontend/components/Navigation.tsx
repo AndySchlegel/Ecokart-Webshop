@@ -2,9 +2,17 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  category?: string;
+  imageUrl: string;
+}
 
 export default function Navigation() {
   const router = useRouter();
@@ -14,6 +22,9 @@ export default function Navigation() {
   const [cartOpen, setCartOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchSuggestions, setSearchSuggestions] = useState<Product[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   const handleCategoryClick = (category: string | null) => {
     const target = category ? `/?category=${category}#featured-products` : '/#featured-products';
@@ -40,13 +51,68 @@ export default function Navigation() {
     router.push(target);
   };
 
+  // Fetch search suggestions
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (searchQuery.trim().length < 2) {
+        setSearchSuggestions([]);
+        setShowSuggestions(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('http://localhost:4000/api/products');
+        if (response.ok) {
+          const data = await response.json();
+          const products = data.items || [];
+          const query = searchQuery.toLowerCase();
+
+          const filtered = products
+            .filter((product: Product) => {
+              const name = product.name.toLowerCase();
+              return name.includes(query);
+            })
+            .slice(0, 5); // Max 5 suggestions
+
+          setSearchSuggestions(filtered);
+          setShowSuggestions(filtered.length > 0);
+        }
+      } catch (error) {
+        console.error('Failed to fetch search suggestions:', error);
+      }
+    };
+
+    const debounceTimer = setTimeout(fetchSuggestions, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/?search=${encodeURIComponent(searchQuery.trim())}#featured-products`);
       setSearchOpen(false);
       setSearchQuery('');
+      setShowSuggestions(false);
     }
+  };
+
+  const handleSuggestionClick = (productId: string) => {
+    router.push(`/product/${productId}`);
+    setSearchOpen(false);
+    setSearchQuery('');
+    setShowSuggestions(false);
   };
 
   return (
@@ -120,7 +186,7 @@ export default function Navigation() {
 
         {/* Search Bar */}
         {searchOpen && (
-          <div className="search-bar">
+          <div className="search-bar" ref={searchRef}>
             <form onSubmit={handleSearch} className="search-form">
               <input
                 type="text"
@@ -138,12 +204,44 @@ export default function Navigation() {
                 onClick={() => {
                   setSearchOpen(false);
                   setSearchQuery('');
+                  setShowSuggestions(false);
                 }}
                 className="search-close"
               >
                 ✕
               </button>
             </form>
+
+            {/* Search Suggestions */}
+            {showSuggestions && searchSuggestions.length > 0 && (
+              <div className="search-suggestions">
+                <div className="suggestions-header">
+                  Gefundene Produkte ({searchSuggestions.length})
+                </div>
+                <div className="suggestions-list">
+                  {searchSuggestions.map((product) => (
+                    <button
+                      key={product.id}
+                      className="suggestion-item"
+                      onClick={() => handleSuggestionClick(product.id)}
+                      type="button"
+                    >
+                      <div className="suggestion-image">
+                        <img src={product.imageUrl} alt={product.name} />
+                      </div>
+                      <div className="suggestion-info">
+                        <div className="suggestion-name">{product.name}</div>
+                        <div className="suggestion-meta">
+                          <span className="suggestion-category">{product.category || 'Produkt'}</span>
+                          <span className="suggestion-price">€{product.price.toFixed(2)}</span>
+                        </div>
+                      </div>
+                      <div className="suggestion-arrow">→</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -374,7 +472,7 @@ export default function Navigation() {
           top: 0;
           bottom: 0;
           width: 320px;
-          background: #000;
+          background: rgb(0, 0, 0);
           z-index: 10000;
           transition: transform 0.3s ease;
           display: flex;
@@ -522,11 +620,14 @@ export default function Navigation() {
 
         .sidebar-content {
           padding: 2rem 1.5rem;
+          background: rgb(0, 0, 0);
+          flex: 1;
         }
 
         .sidebar-content p {
-          color: #ccc;
+          color: #fff;
           margin-bottom: 1.5rem;
+          font-weight: 500;
         }
 
         .empty-cart {
@@ -672,6 +773,145 @@ export default function Navigation() {
           .search-close {
             padding: 0.75rem 1.5rem;
             font-size: 0.875rem;
+          }
+        }
+
+        /* Search Suggestions */
+        .search-suggestions {
+          max-width: 800px;
+          margin: 1rem auto 0;
+          background: rgba(0, 0, 0, 0.98);
+          border: 2px solid var(--accent-orange);
+          border-radius: 4px;
+          overflow: hidden;
+          animation: slideDown 0.3s ease;
+          box-shadow: 0 10px 40px rgba(255, 107, 0, 0.3);
+        }
+
+        .suggestions-header {
+          padding: 0.75rem 1.25rem;
+          background: rgba(255, 107, 0, 0.1);
+          border-bottom: 1px solid var(--accent-orange);
+          font-weight: 700;
+          font-size: 0.875rem;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          color: var(--accent-orange);
+        }
+
+        .suggestions-list {
+          max-height: 400px;
+          overflow-y: auto;
+        }
+
+        .suggestion-item {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          padding: 1rem 1.25rem;
+          background: transparent;
+          border: none;
+          border-bottom: 1px solid #222;
+          color: white;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          text-align: left;
+        }
+
+        .suggestion-item:last-child {
+          border-bottom: none;
+        }
+
+        .suggestion-item:hover {
+          background: rgba(255, 107, 0, 0.1);
+          border-left: 3px solid var(--accent-orange);
+          padding-left: 1.5rem;
+        }
+
+        .suggestion-image {
+          width: 60px;
+          height: 60px;
+          border-radius: 4px;
+          overflow: hidden;
+          border: 2px solid #333;
+          flex-shrink: 0;
+          background: #1a1a1a;
+        }
+
+        .suggestion-image img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .suggestion-info {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .suggestion-name {
+          font-weight: 700;
+          font-size: 1rem;
+          margin-bottom: 0.25rem;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .suggestion-meta {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          font-size: 0.875rem;
+        }
+
+        .suggestion-category {
+          color: #999;
+          text-transform: capitalize;
+        }
+
+        .suggestion-price {
+          color: var(--accent-green);
+          font-weight: 700;
+        }
+
+        .suggestion-arrow {
+          color: var(--accent-orange);
+          font-size: 1.5rem;
+          font-weight: 700;
+          flex-shrink: 0;
+          opacity: 0;
+          transform: translateX(-10px);
+          transition: all 0.3s ease;
+        }
+
+        .suggestion-item:hover .suggestion-arrow {
+          opacity: 1;
+          transform: translateX(0);
+        }
+
+        @media (max-width: 768px) {
+          .suggestions-list {
+            max-height: 300px;
+          }
+
+          .suggestion-item {
+            padding: 0.75rem 1rem;
+          }
+
+          .suggestion-image {
+            width: 50px;
+            height: 50px;
+          }
+
+          .suggestion-name {
+            font-size: 0.875rem;
+          }
+
+          .suggestion-meta {
+            font-size: 0.75rem;
+            gap: 0.5rem;
           }
         }
       `}</style>
