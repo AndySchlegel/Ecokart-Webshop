@@ -13,9 +13,10 @@ export default function CheckoutPage() {
   const router = useRouter();
 
   const [shippingAddress, setShippingAddress] = useState({
+    name: user?.name || '',
     street: '',
     city: '',
-    zipCode: '',
+    postalCode: '',
     country: 'Deutschland'
   });
 
@@ -121,12 +122,12 @@ export default function CheckoutPage() {
 
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="zipCode">PLZ *</label>
+                <label htmlFor="postalCode">PLZ *</label>
                 <input
-                  id="zipCode"
+                  id="postalCode"
                   type="text"
-                  value={shippingAddress.zipCode}
-                  onChange={(e) => setShippingAddress({ ...shippingAddress, zipCode: e.target.value })}
+                  value={shippingAddress.postalCode}
+                  onChange={(e) => setShippingAddress({ ...shippingAddress, postalCode: e.target.value })}
                   placeholder="12345"
                   required
                   disabled={isSubmitting}
