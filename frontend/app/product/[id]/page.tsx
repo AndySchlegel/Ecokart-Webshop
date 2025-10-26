@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Navigation from '../../../components/Navigation';
 import { useCart } from '../../../contexts/CartContext';
@@ -45,7 +45,6 @@ function isApparelProduct(article: Article | null) {
 
 export default function ProductDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { addToCart } = useCart();
   const { user } = useAuth();
 
@@ -56,7 +55,15 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
   const [isAdding, setIsAdding] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const fromAnchor = searchParams.get('from');
+  const [fromAnchor, setFromAnchor] = useState<string | null>(null);
+
+  // Get search params on client side only
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setFromAnchor(params.get('from'));
+    }
+  }, []);
 
   useEffect(() => {
     async function loadProduct() {
