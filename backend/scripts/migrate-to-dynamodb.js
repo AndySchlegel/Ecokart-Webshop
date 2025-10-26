@@ -1,5 +1,6 @@
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, PutCommand, BatchWriteCommand } = require('@aws-sdk/lib-dynamodb');
+const { fromSSO } = require('@aws-sdk/credential-providers');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
@@ -8,8 +9,22 @@ const config = {
   region: process.env.AWS_REGION || 'us-east-1',
 };
 
+// Use DynamoDB Local if endpoint is set
 if (process.env.DYNAMODB_ENDPOINT) {
   config.endpoint = process.env.DYNAMODB_ENDPOINT;
+
+  // For local development, use dummy credentials
+  if (process.env.NODE_ENV === 'development') {
+    config.credentials = {
+      accessKeyId: 'local',
+      secretAccessKey: 'local',
+    };
+  }
+} else if (process.env.AWS_PROFILE) {
+  // Use AWS SSO credentials from profile
+  config.credentials = fromSSO({
+    profile: process.env.AWS_PROFILE,
+  });
 }
 
 const client = new DynamoDBClient(config);
@@ -18,7 +33,8 @@ const dynamodb = DynamoDBDocumentClient.from(client);
 async function migrateProducts() {
   try {
     const productsPath = path.join(__dirname, '../src/data/products.json');
-    const products = JSON.parse(fs.readFileSync(productsPath, 'utf8'));
+    const productsData = JSON.parse(fs.readFileSync(productsPath, 'utf8'));
+    const products = productsData.products || productsData;
 
     console.log(`📦 Migrating ${products.length} products...`);
 
@@ -67,7 +83,9 @@ async function migrateUsers() {
       return;
     }
 
-    const users = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
+    const usersData = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
+    const users = usersData.users || usersData;
+
     console.log(`👥 Migrating ${users.length} users...`);
 
     for (const user of users) {
@@ -99,7 +117,9 @@ async function migrateCarts() {
       return;
     }
 
-    const carts = JSON.parse(fs.readFileSync(cartsPath, 'utf8'));
+    const cartsData = JSON.parse(fs.readFileSync(cartsPath, 'utf8'));
+    const carts = cartsData.carts || cartsData;
+
     console.log(`🛒 Migrating ${carts.length} carts...`);
 
     for (const cart of carts) {
@@ -108,7 +128,7 @@ async function migrateCarts() {
         Item: {
           userId: cart.userId,
           items: cart.items || [],
-          updatedAt: new Date().toISOString(),
+          updatedAt: cart.updatedAt || new Date().toISOString(),
         }
       }));
     }
@@ -129,7 +149,9 @@ async function migrateOrders() {
       return;
     }
 
-    const orders = JSON.parse(fs.readFileSync(ordersPath, 'utf8'));
+    const ordersData = JSON.parse(fs.readFileSync(ordersPath, 'utf8'));
+    const orders = ordersData.orders || ordersData;
+
     console.log(`📋 Migrating ${orders.length} orders...`);
 
     for (const order of orders) {

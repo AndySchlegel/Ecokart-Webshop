@@ -1,5 +1,4 @@
-const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
-const { DynamoDBDocumentClient, CreateTableCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBClient, CreateTableCommand } = require('@aws-sdk/client-dynamodb');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
@@ -14,7 +13,6 @@ if (process.env.DYNAMODB_ENDPOINT) {
 }
 
 const client = new DynamoDBClient(config);
-const dynamodb = DynamoDBDocumentClient.from(client);
 
 async function createTables() {
   try {

@@ -1,5 +1,6 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import { fromSSO } from '@aws-sdk/credential-providers';
 
 const config: any = {
   region: process.env.AWS_REGION || 'us-east-1',
@@ -16,6 +17,11 @@ if (process.env.DYNAMODB_ENDPOINT) {
       secretAccessKey: 'local',
     };
   }
+} else if (process.env.AWS_PROFILE) {
+  // Use AWS SSO credentials from profile
+  config.credentials = fromSSO({
+    profile: process.env.AWS_PROFILE,
+  });
 }
 
 const client = new DynamoDBClient(config);
