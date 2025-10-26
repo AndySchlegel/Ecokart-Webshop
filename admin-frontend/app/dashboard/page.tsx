@@ -34,15 +34,36 @@ export default function DashboardPage() {
     void loadArticles();
   }, []);
 
-  async function handleAddArticle(values: { name: string; price: string; description: string; imageUrl: string }) {
+  async function handleAddArticle(values: { name: string; price: string; description: string; imageUrl: string; category: string; rating: string; reviewCount: string }) {
+    const localRoot = '/Users/his4irness23/GitHub/Repositories/Ecokart-Webshop/pics/';
+    let imageUrl = values.imageUrl.trim();
+    if (imageUrl.startsWith(localRoot)) {
+      imageUrl = `/pics/${imageUrl.slice(localRoot.length)}`;
+    } else if (!imageUrl.startsWith('http')) {
+      if (imageUrl.startsWith('pics/')) {
+        imageUrl = `/${imageUrl}`;
+      } else if (!imageUrl.startsWith('/pics/') && imageUrl) {
+        imageUrl = `/pics/${imageUrl}`;
+      }
+    }
+
     const payload = {
       name: values.name,
       price: Number.parseFloat(values.price),
       description: values.description,
-      imageUrl: values.imageUrl
+      imageUrl,
+      category: values.category,
+      rating: Number.parseFloat(values.rating),
+      reviewCount: Number.parseInt(values.reviewCount, 10)
     };
     if (Number.isNaN(payload.price)) {
       throw new Error('Bitte einen gültigen Preis hinterlegen.');
+    }
+    if (Number.isNaN(payload.rating) || payload.rating < 0 || payload.rating > 5) {
+      throw new Error('Bitte ein gültiges Rating zwischen 0 und 5 hinterlegen.');
+    }
+    if (Number.isNaN(payload.reviewCount) || payload.reviewCount < 0) {
+      throw new Error('Bitte eine gültige Anzahl an Reviews hinterlegen.');
     }
     const request = await fetch('/api/articles', {
       method: 'POST',
@@ -83,7 +104,7 @@ export default function DashboardPage() {
       <header>
         <div className="page__content">
           <div>
-            <strong>ECOKART ADMIN</strong>
+            <strong>AIR LEGACY ADMIN</strong>
           </div>
           <button onClick={handleLogout} className="button button--logout">
             Abmelden

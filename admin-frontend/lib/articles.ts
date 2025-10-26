@@ -4,6 +4,9 @@ export type Article = {
   price: number;
   description: string;
   imageUrl: string;
+  category?: string;
+  rating?: number;
+  reviewCount?: number;
 };
 
 export type ArticlePayload = Omit<Article, 'id'>;
@@ -62,7 +65,7 @@ export async function deleteArticle(id: string) {
     throw new Error('ADMIN_API_URL ist nicht gesetzt.');
   }
   // Backend erwartet DELETE /api/products/:id
-  const deleteUrl = `${API_URL.replace('/products', '')}/${id}`;
+  const deleteUrl = `${API_URL}/${id}`;
   const response = await fetch(deleteUrl, {
     method: 'DELETE',
     headers: {

@@ -1,0 +1,119 @@
+{
+  "orders": [
+    {
+      "id": "d5a60055-bd9f-40b7-9bc4-e6ee92a0e315",
+      "userId": "007009b5-f9fb-460b-ab12-f2f1e045c261",
+      "items": [
+        {
+          "productId": "prod-001",
+          "name": "Air Performance Runner",
+          "price": 149.99,
+          "quantity": 2,
+          "imageUrl": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80"
+        }
+      ],
+      "total": 299.98,
+      "shippingAddress": {
+        "street": "123 Nike Street",
+        "city": "Portland",
+        "zipCode": "97201",
+        "country": "USA"
+      },
+      "status": "pending",
+      "createdAt": "2025-10-25T13:42:41.655Z",
+      "updatedAt": "2025-10-25T13:42:41.655Z"
+    },
+    {
+      "id": "1204da62-0481-4e40-9dd1-4950957f67d9",
+      "userId": "abc7b3b6-c60d-43f8-b6aa-f016bd580a57",
+      "items": [
+        {
+          "productId": "020ae7be-146b-4a51-8c6f-f1c9950c2d26",
+          "name": "Air Jordan 4",
+          "price": 219.99,
+          "imageUrl": "https://cdn.pixabay.com/photo/2019/11/27/16/47/jordan-4657349_1280.jpg",
+          "quantity": 1
+        }
+      ],
+      "total": 219.99,
+      "shippingAddress": {
+        "street": "Musterstr. 123",
+        "city": "Berlin",
+        "zipCode": "12345",
+        "country": "Deutschland"
+      },
+      "status": "pending",
+      "createdAt": "2025-10-25T14:54:28.187Z",
+      "updatedAt": "2025-10-25T14:54:28.187Z"
+    },
+    {
+      "id": "16859c62-1af6-4219-9e56-e45cdb87bf34",
+      "userId": "abc7b3b6-c60d-43f8-b6aa-f016bd580a57",
+      "items": [
+        {
+          "productId": "prod-002",
+          "name": "Pro Training Set",
+          "price": 89.99,
+          "imageUrl": "https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&w=800&q=80",
+          "quantity": 1
+        }
+      ],
+      "total": 89.99,
+      "shippingAddress": {
+        "street": "Muster 2",
+        "city": "Berlin",
+        "zipCode": "12345",
+        "country": "Deutschland"
+      },
+      "status": "pending",
+      "createdAt": "2025-10-25T14:59:13.875Z",
+      "updatedAt": "2025-10-25T14:59:13.875Z"
+    },
+    {
+      "id": "f20ead2a-7cbb-48d9-b09b-5bbaf64e48e9",
+      "userId": "007009b5-f9fb-460b-ab12-f2f1e045c261",
+      "items": [
+        {
+          "productId": "020ae7be-146b-4a51-8c6f-f1c9950c2d26",
+          "name": "Air Jordan 4",
+          "price": 219.99,
+          "imageUrl": "https://cdn.pixabay.com/photo/2019/11/27/16/47/jordan-4657349_1280.jpg",
+          "quantity": 1
+        }
+      ],
+      "total": 219.99,
+      "shippingAddress": {
+        "street": "test 2",
+        "city": "Berlin",
+        "zipCode": "12345",
+        "country": "Deutschland"
+      },
+      "status": "pending",
+      "createdAt": "2025-10-25T15:12:02.497Z",
+      "updatedAt": "2025-10-25T15:12:02.497Z"
+    },
+    {
+      "id": "69e56e39-4b28-4e67-bcb0-387f5711c4e8",
+      "userId": "007009b5-f9fb-460b-ab12-f2f1e045c261",
+      "items": [
+        {
+          "productId": "prod-002",
+          "name": "Pro Training Set",
+          "price": 89.99,
+          "imageUrl": "https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&w=800&q=80",
+          "quantity": 1
+        }
+      ],
+      "total": 89.99,
+      "shippingAddress": {
+        "street": "testt1",
+        "city": "berlin",
+        "zipCode": "12345",
+        "country": "Deutschland"
+      },
+      "status": "pending",
+      "createdAt": "2025-10-25T18:23:25.013Z",
+      "updatedAt": "2025-10-25T18:23:25.013Z"
+    }
+  ]
+}

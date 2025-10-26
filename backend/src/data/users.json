@@ -1,0 +1,20 @@
+{
+  "users": [
+    {
+      "id": "007009b5-f9fb-460b-ab12-f2f1e045c261",
+      "email": "test@ecokart.com",
+      "password": "$2b$10$li2Hb1jLd6a8WpYsiqkCpO.zJ.xJtNXuMiVj8.JCm4Lxv1Kw5KAYm",
+      "name": "Test User",
+      "createdAt": "2025-10-25T13:42:00.058Z",
+      "updatedAt": "2025-10-25T13:42:00.058Z"
+    },
+    {
+      "id": "abc7b3b6-c60d-43f8-b6aa-f016bd580a57",
+      "email": "andy.schlegel23@googlemail.com",
+      "password": "$2b$10$xgK9ZlkdEGerqS3JQ0.Z6.Q0aeDsyxBWIoBEo0Fw09osKEVasw1x6",
+      "name": "Andy Schlegel",
+      "createdAt": "2025-10-25T14:51:21.038Z",
+      "updatedAt": "2025-10-25T14:51:21.038Z"
+    }
+  ]
+}

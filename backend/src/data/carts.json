@@ -1,0 +1,18 @@
+{
+  "carts": [
+    {
+      "id": "ae3f5a47-e050-43a0-8dae-e144dfbe707c",
+      "userId": "007009b5-f9fb-460b-ab12-f2f1e045c261",
+      "items": [],
+      "createdAt": "2025-10-25T13:42:13.042Z",
+      "updatedAt": "2025-10-25T19:18:41.222Z"
+    },
+    {
+      "id": "848f9714-9561-43b1-a41d-33035227cde9",
+      "userId": "abc7b3b6-c60d-43f8-b6aa-f016bd580a57",
+      "items": [],
+      "createdAt": "2025-10-25T14:51:21.046Z",
+      "updatedAt": "2025-10-25T14:59:13.878Z"
+    }
+  ]
+}

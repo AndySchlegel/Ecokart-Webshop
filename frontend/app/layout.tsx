@@ -1,11 +1,12 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import React from 'react';
+import { Providers } from './providers';
 
 // Metadata beschreibt Titel und Kurztext für die Demo-Seite.
 export const metadata: Metadata = {
-  title: 'EcoKart Sportshop - Just Do It',
-  description: 'Premium Sport-Equipment und Performance-Ausrüstung für deine Ziele. Entdecke die neuesten Produkte.'
+  title: 'AIR LEGACY - Premium Sneakers & Sportswear',
+  description: 'Die neuesten Jordan Sneakers, Performance Trainingskleidung und Street-Style. Elevate your game.'
 };
 
 type RootLayoutProps = {
@@ -17,7 +18,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="de">
       <body>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

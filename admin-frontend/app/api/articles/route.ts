@@ -34,11 +34,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Alle Felder müssen korrekt gefüllt werden.' }, { status: 400 });
   }
   try {
+    const localRoot = '/Users/his4irness23/GitHub/Repositories/Ecokart-Webshop/pics/';
+    let imageUrl = body.imageUrl.trim();
+    if (imageUrl.startsWith(localRoot)) {
+      imageUrl = `/pics/${imageUrl.slice(localRoot.length)}`;
+    } else if (!imageUrl.startsWith('http')) {
+      if (imageUrl.startsWith('pics/')) {
+        imageUrl = `/${imageUrl}`;
+      } else if (!imageUrl.startsWith('/pics/') && imageUrl) {
+        imageUrl = `/pics/${imageUrl}`;
+      }
+    }
+
     const item = await createArticle({
       name: body.name,
       description: body.description,
-      imageUrl: body.imageUrl,
-      price: body.price
+      imageUrl,
+      price: body.price,
+      category: body.category,
+      rating: body.rating,
+      reviewCount: body.reviewCount
     });
     return NextResponse.json({ item }, { status: 201 });
   } catch (error) {

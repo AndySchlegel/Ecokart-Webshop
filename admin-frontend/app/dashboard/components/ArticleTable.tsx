@@ -36,6 +36,9 @@ export function ArticleTable({ articles, onDelete }: ArticleTableProps) {
             <th>Bild</th>
             <th>Name</th>
             <th>Preis</th>
+            <th>Kategorie</th>
+            <th>Rating</th>
+            <th>Reviews</th>
             <th>Beschreibung</th>
             <th>Aktionen</th>
           </tr>
@@ -48,6 +51,13 @@ export function ArticleTable({ articles, onDelete }: ArticleTableProps) {
               </td>
               <td data-label="Name">{article.name}</td>
               <td data-label="Preis">{article.price.toFixed(2)} €</td>
+              <td data-label="Kategorie">{article.category ? article.category : '–'}</td>
+              <td data-label="Rating">
+                {article.rating ? `⭐ ${article.rating.toFixed(1)}` : '-'}
+              </td>
+              <td data-label="Reviews">
+                {article.reviewCount || 0}
+              </td>
               <td data-label="Beschreibung">{article.description}</td>
               <td data-label="Aktionen">
                 <button

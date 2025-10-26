@@ -337,6 +337,61 @@ td img:hover {
   grid-column: 1 / -1;
 }
 
+.image-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.image-source-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.image-source-options {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.image-source-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--text-gray);
+}
+
+.image-source-option input {
+  accent-color: var(--accent-orange);
+}
+
+.image-hint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-gray);
+}
+
+.image-hint code {
+  color: var(--accent-green);
+}
+
+.image-preview {
+  margin-top: 0.5rem;
+  border: 2px solid var(--bg-darker);
+  background: var(--bg-dark);
+  padding: 1rem;
+  max-width: 320px;
+}
+
+.image-preview img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
 /* Error/Success Messages */
 .message {
   padding: 1rem 1.5rem;

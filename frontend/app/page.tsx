@@ -1,100 +1,41 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 
+import Navigation from '../components/Navigation';
 import { ArticleList } from '@/components/ArticleList';
 import { Article } from '@/components/types';
 
-const demoArticles: Article[] = [
-  {
-    id: 'demo-001',
-    name: 'Air Performance Runner',
-    price: 149.99,
-    description: 'Hochleistungs-Laufschuh mit atmungsaktivem Mesh und reaktionsfreudiger Dämpfung.',
-    imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'demo-002',
-    name: 'Pro Training Set',
-    price: 89.99,
-    description: 'Premium Trainingsausrüstung für maximale Performance im Fitnessstudio.',
-    imageUrl: 'https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'demo-003',
-    name: 'Elite Sport Jacket',
-    price: 129.99,
-    description: 'Leichte, wasserabweisende Jacke mit ergonomischem Schnitt für aktive Sportler.',
-    imageUrl: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'demo-004',
-    name: 'Urban Street Sneaker',
-    price: 119.99,
-    description: 'Stylischer Lifestyle-Sneaker mit modernem Design und ganztägigem Komfort.',
-    imageUrl: 'https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'demo-005',
-    name: 'Performance Backpack',
-    price: 79.99,
-    description: 'Ergonomischer Sportrucksack mit wasserabweisendem Material und Laptop-Fach.',
-    imageUrl: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: 'demo-006',
-    name: 'Tech Training Shirt',
-    price: 49.99,
-    description: 'Atmungsaktives Funktionsshirt mit Feuchtigkeitstransport-Technologie.',
-    imageUrl: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=800&q=80'
-  }
-];
-
-const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
 export default function HomePage() {
-  const [articles, setArticles] = useState<Article[]>(demoArticles);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const productsRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    if (!apiUrl) {
-      return;
-    }
     let cancelled = false;
-    const endpoint = apiUrl;
 
     async function loadArticles() {
       try {
-        const response = await fetch(endpoint);
+        const response = await fetch('http://localhost:4000/api/products');
         if (!response.ok) {
           throw new Error(`Request fehlgeschlagen: ${response.status}`);
         }
-        const payload = await response.json() as { items?: Article[] } | Article[];
-        const items = Array.isArray(payload) ? payload : payload.items ?? [];
+        const data = await response.json();
         if (cancelled) {
           return;
         }
-        setArticles((current) => {
-          const merged = [...current];
-          const indexById = new Map(current.map((item) => [item.id, item]));
-          items.forEach((item) => {
-            if (indexById.has(item.id)) {
-              const updateIndex = merged.findIndex((match) => match.id === item.id);
-              if (updateIndex >= 0) {
-                merged[updateIndex] = item;
-              }
-            } else {
-              merged.push(item);
-            }
-          });
-          return merged;
-        });
+        // Backend gibt {items: [...], count: ...} zurück
+        setArticles(data.items || []);
         setError(null);
       } catch (err) {
         if (!cancelled) {
-          setError('Live-Aktualisierung fehlgeschlagen. Bitte Demo-API prüfen.');
+          setError('Fehler beim Laden der Produkte. Bitte Backend starten.');
         }
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -103,12 +44,20 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, [apiUrl]);
+  }, []);
+
+  const handleExploreClick = useCallback(() => {
+    if (productsRef.current) {
+      productsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
 
   return (
     <>
+      <Navigation />
+
       {/* Hero Section */}
-      <section className="hero">
+      <section className="hero" id="hero">
         <div className="hero__background">
           <Image
             src="https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&w=1920&q=80"
@@ -123,27 +72,177 @@ export default function HomePage() {
           <p className="hero__subtitle">
             Erreiche deine Ziele mit der neuesten Performance-Ausrüstung
           </p>
-          <button className="hero__cta" type="button">
+          <button className="hero__cta" type="button" onClick={handleExploreClick}>
             Jetzt Entdecken
           </button>
         </div>
       </section>
 
+      {/* Trust Badges */}
+      <section className="trust-badges">
+        <div className="trust-container">
+          <div className="trust-badge">
+            <div className="trust-icon">🚚</div>
+            <div className="trust-text">
+              <h3>Kostenloser Versand</h3>
+              <p>Ab 50€ Bestellwert</p>
+            </div>
+          </div>
+          <div className="trust-badge">
+            <div className="trust-icon">🔒</div>
+            <div className="trust-text">
+              <h3>Sichere Zahlung</h3>
+              <p>SSL verschlüsselt</p>
+            </div>
+          </div>
+          <div className="trust-badge">
+            <div className="trust-icon">↩️</div>
+            <div className="trust-text">
+              <h3>30 Tage Rückgabe</h3>
+              <p>Kostenloser Rückversand</p>
+            </div>
+          </div>
+          <div className="trust-badge">
+            <div className="trust-icon">⚡</div>
+            <div className="trust-text">
+              <h3>Schnelle Lieferung</h3>
+              <p>2-3 Werktage</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Featured Products */}
-      <main className="page">
-        <header className="page__header">
-          <h1>Featured Products</h1>
-          <p className="page__hint">
-            Unsere neuesten Highlights für maximale Performance
-          </p>
-          {error && (
-            <p className="page__hint" style={{ color: '#dc2626' }}>
-              {error}
-            </p>
-          )}
-        </header>
-        <ArticleList articles={articles} />
-      </main>
+      <Suspense
+        fallback={
+          <main className="page" id="featured-products" ref={productsRef}>
+            <header className="page__header">
+              <h1>Featured Products</h1>
+              <p className="page__hint">
+                Unsere neuesten Highlights für maximale Performance
+              </p>
+              <p className="page__hint" style={{ color: '#999' }}>
+                Laden...
+              </p>
+            </header>
+          </main>
+        }
+      >
+        <FeaturedProducts
+          articles={articles}
+          error={error}
+          isLoading={isLoading}
+          productsRef={productsRef}
+        />
+      </Suspense>
     </>
+  );
+}
+
+type FeaturedProductsProps = {
+  articles: Article[];
+  error: string | null;
+  isLoading: boolean;
+  productsRef: React.RefObject<HTMLElement>;
+};
+
+function FeaturedProducts({ articles, error, isLoading, productsRef }: FeaturedProductsProps) {
+  const searchParams = useSearchParams();
+  const normalizedCategory = searchParams.get('category')?.toLowerCase() ?? null;
+  const hasScrolledToHash = useRef<string | null>(null);
+
+  const filteredArticles = useMemo(() => {
+    if (!normalizedCategory || normalizedCategory === 'all') {
+      return articles;
+    }
+    return articles.filter((article) => {
+      const articleCategory = article.category?.toLowerCase() ?? '';
+      if (articleCategory && articleCategory.includes(normalizedCategory)) {
+        return true;
+      }
+      const articleName = article.name.toLowerCase();
+      return articleName.includes(normalizedCategory);
+    });
+  }, [articles, normalizedCategory]);
+
+  const categoryLabelMap: Record<string, string> = {
+    shoes: 'Schuhe',
+    shoe: 'Schuhe',
+    sneakers: 'Sneaker',
+    apparel: 'Bekleidung',
+    clothing: 'Bekleidung',
+    bekleidung: 'Bekleidung',
+    equipment: 'Equipment',
+    accessories: 'Accessoires',
+    sale: 'Sale'
+  };
+
+  const activeCategoryLabel =
+    normalizedCategory && normalizedCategory !== 'all'
+      ? categoryLabelMap[normalizedCategory] ?? normalizedCategory
+      : null;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    if (isLoading) {
+      return;
+    }
+
+    const hash = window.location.hash.replace('#', '');
+    if (!hash) {
+      return;
+    }
+
+    if (hasScrolledToHash.current === hash) {
+      return;
+    }
+
+    const targetElement = hash === 'featured-products'
+      ? productsRef.current
+      : document.getElementById(hash);
+
+    if (targetElement) {
+      hasScrolledToHash.current = hash;
+      requestAnimationFrame(() => {
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  }, [isLoading, filteredArticles, productsRef]);
+
+  return (
+    <main className="page" id="featured-products" ref={productsRef}>
+      <header className="page__header">
+        <h1>Featured Products</h1>
+        <p className="page__hint">
+          Unsere neuesten Highlights für maximale Performance
+        </p>
+        {activeCategoryLabel && (
+          <p className="page__hint page__hint--filter">
+            Kategorie: {activeCategoryLabel}
+          </p>
+        )}
+        {error && (
+          <p className="page__hint" style={{ color: '#dc2626' }}>
+            {error}
+          </p>
+        )}
+        {isLoading && (
+          <p className="page__hint" style={{ color: '#999' }}>
+            Laden...
+          </p>
+        )}
+      </header>
+      {!isLoading && (
+        filteredArticles.length > 0 ? (
+          <ArticleList articles={filteredArticles} />
+        ) : (
+          <p className="page__hint" style={{ color: '#dc2626', marginTop: '2rem' }}>
+            Keine Produkte für diese Kategorie gefunden.
+          </p>
+        )
+      )}
+    </main>
   );
 }

@@ -6,6 +6,8 @@ export interface Product {
   imageUrl: string;
   category?: string;
   stock?: number;
+  rating?: number;
+  reviewCount?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -17,6 +19,8 @@ export interface ProductCreateInput {
   imageUrl: string;
   category?: string;
   stock?: number;
+  rating?: number;
+  reviewCount?: number;
 }
 
 export interface ProductUpdateInput {
@@ -26,4 +30,6 @@ export interface ProductUpdateInput {
   imageUrl?: string;
   category?: string;
   stock?: number;
+  rating?: number;
+  reviewCount?: number;
 }

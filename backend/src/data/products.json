@@ -8,6 +8,8 @@
       "imageUrl": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80",
       "category": "shoes",
       "stock": 50,
+      "rating": 4.8,
+      "reviewCount": 342,
       "createdAt": "2025-01-15T10:00:00Z",
       "updatedAt": "2025-01-15T10:00:00Z"
     },
@@ -19,6 +21,8 @@
       "imageUrl": "https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&w=800&q=80",
       "category": "equipment",
       "stock": 30,
+      "rating": 4.6,
+      "reviewCount": 189,
       "createdAt": "2025-01-15T10:00:00Z",
       "updatedAt": "2025-01-15T10:00:00Z"
     },
@@ -30,6 +34,8 @@
       "imageUrl": "https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=800&q=80",
       "category": "apparel",
       "stock": 25,
+      "rating": 4.9,
+      "reviewCount": 267,
       "createdAt": "2025-01-15T10:00:00Z",
       "updatedAt": "2025-01-15T10:00:00Z"
     },
@@ -41,8 +47,87 @@
       "imageUrl": "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?auto=format&fit=crop&w=800&q=80",
       "category": "shoes",
       "stock": 100,
+      "rating": 4.7,
+      "reviewCount": 521,
       "createdAt": "2025-10-25T13:02:56.392Z",
       "updatedAt": "2025-10-25T13:02:56.392Z"
+    },
+    {
+      "id": "a175d30c-3da8-4719-866f-c11eafdbbc7f",
+      "name": "Air Jordan 4",
+      "description": "Ein legendäres Highlight solltest DU dir nicht entgehen lassen!",
+      "imageUrl": "https://cdn.pixabay.com/photo/2019/11/27/16/47/jordan-4657349_1280.jpg",
+      "price": 219.99,
+      "category": "shoes",
+      "rating": 4.5,
+      "reviewCount": 10,
+      "createdAt": "2025-10-25T21:06:11.347Z",
+      "updatedAt": "2025-10-25T21:06:11.347Z"
+    },
+    {
+      "id": "air-legacy-001",
+      "name": "Skyline Elevate Retro",
+      "price": 229.99,
+      "description": "Premiumleder, satten Air-Support und ein Glow-in-the-Dark-Finish – der Skyline Elevate Retro bringt ikonische Jordan-DNA zurück auf die Straße.",
+      "imageUrl": "/pics/jordan-4657349_1280.jpg",
+      "category": "shoes",
+      "stock": 42,
+      "rating": 4.9,
+      "reviewCount": 412,
+      "createdAt": "2025-10-25T22:00:00.000Z",
+      "updatedAt": "2025-10-25T22:00:00.000Z"
+    },
+    {
+      "id": "air-legacy-002",
+      "name": "Urban Flight Pack",
+      "price": 189.99,
+      "description": "Zwei Sneaker, ein Statement: der Urban Flight Pack liefert gedämpfte City-Power mit reflektierendem Upper für Nächte voller Moves.",
+      "imageUrl": "/pics/jordan-shoes-1777572_1280.jpg",
+      "category": "shoes",
+      "stock": 58,
+      "rating": 4.7,
+      "reviewCount": 287,
+      "createdAt": "2025-10-25T22:02:00.000Z",
+      "updatedAt": "2025-10-25T22:02:00.000Z"
+    },
+    {
+      "id": "air-legacy-003",
+      "name": "Court Legends Statement Jersey",
+      "price": 129.99,
+      "description": "Atmungsaktives Performance-Mesh trifft auf Championship-Details – das Court Legends Statement Jersey macht jeden Playground zur Arena.",
+      "imageUrl": "/pics/nba-8176216_1280.png",
+      "category": "apparel",
+      "stock": 75,
+      "rating": 4.8,
+      "reviewCount": 198,
+      "createdAt": "2025-10-25T22:04:00.000Z",
+      "updatedAt": "2025-10-25T22:04:00.000Z"
+    },
+    {
+      "id": "air-legacy-004",
+      "name": "Velocity Sprint Runner",
+      "price": 169.99,
+      "description": "Federleichte Carbon-Fasern und ein Energy-Return-Midsole pushen dich über jede Ziellinie – der Velocity Sprint Runner ballert dich nach vorn.",
+      "imageUrl": "/pics/nike-5418992_1280.jpg",
+      "category": "shoes",
+      "stock": 63,
+      "rating": 4.6,
+      "reviewCount": 254,
+      "createdAt": "2025-10-25T22:06:00.000Z",
+      "updatedAt": "2025-10-25T22:06:00.000Z"
+    },
+    {
+      "id": "air-legacy-005",
+      "name": "Street Pulse Neon",
+      "price": 159.99,
+      "description": "Vibrant Neon-Looks, gepolsterte Lifestyle-Sohle und maximaler Strap-Style – der Street Pulse Neon ist dein Ticket für Future-Streetwear.",
+      "imageUrl": "/pics/sneakers-5578127_1280.jpg",
+      "category": "shoes",
+      "stock": 88,
+      "rating": 4.5,
+      "reviewCount": 176,
+      "createdAt": "2025-10-25T22:08:00.000Z",
+      "updatedAt": "2025-10-25T22:08:00.000Z"
     }
   ]
 }
