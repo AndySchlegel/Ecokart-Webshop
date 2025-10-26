@@ -5,9 +5,10 @@ import type { Article } from '@/lib/articles';
 type ArticleTableProps = {
   articles: Article[];
   onDelete: (id: string) => Promise<void>;
+  onEdit: (article: Article) => void;
 };
 
-export function ArticleTable({ articles, onDelete }: ArticleTableProps) {
+export function ArticleTable({ articles, onDelete, onEdit }: ArticleTableProps) {
   async function handleDelete(id: string, name: string) {
     if (!window.confirm(`Wirklich "${name}" löschen?`)) {
       return;
@@ -60,13 +61,22 @@ export function ArticleTable({ articles, onDelete }: ArticleTableProps) {
               </td>
               <td data-label="Beschreibung">{article.description}</td>
               <td data-label="Aktionen">
-                <button
-                  onClick={() => void handleDelete(article.id, article.name)}
-                  className="button button--delete"
-                  type="button"
-                >
-                  Löschen
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => onEdit(article)}
+                    className="button button--secondary"
+                    type="button"
+                  >
+                    Bearbeiten
+                  </button>
+                  <button
+                    onClick={() => void handleDelete(article.id, article.name)}
+                    className="button button--delete"
+                    type="button"
+                  >
+                    Löschen
+                  </button>
+                </div>
               </td>
             </tr>
           ))}

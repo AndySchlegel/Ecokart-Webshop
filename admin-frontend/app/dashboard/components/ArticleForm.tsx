@@ -46,20 +46,32 @@ type ArticleFormSubmitValues = {
 };
 
 type ArticleFormProps = {
-  onSubmit: (values: ArticleFormSubmitValues) => Promise<void>;
+  onSubmit: (values: ArticleFormSubmitValues, articleId?: string) => Promise<void>;
+  editingArticle?: {
+    id: string;
+    name: string;
+    price: number;
+    description: string;
+    imageUrl: string;
+    category: string;
+    rating: number;
+    reviewCount: number;
+  } | null;
+  onCancelEdit?: () => void;
 };
 
-export function ArticleForm({ onSubmit }: ArticleFormProps) {
+export function ArticleForm({ onSubmit, editingArticle, onCancelEdit }: ArticleFormProps) {
+  const isLocalImage = editingArticle?.imageUrl.startsWith('/pics') ?? false;
   const [values, setValues] = useState<ArticleFormValues>({
-    name: '',
-    price: '',
-    description: '',
-    imageUrl: '',
-    imageSource: 'url',
-    localImage: LOCAL_IMAGES[0]?.value ?? '',
-    category: 'shoes',
-    rating: '4.5',
-    reviewCount: '0'
+    name: editingArticle?.name ?? '',
+    price: editingArticle?.price.toString() ?? '',
+    description: editingArticle?.description ?? '',
+    imageUrl: isLocalImage ? '' : (editingArticle?.imageUrl ?? ''),
+    imageSource: isLocalImage ? 'local' : 'url',
+    localImage: isLocalImage ? (editingArticle?.imageUrl ?? LOCAL_IMAGES[0]?.value ?? '') : LOCAL_IMAGES[0]?.value ?? '',
+    category: editingArticle?.category ?? 'shoes',
+    rating: editingArticle?.rating.toString() ?? '4.5',
+    reviewCount: editingArticle?.reviewCount.toString() ?? '0'
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,18 +100,22 @@ export function ArticleForm({ onSubmit }: ArticleFormProps) {
         category: values.category,
         rating: values.rating,
         reviewCount: values.reviewCount
-      });
-      setValues({
-        name: '',
-        price: '',
-        description: '',
-        imageUrl: '',
-        imageSource: 'url',
-        localImage: LOCAL_IMAGES[0]?.value ?? '',
-        category: 'shoes',
-        rating: '4.5',
-        reviewCount: '0'
-      });
+      }, editingArticle?.id);
+
+      if (!editingArticle) {
+        // Only reset form if creating a new article
+        setValues({
+          name: '',
+          price: '',
+          description: '',
+          imageUrl: '',
+          imageSource: 'url',
+          localImage: LOCAL_IMAGES[0]?.value ?? '',
+          category: 'shoes',
+          rating: '4.5',
+          reviewCount: '0'
+        });
+      }
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
@@ -111,10 +127,21 @@ export function ArticleForm({ onSubmit }: ArticleFormProps) {
 
   return (
     <div className="card">
-      <h2>Neues Produkt anlegen</h2>
+      <h2>{editingArticle ? 'Produkt bearbeiten' : 'Neues Produkt anlegen'}</h2>
       <p style={{ color: 'var(--text-gray)', marginBottom: '2rem' }}>
-        Füge ein neues Produkt zum Shop hinzu
+        {editingArticle ? `Bearbeite "${editingArticle.name}"` : 'Füge ein neues Produkt zum Shop hinzu'}
       </p>
+
+      {editingArticle && onCancelEdit && (
+        <button
+          type="button"
+          onClick={onCancelEdit}
+          className="button button--secondary"
+          style={{ marginBottom: '1rem' }}
+        >
+          Abbrechen
+        </button>
+      )}
 
       {error && (
         <div className="message message--error">
@@ -124,7 +151,7 @@ export function ArticleForm({ onSubmit }: ArticleFormProps) {
 
       {success && (
         <div className="message message--success">
-          Produkt erfolgreich angelegt!
+          {editingArticle ? 'Produkt erfolgreich aktualisiert!' : 'Produkt erfolgreich angelegt!'}
         </div>
       )}
 
@@ -269,7 +296,7 @@ export function ArticleForm({ onSubmit }: ArticleFormProps) {
         </div>
 
         <button className="button" type="submit" disabled={isLoading} style={{ marginTop: '2rem' }}>
-          {isLoading ? 'Speichere...' : 'Produkt anlegen'}
+          {isLoading ? 'Speichere...' : (editingArticle ? 'Änderungen speichern' : 'Produkt anlegen')}
         </button>
       </form>
     </div>

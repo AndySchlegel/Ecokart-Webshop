@@ -12,6 +12,7 @@ export default function DashboardPage() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingArticle, setEditingArticle] = useState<Article | null>(null);
 
   async function loadArticles() {
     setIsLoading(true);
@@ -34,7 +35,7 @@ export default function DashboardPage() {
     void loadArticles();
   }, []);
 
-  async function handleAddArticle(values: { name: string; price: string; description: string; imageUrl: string; category: string; rating: string; reviewCount: string }) {
+  async function handleAddArticle(values: { name: string; price: string; description: string; imageUrl: string; category: string; rating: string; reviewCount: string }, articleId?: string) {
     const localRoot = '/Users/his4irness23/GitHub/Repositories/Ecokart-Webshop/pics/';
     let imageUrl = values.imageUrl.trim();
     if (imageUrl.startsWith(localRoot)) {
@@ -66,15 +67,18 @@ export default function DashboardPage() {
       throw new Error('Bitte eine gültige Anzahl an Reviews hinterlegen.');
     }
     const request = await fetch('/api/articles', {
-      method: 'POST',
+      method: articleId ? 'PUT' : 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(articleId ? { ...payload, id: articleId } : payload)
     });
     const body = await request.json();
     if (!request.ok) {
       throw new Error(body.message ?? 'Der Artikel konnte nicht gespeichert werden.');
+    }
+    if (articleId) {
+      setEditingArticle(null);  // Clear editing state after successful update
     }
     await loadArticles();
   }
@@ -125,6 +129,14 @@ export default function DashboardPage() {
         {!isLoading && !error && (
           <ArticleTable
             articles={articles}
+            onEdit={(article) => {
+              setEditingArticle(article);
+              // Scroll to form
+              setTimeout(() => {
+                const form = document.querySelector('.card:last-child');
+                form?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }, 100);
+            }}
             onDelete={async (id) => {
               setError(null);
               try {
@@ -135,7 +147,11 @@ export default function DashboardPage() {
             }}
           />
         )}
-        <ArticleForm onSubmit={handleAddArticle} />
+        <ArticleForm
+          onSubmit={handleAddArticle}
+          editingArticle={editingArticle}
+          onCancelEdit={() => setEditingArticle(null)}
+        />
       </section>
     </main>
   );

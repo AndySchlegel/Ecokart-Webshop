@@ -12,11 +12,41 @@ export default function Navigation() {
   const { cartItemCount } = useCart();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleCategoryClick = (category: string | null) => {
     const target = category ? `/?category=${category}#featured-products` : '/#featured-products';
     setSidebarOpen(false);
     router.push(target);
+  };
+
+  const handlePriceFilter = (minPrice: number | null, maxPrice: number | null) => {
+    let target = '/#featured-products';
+    const params = new URLSearchParams();
+
+    if (minPrice !== null) {
+      params.set('minPrice', minPrice.toString());
+    }
+    if (maxPrice !== null) {
+      params.set('maxPrice', maxPrice.toString());
+    }
+
+    if (params.toString()) {
+      target = `/?${params.toString()}#featured-products`;
+    }
+
+    setSidebarOpen(false);
+    router.push(target);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/?search=${encodeURIComponent(searchQuery.trim())}#featured-products`);
+      setSearchOpen(false);
+      setSearchQuery('');
+    }
   };
 
   return (
@@ -44,7 +74,11 @@ export default function Navigation() {
 
           {/* Right: Icons */}
           <div className="nav-icons">
-            <button className="nav-icon-btn" aria-label="Search">
+            <button
+              className="nav-icon-btn"
+              aria-label="Search"
+              onClick={() => setSearchOpen(!searchOpen)}
+            >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.35-4.35"></path>
@@ -84,6 +118,35 @@ export default function Navigation() {
           </div>
         </div>
 
+        {/* Search Bar */}
+        {searchOpen && (
+          <div className="search-bar">
+            <form onSubmit={handleSearch} className="search-form">
+              <input
+                type="text"
+                placeholder="Produkte suchen..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+                autoFocus
+              />
+              <button type="submit" className="search-submit">
+                Suchen
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchOpen(false);
+                  setSearchQuery('');
+                }}
+                className="search-close"
+              >
+                ✕
+              </button>
+            </form>
+          </div>
+        )}
+
       {/* Left Sidebar - Categories */}
       <div className={`sidebar sidebar-left ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
@@ -99,6 +162,19 @@ export default function Navigation() {
           <button type="button" onClick={() => handleCategoryClick('accessories')}>Accessoires</button>
           <button type="button" onClick={() => handleCategoryClick('sale')}>Sale</button>
         </nav>
+
+        <div className="sidebar-divider"></div>
+
+        <div className="sidebar-section">
+          <h3 className="sidebar-section-title">PREIS</h3>
+          <nav className="sidebar-nav">
+            <button type="button" onClick={() => handlePriceFilter(null, 50)}>Unter €50</button>
+            <button type="button" onClick={() => handlePriceFilter(50, 100)}>€50 - €100</button>
+            <button type="button" onClick={() => handlePriceFilter(100, 150)}>€100 - €150</button>
+            <button type="button" onClick={() => handlePriceFilter(150, 200)}>€150 - €200</button>
+            <button type="button" onClick={() => handlePriceFilter(200, null)}>Über €200</button>
+          </nav>
+        </div>
         {user && (
           <div className="sidebar-user">
             <p>Angemeldet als: <strong>{user.name}</strong></p>
@@ -391,6 +467,26 @@ export default function Navigation() {
           padding-left: 2rem;
         }
 
+        .sidebar-divider {
+          height: 2px;
+          background: linear-gradient(90deg, transparent, var(--accent-orange), transparent);
+          margin: 1rem 0;
+          opacity: 0.3;
+        }
+
+        .sidebar-section {
+          padding: 0;
+        }
+
+        .sidebar-section-title {
+          margin: 1rem 1.5rem 0.5rem 1.5rem;
+          font-size: 0.875rem;
+          font-weight: 700;
+          letter-spacing: 1.5px;
+          color: var(--accent-orange);
+          text-transform: uppercase;
+        }
+
         .sidebar-user {
           margin-top: auto;
           padding: 1.5rem;
@@ -472,6 +568,110 @@ export default function Navigation() {
         @media (max-width: 768px) {
           .sidebar {
             width: 280px;
+          }
+        }
+
+        /* Search Bar */
+        .search-bar {
+          background: rgba(0, 0, 0, 0.98);
+          border-bottom: 2px solid var(--accent-orange);
+          padding: 1rem 2rem;
+          animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .search-form {
+          max-width: 800px;
+          margin: 0 auto;
+          display: flex;
+          gap: 1rem;
+          align-items: center;
+        }
+
+        .search-input {
+          flex: 1;
+          background: rgba(255, 255, 255, 0.05);
+          border: 2px solid #333;
+          color: white;
+          padding: 0.875rem 1.25rem;
+          font-size: 1rem;
+          transition: all 0.3s ease;
+          outline: none;
+        }
+
+        .search-input:focus {
+          border-color: var(--accent-orange);
+          background: rgba(255, 255, 255, 0.08);
+          box-shadow: 0 0 20px rgba(255, 107, 0, 0.2);
+        }
+
+        .search-input::placeholder {
+          color: #666;
+        }
+
+        .search-submit {
+          padding: 0.875rem 2rem;
+          background: var(--accent-orange);
+          border: none;
+          color: #000;
+          font-weight: 700;
+          font-size: 1rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        .search-submit:hover {
+          background: var(--accent-green);
+          transform: translateY(-2px);
+          box-shadow: 0 5px 15px rgba(0, 255, 135, 0.4);
+        }
+
+        .search-close {
+          background: none;
+          border: 2px solid #666;
+          color: #666;
+          padding: 0.875rem 1.25rem;
+          font-size: 1.25rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+
+        .search-close:hover {
+          border-color: var(--accent-orange);
+          color: var(--accent-orange);
+          transform: rotate(90deg);
+        }
+
+        @media (max-width: 768px) {
+          .search-bar {
+            padding: 1rem;
+          }
+
+          .search-form {
+            flex-wrap: wrap;
+          }
+
+          .search-input {
+            flex: 1 1 100%;
+            margin-bottom: 0.5rem;
+          }
+
+          .search-submit,
+          .search-close {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.875rem;
           }
         }
       `}</style>

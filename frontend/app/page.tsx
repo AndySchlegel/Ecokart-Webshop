@@ -149,21 +149,47 @@ type FeaturedProductsProps = {
 function FeaturedProducts({ articles, error, isLoading, productsRef }: FeaturedProductsProps) {
   const searchParams = useSearchParams();
   const normalizedCategory = searchParams.get('category')?.toLowerCase() ?? null;
+  const searchQuery = searchParams.get('search')?.toLowerCase() ?? null;
+  const minPrice = searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice')!) : null;
+  const maxPrice = searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')!) : null;
   const hasScrolledToHash = useRef<string | null>(null);
 
   const filteredArticles = useMemo(() => {
-    if (!normalizedCategory || normalizedCategory === 'all') {
-      return articles;
+    let result = articles;
+
+    // Filter by search query first
+    if (searchQuery) {
+      result = result.filter((article) => {
+        const name = article.name.toLowerCase();
+        const description = article.description?.toLowerCase() ?? '';
+        return name.includes(searchQuery) || description.includes(searchQuery);
+      });
     }
-    return articles.filter((article) => {
-      const articleCategory = article.category?.toLowerCase() ?? '';
-      if (articleCategory && articleCategory.includes(normalizedCategory)) {
+
+    // Then filter by category
+    if (normalizedCategory && normalizedCategory !== 'all') {
+      result = result.filter((article) => {
+        const articleCategory = article.category?.toLowerCase() ?? '';
+        if (articleCategory && articleCategory.includes(normalizedCategory)) {
+          return true;
+        }
+        const articleName = article.name.toLowerCase();
+        return articleName.includes(normalizedCategory);
+      });
+    }
+
+    // Filter by price range
+    if (minPrice !== null || maxPrice !== null) {
+      result = result.filter((article) => {
+        const price = article.price;
+        if (minPrice !== null && price < minPrice) return false;
+        if (maxPrice !== null && price > maxPrice) return false;
         return true;
-      }
-      const articleName = article.name.toLowerCase();
-      return articleName.includes(normalizedCategory);
-    });
-  }, [articles, normalizedCategory]);
+      });
+    }
+
+    return result;
+  }, [articles, normalizedCategory, searchQuery, minPrice, maxPrice]);
 
   const categoryLabelMap: Record<string, string> = {
     shoes: 'Schuhe',
@@ -218,9 +244,19 @@ function FeaturedProducts({ articles, error, isLoading, productsRef }: FeaturedP
         <p className="page__hint">
           Unsere neuesten Highlights für maximale Performance
         </p>
-        {activeCategoryLabel && (
+        {searchQuery && (
+          <p className="page__hint page__hint--filter">
+            Suchergebnisse für: "{searchQuery}"
+          </p>
+        )}
+        {activeCategoryLabel && !searchQuery && (
           <p className="page__hint page__hint--filter">
             Kategorie: {activeCategoryLabel}
+          </p>
+        )}
+        {(minPrice !== null || maxPrice !== null) && (
+          <p className="page__hint page__hint--filter">
+            Preis: {minPrice !== null ? `€${minPrice}` : '€0'} - {maxPrice !== null ? `€${maxPrice}` : '∞'}
           </p>
         )}
         {error && (
