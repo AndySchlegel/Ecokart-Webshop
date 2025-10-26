@@ -69,7 +69,7 @@ export default function HomePage() {
           />
         </div>
         <div className="hero__content">
-          <h1 className="hero__title">Just Do It</h1>
+          <h1 className="hero__title">Reach Your Peak</h1>
           <p className="hero__subtitle">
             Erreiche deine Ziele mit der neuesten Performance-Ausrüstung
           </p>
