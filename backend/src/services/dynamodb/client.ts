@@ -3,7 +3,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { fromSSO } from '@aws-sdk/credential-providers';
 
 const config: any = {
-  region: process.env.AWS_REGION || 'us-east-1',
+  region: process.env.AWS_REGION || 'eu-north-1',
 };
 
 // Use DynamoDB Local if endpoint is set
@@ -17,12 +17,13 @@ if (process.env.DYNAMODB_ENDPOINT) {
       secretAccessKey: 'local',
     };
   }
-} else if (process.env.AWS_PROFILE) {
-  // Use AWS SSO credentials from profile
+} else if (process.env.AWS_PROFILE && !process.env.AWS_EXECUTION_ENV) {
+  // Use AWS SSO credentials from profile (local development only)
   config.credentials = fromSSO({
     profile: process.env.AWS_PROFILE,
   });
 }
+// When running in Lambda, credentials are automatic via IAM Role
 
 const client = new DynamoDBClient(config);
 

@@ -57,7 +57,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setIsLoading(true);
-      const response = await fetch('${API_BASE_URL}/api/cart', {
+      const response = await fetch(`${API_BASE_URL}/api/cart`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -81,7 +81,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setIsLoading(true);
-      const response = await fetch('${API_BASE_URL}/api/cart/items', {
+      const response = await fetch(`${API_BASE_URL}/api/cart/items`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -110,7 +110,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setIsLoading(true);
-      const response = await fetch('${API_BASE_URL}/api/cart/items', {
+      const response = await fetch(`${API_BASE_URL}/api/cart/items`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -166,7 +166,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setIsLoading(true);
-      const response = await fetch('${API_BASE_URL}/api/cart', {
+      const response = await fetch(`${API_BASE_URL}/api/cart`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

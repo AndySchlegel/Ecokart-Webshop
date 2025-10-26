@@ -14,7 +14,13 @@ const PORT = process.env.PORT || 4000;
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'https://main.d1d14e6pdoz4r.amplifyapp.com', // Your Amplify URL
+    /\.amplifyapp\.com$/ // All Amplify URLs
+  ],
   credentials: true
 }));
 app.use(express.json());
@@ -45,45 +51,47 @@ app.use((req: Request, res: Response) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log('┌─────────────────────────────────────────┐');
-  console.log('│  🚀 EcoKart Backend API                 │');
-  console.log('├─────────────────────────────────────────┤');
-  console.log(`│  📍 Server: http://localhost:${PORT}       │`);
-  console.log(`│  🌐 Environment: ${(process.env.NODE_ENV || 'development').padEnd(19)}│`);
-  console.log('│  📦 Database: JSON (Local)              │');
-  console.log('├─────────────────────────────────────────┤');
-  console.log('│  Endpoints:                             │');
-  console.log('│                                         │');
-  console.log('│  🔐 Authentication:                     │');
-  console.log('│  POST   /api/auth/register              │');
-  console.log('│  POST   /api/auth/login                 │');
-  console.log('│  GET    /api/auth/me                    │');
-  console.log('│                                         │');
-  console.log('│  🛒 Shopping Cart:                      │');
-  console.log('│  GET    /api/cart                       │');
-  console.log('│  POST   /api/cart/items                 │');
-  console.log('│  PUT    /api/cart/items                 │');
-  console.log('│  DELETE /api/cart/items/:productId      │');
-  console.log('│  DELETE /api/cart                       │');
-  console.log('│                                         │');
-  console.log('│  📦 Orders:                             │');
-  console.log('│  POST   /api/orders                     │');
-  console.log('│  GET    /api/orders                     │');
-  console.log('│  GET    /api/orders/:id                 │');
-  console.log('│  PATCH  /api/orders/:id/status          │');
-  console.log('│                                         │');
-  console.log('│  🏷️  Products:                          │');
-  console.log('│  GET    /api/products                   │');
-  console.log('│  GET    /api/products/:id               │');
-  console.log('│  POST   /api/products                   │');
-  console.log('│  PUT    /api/products/:id               │');
-  console.log('│  DELETE /api/products/:id               │');
-  console.log('│                                         │');
-  console.log('│  ❤️  Health Check:                      │');
-  console.log('│  GET    /api/health                     │');
-  console.log('└─────────────────────────────────────────┘');
-});
+// Start server (only when not running in Lambda)
+if (process.env.AWS_EXECUTION_ENV === undefined) {
+  app.listen(PORT, () => {
+    console.log('┌─────────────────────────────────────────┐');
+    console.log('│  🚀 EcoKart Backend API                 │');
+    console.log('├─────────────────────────────────────────┤');
+    console.log(`│  📍 Server: http://localhost:${PORT}       │`);
+    console.log(`│  🌐 Environment: ${(process.env.NODE_ENV || 'development').padEnd(19)}│`);
+    console.log('│  📦 Database: DynamoDB                  │');
+    console.log('├─────────────────────────────────────────┤');
+    console.log('│  Endpoints:                             │');
+    console.log('│                                         │');
+    console.log('│  🔐 Authentication:                     │');
+    console.log('│  POST   /api/auth/register              │');
+    console.log('│  POST   /api/auth/login                 │');
+    console.log('│  GET    /api/auth/me                    │');
+    console.log('│                                         │');
+    console.log('│  🛒 Shopping Cart:                      │');
+    console.log('│  GET    /api/cart                       │');
+    console.log('│  POST   /api/cart/items                 │');
+    console.log('│  PUT    /api/cart/items                 │');
+    console.log('│  DELETE /api/cart/items/:productId      │');
+    console.log('│  DELETE /api/cart                       │');
+    console.log('│                                         │');
+    console.log('│  📦 Orders:                             │');
+    console.log('│  POST   /api/orders                     │');
+    console.log('│  GET    /api/orders                     │');
+    console.log('│  GET    /api/orders/:id                 │');
+    console.log('│  PATCH  /api/orders/:id/status          │');
+    console.log('│                                         │');
+    console.log('│  🏷️  Products:                          │');
+    console.log('│  GET    /api/products                   │');
+    console.log('│  GET    /api/products/:id               │');
+    console.log('│  POST   /api/products                   │');
+    console.log('│  PUT    /api/products/:id               │');
+    console.log('│  DELETE /api/products/:id               │');
+    console.log('│                                         │');
+    console.log('│  ❤️  Health Check:                      │');
+    console.log('│  GET    /api/health                     │');
+    console.log('└─────────────────────────────────────────┘');
+  });
+}
 
 export default app;

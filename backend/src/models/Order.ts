@@ -26,5 +26,7 @@ export interface Order {
 }
 
 export interface CreateOrderInput {
+  items: OrderItem[];
+  total: number;
   shippingAddress: ShippingAddress;
 }

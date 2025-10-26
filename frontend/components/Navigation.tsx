@@ -62,7 +62,7 @@ export default function Navigation() {
       }
 
       try {
-        const response = await fetch('${API_BASE_URL}/api/products');
+        const response = await fetch(`${API_BASE_URL}/api/products`);
         if (response.ok) {
           const data = await response.json();
           const products = data.items || [];

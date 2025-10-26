@@ -1,0 +1,11 @@
+# SAM Build Ignore
+node_modules/
+src/
+scripts/
+aws/
+*.md
+.env*
+.git/
+.gitignore
+tsconfig.json
+package-lock.json

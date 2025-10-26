@@ -1,0 +1,13 @@
+version = 0.1
+
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "ecokart-backend"
+s3_prefix = "ecokart-backend"
+region = "eu-north-1"
+resolve_s3 = true
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "JWTSecret=ecokart-production-jwt-secret-2025"
+image_repositories = []

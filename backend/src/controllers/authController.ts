@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
-import database from '../config/database-extended';
+import database from '../config/database-adapter';
 import { generateToken, AuthRequest } from '../middleware/auth';
 import { User, UserCreateInput, UserLoginInput, UserResponse } from '../models/User';
 
@@ -24,7 +24,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Check if user exists
-    const existingUser = database.getUserByEmail(email);
+    const existingUser = await database.getUserByEmail(email);
     if (existingUser) {
       res.status(400).json({ error: 'User with this email already exists' });
       return;
@@ -42,7 +42,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       updatedAt: new Date().toISOString()
     };
 
-    const created = database.createUser(newUser);
+    const created = await database.createUser(newUser);
     const token = generateToken(created.id);
 
     res.status(201).json({
@@ -64,7 +64,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const user = database.getUserByEmail(email);
+    const user = await database.getUserByEmail(email);
     if (!user) {
       res.status(401).json({ error: 'Invalid credentials' });
       return;
@@ -88,7 +88,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const getCurrentUser = (req: AuthRequest, res: Response): void => {
+export const getCurrentUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
     if (!userId) {
@@ -96,7 +96,7 @@ export const getCurrentUser = (req: AuthRequest, res: Response): void => {
       return;
     }
 
-    const user = database.getUserById(userId);
+    const user = await database.getUserById(userId);
     if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;

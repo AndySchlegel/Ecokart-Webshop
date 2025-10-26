@@ -1,11 +1,10 @@
 import { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import database from '../config/database-extended';
-import productDb from '../config/database';
+import database from '../config/database-adapter';
 import { AuthRequest } from '../middleware/auth';
 import { Cart, AddToCartInput, UpdateCartItemInput } from '../models/Cart';
 
-export const getCart = (req: AuthRequest, res: Response): void => {
+export const getCart = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
     if (!userId) {
@@ -13,7 +12,7 @@ export const getCart = (req: AuthRequest, res: Response): void => {
       return;
     }
 
-    let cart = database.getCartByUserId(userId);
+    let cart = await database.getCartByUserId(userId);
 
     // Create cart if doesn't exist
     if (!cart) {
@@ -24,7 +23,7 @@ export const getCart = (req: AuthRequest, res: Response): void => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      database.createCart(cart);
+      await database.createCart(cart);
     }
 
     res.json(cart);
@@ -34,7 +33,7 @@ export const getCart = (req: AuthRequest, res: Response): void => {
   }
 };
 
-export const addToCart = (req: AuthRequest, res: Response): void => {
+export const addToCart = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
     if (!userId) {
@@ -50,14 +49,14 @@ export const addToCart = (req: AuthRequest, res: Response): void => {
     }
 
     // Get product details
-    const product = productDb.getProductById(productId);
+    const product = await database.getProductById(productId);
     if (!product) {
       res.status(404).json({ error: 'Product not found' });
       return;
     }
 
     // Get or create cart
-    let cart = database.getCartByUserId(userId);
+    let cart = await database.getCartByUserId(userId);
     if (!cart) {
       cart = {
         id: uuidv4(),
@@ -66,7 +65,7 @@ export const addToCart = (req: AuthRequest, res: Response): void => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      cart = database.createCart(cart);
+      cart = await database.createCart(cart);
     }
 
     // Check if item already in cart
@@ -86,7 +85,7 @@ export const addToCart = (req: AuthRequest, res: Response): void => {
       });
     }
 
-    const updated = database.updateCart(cart.id, { items: cart.items });
+    const updated = await database.updateCart(cart.id, { items: cart.items });
     res.json(updated);
   } catch (error) {
     console.error('Add to cart error:', error);
@@ -94,7 +93,7 @@ export const addToCart = (req: AuthRequest, res: Response): void => {
   }
 };
 
-export const updateCartItem = (req: AuthRequest, res: Response): void => {
+export const updateCartItem = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
     if (!userId) {
@@ -109,7 +108,7 @@ export const updateCartItem = (req: AuthRequest, res: Response): void => {
       return;
     }
 
-    const cart = database.getCartByUserId(userId);
+    const cart = await database.getCartByUserId(userId);
     if (!cart) {
       res.status(404).json({ error: 'Cart not found' });
       return;
@@ -128,7 +127,7 @@ export const updateCartItem = (req: AuthRequest, res: Response): void => {
       cart.items[itemIndex].quantity = quantity;
     }
 
-    const updated = database.updateCart(cart.id, { items: cart.items });
+    const updated = await database.updateCart(cart.id, { items: cart.items });
     res.json(updated);
   } catch (error) {
     console.error('Update cart error:', error);
@@ -136,7 +135,7 @@ export const updateCartItem = (req: AuthRequest, res: Response): void => {
   }
 };
 
-export const removeFromCart = (req: AuthRequest, res: Response): void => {
+export const removeFromCart = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
     if (!userId) {
@@ -146,14 +145,14 @@ export const removeFromCart = (req: AuthRequest, res: Response): void => {
 
     const { productId } = req.params;
 
-    const cart = database.getCartByUserId(userId);
+    const cart = await database.getCartByUserId(userId);
     if (!cart) {
       res.status(404).json({ error: 'Cart not found' });
       return;
     }
 
     cart.items = cart.items.filter(item => item.productId !== productId);
-    const updated = database.updateCart(cart.id, { items: cart.items });
+    const updated = await database.updateCart(cart.id, { items: cart.items });
     res.json(updated);
   } catch (error) {
     console.error('Remove from cart error:', error);
@@ -161,7 +160,7 @@ export const removeFromCart = (req: AuthRequest, res: Response): void => {
   }
 };
 
-export const clearCart = (req: AuthRequest, res: Response): void => {
+export const clearCart = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
     if (!userId) {
@@ -169,13 +168,13 @@ export const clearCart = (req: AuthRequest, res: Response): void => {
       return;
     }
 
-    const cart = database.getCartByUserId(userId);
+    const cart = await database.getCartByUserId(userId);
     if (!cart) {
       res.status(404).json({ error: 'Cart not found' });
       return;
     }
 
-    const updated = database.updateCart(cart.id, { items: [] });
+    const updated = await database.updateCart(cart.id, { items: [] });
     res.json(updated);
   } catch (error) {
     console.error('Clear cart error:', error);

@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import database from '../config/database';
+import database from '../config/database-adapter';
 import { Product, ProductCreateInput, ProductUpdateInput } from '../models/Product';
 
-export const getAllProducts = (req: Request, res: Response): void => {
+export const getAllProducts = async (req: Request, res: Response): Promise<void> => {
   try {
-    const products = database.getAllProducts();
+    const products = await database.getAllProducts();
     res.json({ items: products, count: products.length });
   } catch (error) {
     console.error('Error fetching products:', error);
@@ -13,10 +13,10 @@ export const getAllProducts = (req: Request, res: Response): void => {
   }
 };
 
-export const getProductById = (req: Request, res: Response): void => {
+export const getProductById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const product = database.getProductById(id);
+    const product = await database.getProductById(id);
 
     if (!product) {
       res.status(404).json({ error: 'Product not found' });
@@ -30,7 +30,7 @@ export const getProductById = (req: Request, res: Response): void => {
   }
 };
 
-export const createProduct = (req: Request, res: Response): void => {
+export const createProduct = async (req: Request, res: Response): Promise<void> => {
   try {
     const input: ProductCreateInput = req.body;
 
@@ -46,7 +46,7 @@ export const createProduct = (req: Request, res: Response): void => {
       updatedAt: new Date().toISOString()
     };
 
-    const created = database.createProduct(newProduct);
+    const created = await database.createProduct(newProduct);
     res.status(201).json(created);
   } catch (error) {
     console.error('Error creating product:', error);
@@ -54,12 +54,12 @@ export const createProduct = (req: Request, res: Response): void => {
   }
 };
 
-export const updateProduct = (req: Request, res: Response): void => {
+export const updateProduct = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const updates: ProductUpdateInput = req.body;
 
-    const updated = database.updateProduct(id, updates);
+    const updated = await database.updateProduct(id, updates);
 
     if (!updated) {
       res.status(404).json({ error: 'Product not found' });
@@ -73,10 +73,10 @@ export const updateProduct = (req: Request, res: Response): void => {
   }
 };
 
-export const deleteProduct = (req: Request, res: Response): void => {
+export const deleteProduct = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const deleted = database.deleteProduct(id);
+    const deleted = await database.deleteProduct(id);
 
     if (!deleted) {
       res.status(404).json({ error: 'Product not found' });

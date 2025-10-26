@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: EcoKart Backend API - Serverless Express on Lambda
+
+# Global configuration
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: nodejs20.x
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        NODE_ENV: production
+        DB_TYPE: dynamodb
+
+Parameters:
+  JWTSecret:
+    Type: String
+    Description: Secret key for JWT tokens
+    Default: ecokart-production-jwt-secret-change-me
+    NoEcho: true
+
+Resources:
+  # Lambda Function
+  EcoKartAPI:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ecokart-backend-api
+      CodeUri: ./
+      Handler: dist/lambda.handler
+      Description: EcoKart Express API on Lambda
+      Environment:
+        Variables:
+          JWT_SECRET: !Ref JWTSecret
+      Policies:
+        # DynamoDB Permissions
+        - DynamoDBCrudPolicy:
+            TableName: ecokart-products
+        - DynamoDBCrudPolicy:
+            TableName: ecokart-users
+        - DynamoDBCrudPolicy:
+            TableName: ecokart-carts
+        - DynamoDBCrudPolicy:
+            TableName: ecokart-orders
+      Events:
+        # API Gateway Events
+        ApiRoot:
+          Type: Api
+          Properties:
+            Path: /
+            Method: ANY
+        ApiProxy:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+      Tags:
+        Project: EcoKart
+        Environment: Production
+        ManagedBy: SAM
+
+Outputs:
+  ApiUrl:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+
+  FunctionArn:
+    Description: "Lambda Function ARN"
+    Value: !GetAtt EcoKartAPI.Arn
+
+  FunctionName:
+    Description: "Lambda Function Name"
+    Value: !Ref EcoKartAPI

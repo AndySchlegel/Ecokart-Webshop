@@ -7,16 +7,6 @@
 
 export { dynamodb, TableNames } from './client';
 export { ProductsService, productsService } from './products.service';
-
-// Export types
-export type { Product } from './products.service';
-
-/**
- * TODO: Implement remaining services
- *
- * - UsersService: User management (getById, getByEmail, create, update)
- * - CartsService: Shopping cart operations (get, update, clear)
- * - OrdersService: Order management (create, getById, getByUserId)
- *
- * Each service follows the same pattern as ProductsService
- */
+export { UsersService, usersService } from './users.service';
+export { CartsService, cartsService } from './carts.service';
+export { OrdersService, ordersService } from './orders.service';

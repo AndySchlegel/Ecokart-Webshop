@@ -1,10 +1,10 @@
 import { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import database from '../config/database-extended';
+import database from '../config/database-adapter';
 import { AuthRequest } from '../middleware/auth';
 import { Order, CreateOrderInput } from '../models/Order';
 
-export const createOrder = (req: AuthRequest, res: Response): void => {
+export const createOrder = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
     if (!userId) {
@@ -19,7 +19,7 @@ export const createOrder = (req: AuthRequest, res: Response): void => {
       return;
     }
 
-    if (!shippingAddress || !shippingAddress.street || !shippingAddress.city || !shippingAddress.zipCode || !shippingAddress.country) {
+    if (!shippingAddress || !shippingAddress.street || !shippingAddress.city || !shippingAddress.postalCode || !shippingAddress.country) {
       res.status(400).json({ error: 'Complete shipping address is required' });
       return;
     }
@@ -40,12 +40,12 @@ export const createOrder = (req: AuthRequest, res: Response): void => {
       updatedAt: new Date().toISOString()
     };
 
-    const created = database.createOrder(newOrder);
+    const created = await database.createOrder(newOrder);
 
     // Clear the user's cart after successful order
-    const cart = database.getCartByUserId(userId);
+    const cart = await database.getCartByUserId(userId);
     if (cart) {
-      database.updateCart(cart.id, { items: [] });
+      await database.updateCart(cart.id, { items: [] });
     }
 
     res.status(201).json(created);
@@ -55,7 +55,7 @@ export const createOrder = (req: AuthRequest, res: Response): void => {
   }
 };
 
-export const getOrders = (req: AuthRequest, res: Response): void => {
+export const getOrders = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
     if (!userId) {
@@ -63,7 +63,7 @@ export const getOrders = (req: AuthRequest, res: Response): void => {
       return;
     }
 
-    const orders = database.getOrdersByUserId(userId);
+    const orders = await database.getOrdersByUserId(userId);
     res.json(orders);
   } catch (error) {
     console.error('Get orders error:', error);
@@ -71,7 +71,7 @@ export const getOrders = (req: AuthRequest, res: Response): void => {
   }
 };
 
-export const getOrderById = (req: AuthRequest, res: Response): void => {
+export const getOrderById = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
     if (!userId) {
@@ -80,7 +80,7 @@ export const getOrderById = (req: AuthRequest, res: Response): void => {
     }
 
     const { id } = req.params;
-    const order = database.getOrderById(id);
+    const order = await database.getOrderById(id);
 
     if (!order) {
       res.status(404).json({ error: 'Order not found' });
@@ -100,7 +100,7 @@ export const getOrderById = (req: AuthRequest, res: Response): void => {
   }
 };
 
-export const updateOrderStatus = (req: AuthRequest, res: Response): void => {
+export const updateOrderStatus = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
     if (!userId) {
@@ -117,7 +117,7 @@ export const updateOrderStatus = (req: AuthRequest, res: Response): void => {
       return;
     }
 
-    const order = database.getOrderById(id);
+    const order = await database.getOrderById(id);
     if (!order) {
       res.status(404).json({ error: 'Order not found' });
       return;
@@ -129,7 +129,7 @@ export const updateOrderStatus = (req: AuthRequest, res: Response): void => {
       return;
     }
 
-    const updated = database.updateOrder(id, { status });
+    const updated = await database.updateOrder(id, { status });
     res.json(updated);
   } catch (error) {
     console.error('Update order status error:', error);

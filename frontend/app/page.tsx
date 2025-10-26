@@ -20,7 +20,7 @@ export default function HomePage() {
 
     async function loadArticles() {
       try {
-        const response = await fetch('${API_BASE_URL}/api/products');
+        const response = await fetch(`${API_BASE_URL}/api/products`);
         if (!response.ok) {
           throw new Error(`Request fehlgeschlagen: ${response.status}`);
         }

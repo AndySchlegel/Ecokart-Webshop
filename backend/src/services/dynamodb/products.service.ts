@@ -1,16 +1,6 @@
 import { GetCommand, PutCommand, DeleteCommand, ScanCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { dynamodb, TableNames } from './client';
-
-export interface Product {
-  id: string;
-  name: string;
-  price: number;
-  description: string;
-  imageUrl: string;
-  category: string;
-  rating?: number;
-  reviewCount?: number;
-}
+import { Product } from '../../models/Product';
 
 export class ProductsService {
   /**
