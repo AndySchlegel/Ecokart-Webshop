@@ -8,7 +8,9 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "echo \"Tests coming soon...\"",
-    "migrate:aws": "echo \"AWS migration script coming soon...\""
+    "dynamodb:create-tables": "node scripts/create-dynamodb-tables.js",
+    "dynamodb:migrate": "node scripts/migrate-to-dynamodb.js",
+    "dynamodb:setup": "npm run dynamodb:create-tables && npm run dynamodb:migrate"
   },
   "keywords": [
     "ecokart",
@@ -19,6 +21,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.637.0",
+    "@aws-sdk/lib-dynamodb": "^3.637.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
     "bcryptjs": "^3.0.2",
