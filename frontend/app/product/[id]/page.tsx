@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Navigation from '../../../components/Navigation';
 import { useCart } from '../../../contexts/CartContext';
@@ -43,8 +43,7 @@ function isApparelProduct(article: Article | null) {
   return /hoodie|jacket|shirt|tee|trikot|shorts|sweat/i.test(article.name);
 }
 
-export default function ProductDetailPage() {
-  const params = useParams();
+export default function ProductDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addToCart } = useCart();

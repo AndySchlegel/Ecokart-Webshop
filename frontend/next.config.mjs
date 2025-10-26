@@ -10,9 +10,6 @@ const nextConfig = {
   images: {
     unoptimized: true
   },
-
-  // Optional: Configure trailing slashes
-  trailingSlash: true,
 };
 
 export default nextConfig;
