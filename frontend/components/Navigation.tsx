@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import { API_BASE_URL } from '../lib/config';
 
 interface Product {
   id: string;
@@ -61,7 +62,7 @@ export default function Navigation() {
       }
 
       try {
-        const response = await fetch('http://localhost:4000/api/products');
+        const response = await fetch('${API_BASE_URL}/api/products');
         if (response.ok) {
           const data = await response.json();
           const products = data.items || [];
@@ -507,7 +508,7 @@ export default function Navigation() {
           align-items: center;
           padding: 1.5rem;
           border-bottom: 2px solid #222;
-          background: rgba(255, 107, 0, 0.05);
+          background: rgb(0, 0, 0);
         }
 
         .sidebar-header h2 {
@@ -540,18 +541,19 @@ export default function Navigation() {
           display: flex;
           flex-direction: column;
           padding: 1rem 0;
+          background: rgb(0, 0, 0);
         }
 
         .sidebar-nav a,
         .sidebar-nav button {
           padding: 1rem 1.5rem;
-          color: white;
+          color: #fff;
           text-decoration: none;
           font-weight: 600;
           letter-spacing: 1px;
           transition: all 0.3s ease;
           border-left: 3px solid transparent;
-          background: none;
+          background: rgb(0, 0, 0);
           border: none;
           text-align: left;
           width: 100%;
@@ -574,6 +576,7 @@ export default function Navigation() {
 
         .sidebar-section {
           padding: 0;
+          background: rgb(0, 0, 0);
         }
 
         .sidebar-section-title {
@@ -589,13 +592,14 @@ export default function Navigation() {
           margin-top: auto;
           padding: 1.5rem;
           border-top: 2px solid #222;
-          background: rgba(0, 0, 0, 0.3);
+          background: rgb(0, 0, 0);
         }
 
         .sidebar-user p {
           margin: 0 0 1rem 0;
-          color: #999;
+          color: #fff;
           font-size: 0.875rem;
+          font-weight: 500;
         }
 
         .sidebar-user strong {

@@ -5,6 +5,7 @@ import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { API_BASE_URL } from '../../lib/config';
 
 export default function CheckoutPage() {
   const { cart, cartTotal, isLoading: cartLoading, clearCart } = useCart();
@@ -61,7 +62,7 @@ export default function CheckoutPage() {
         shippingAddress
       };
 
-      const response = await fetch('http://localhost:4000/api/orders', {
+      const response = await fetch('${API_BASE_URL}/api/orders', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

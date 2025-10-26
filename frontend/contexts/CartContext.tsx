@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { API_BASE_URL } from '../lib/config';
 
 interface CartItem {
   productId: string;
@@ -56,7 +57,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:4000/api/cart', {
+      const response = await fetch('${API_BASE_URL}/api/cart', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -80,7 +81,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:4000/api/cart/items', {
+      const response = await fetch('${API_BASE_URL}/api/cart/items', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -109,7 +110,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:4000/api/cart/items', {
+      const response = await fetch('${API_BASE_URL}/api/cart/items', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -138,7 +139,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setIsLoading(true);
-      const response = await fetch(`http://localhost:4000/api/cart/items/${productId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/cart/items/${productId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -165,7 +166,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:4000/api/cart', {
+      const response = await fetch('${API_BASE_URL}/api/cart', {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

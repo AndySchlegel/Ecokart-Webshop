@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import Navigation from '../components/Navigation';
 import { ArticleList } from '@/components/ArticleList';
 import { Article } from '@/components/types';
+import { API_BASE_URL } from '@/lib/config';
 
 export default function HomePage() {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -19,7 +20,7 @@ export default function HomePage() {
 
     async function loadArticles() {
       try {
-        const response = await fetch('http://localhost:4000/api/products');
+        const response = await fetch('${API_BASE_URL}/api/products');
         if (!response.ok) {
           throw new Error(`Request fehlgeschlagen: ${response.status}`);
         }

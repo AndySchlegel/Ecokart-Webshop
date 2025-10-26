@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { API_BASE_URL } from '../../../lib/config';
 
 interface Order {
   id: string;
@@ -42,7 +43,7 @@ export default function OrderConfirmationPage() {
 
     const fetchOrder = async () => {
       try {
-        const response = await fetch(`http://localhost:4000/api/orders/${orderId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

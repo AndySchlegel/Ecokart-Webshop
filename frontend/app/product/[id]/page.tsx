@@ -7,6 +7,7 @@ import Navigation from '../../../components/Navigation';
 import { useCart } from '../../../contexts/CartContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { Article } from '../../components/types';
+import { API_BASE_URL } from '../../../lib/config';
 
 // Sneaker sizes (US sizes)
 const SHOE_SIZES = ['7', '7.5', '8', '8.5', '9', '9.5', '10', '10.5', '11', '11.5', '12', '13'];
@@ -61,7 +62,7 @@ export default function ProductDetailPage() {
   useEffect(() => {
     async function loadProduct() {
       try {
-        const response = await fetch(`http://localhost:4000/api/products/${params.id}`);
+        const response = await fetch(`${API_BASE_URL}/api/products/${params.id}`);
         if (!response.ok) {
           throw new Error('Produkt nicht gefunden');
         }
