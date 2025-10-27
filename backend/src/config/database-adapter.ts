@@ -147,28 +147,32 @@ class DatabaseAdapter {
     }
   }
 
-  async updateCart(id: string, updates: Partial<Cart>): Promise<Cart | null> {
+  async updateCart(userIdOrId: string, updates: Partial<Cart>): Promise<Cart | null> {
     if (this.useDynamoDB) {
       try {
-        return await cartsService.update(id, updates);
+        // For DynamoDB, userIdOrId is the userId (partition key)
+        return await cartsService.update(userIdOrId, updates);
       } catch (error) {
         return null;
       }
     } else {
-      return jsonExtendedDatabase.updateCart(id, updates);
+      // For JSON database, userIdOrId is the cart id
+      return jsonExtendedDatabase.updateCart(userIdOrId, updates);
     }
   }
 
-  async deleteCart(id: string): Promise<boolean> {
+  async deleteCart(userIdOrId: string): Promise<boolean> {
     if (this.useDynamoDB) {
       try {
-        await cartsService.delete(id);
+        // For DynamoDB, userIdOrId is the userId (partition key)
+        await cartsService.delete(userIdOrId);
         return true;
       } catch (error) {
         return false;
       }
     } else {
-      return jsonExtendedDatabase.deleteCart(id);
+      // For JSON database, userIdOrId is the cart id
+      return jsonExtendedDatabase.deleteCart(userIdOrId);
     }
   }
 

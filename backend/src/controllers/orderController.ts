@@ -45,7 +45,7 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<void
     // Clear the user's cart after successful order
     const cart = await database.getCartByUserId(userId);
     if (cart) {
-      await database.updateCart(cart.id, { items: [] });
+      await database.updateCart(userId, { items: [] });
     }
 
     res.status(201).json(created);

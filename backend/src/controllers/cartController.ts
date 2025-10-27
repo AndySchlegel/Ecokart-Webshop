@@ -85,7 +85,7 @@ export const addToCart = async (req: AuthRequest, res: Response): Promise<void> 
       });
     }
 
-    const updated = await database.updateCart(cart.id, { items: cart.items });
+    const updated = await database.updateCart(userId, { items: cart.items });
     res.json(updated);
   } catch (error) {
     console.error('Add to cart error:', error);
@@ -127,7 +127,7 @@ export const updateCartItem = async (req: AuthRequest, res: Response): Promise<v
       cart.items[itemIndex].quantity = quantity;
     }
 
-    const updated = await database.updateCart(cart.id, { items: cart.items });
+    const updated = await database.updateCart(userId, { items: cart.items });
     res.json(updated);
   } catch (error) {
     console.error('Update cart error:', error);
@@ -152,7 +152,7 @@ export const removeFromCart = async (req: AuthRequest, res: Response): Promise<v
     }
 
     cart.items = cart.items.filter(item => item.productId !== productId);
-    const updated = await database.updateCart(cart.id, { items: cart.items });
+    const updated = await database.updateCart(userId, { items: cart.items });
     res.json(updated);
   } catch (error) {
     console.error('Remove from cart error:', error);
@@ -174,7 +174,7 @@ export const clearCart = async (req: AuthRequest, res: Response): Promise<void> 
       return;
     }
 
-    const updated = await database.updateCart(cart.id, { items: [] });
+    const updated = await database.updateCart(userId, { items: [] });
     res.json(updated);
   } catch (error) {
     console.error('Clear cart error:', error);
