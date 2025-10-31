@@ -11,6 +11,7 @@
     "dynamodb:create-tables": "node scripts/create-dynamodb-tables.js",
     "dynamodb:verify": "node scripts/verify-dynamodb-tables.js",
     "dynamodb:migrate": "node scripts/migrate-to-dynamodb.js",
+    "dynamodb:migrate:single": "node scripts/migrate-to-dynamodb-single.js",
     "dynamodb:setup": "npm run dynamodb:create-tables && npm run dynamodb:migrate",
     "lambda:build": "npm run build",
     "lambda:deploy": "sam build && sam deploy --guided",

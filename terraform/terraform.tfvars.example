@@ -1,0 +1,85 @@
+# ============================================================================
+# Ecokart Terraform Variables - Example Configuration
+# ============================================================================
+# Kopiere diese Datei zu terraform.tfvars und passe die Werte an.
+#
+# WICHTIG: terraform.tfvars wird NICHT in Git committed!
+#          Enthält sensible Daten wie JWT Secret und GitHub Token.
+
+# ----------------------------------------------------------------------------
+# Allgemeine Konfiguration
+# ----------------------------------------------------------------------------
+
+aws_region   = "eu-north-1"  # Stockholm (empfohlen für EU)
+project_name = "ecokart"
+environment  = "production"   # development, staging, production
+
+# ----------------------------------------------------------------------------
+# DynamoDB Konfiguration
+# ----------------------------------------------------------------------------
+
+# Billing Mode: PROVISIONED (Free Tier) oder PAY_PER_REQUEST (flexibler)
+dynamodb_billing_mode = "PROVISIONED"
+
+# Nur bei PROVISIONED Mode:
+dynamodb_read_capacity  = 5
+dynamodb_write_capacity = 5
+
+# Point-in-Time Recovery (empfohlen für Production, kostet extra)
+enable_point_in_time_recovery = false  # Auf true setzen für Production
+
+# ----------------------------------------------------------------------------
+# Lambda Konfiguration
+# ----------------------------------------------------------------------------
+
+lambda_runtime     = "nodejs20.x"
+lambda_memory_size = 512   # MB (128-10240)
+lambda_timeout     = 30    # Sekunden (1-900)
+
+# JWT Secret (ERFORDERLICH - min. 32 Zeichen!)
+# Generiere sicheren Wert mit: openssl rand -base64 32
+jwt_secret = "your-super-secret-jwt-key-change-me-in-production-must-be-at-least-32-chars-long"
+
+# Pfad zum Backend-Code
+# Für Production: "../backend"
+# Für Testing: "./lambda" (minimal code)
+lambda_source_path = "../backend"
+
+# ----------------------------------------------------------------------------
+# API Gateway Konfiguration
+# ----------------------------------------------------------------------------
+
+api_gateway_stage_name         = "Prod"
+enable_api_gateway_access_logs = false  # Auf true setzen für Production
+
+# ----------------------------------------------------------------------------
+# Amplify Konfiguration (Optional)
+# ----------------------------------------------------------------------------
+
+# Amplify aktivieren (benötigt GitHub Access Token)
+enable_amplify = false
+
+# Falls enable_amplify = true, folgende Werte setzen:
+# github_repository   = "username/Ecokart-Webshop"
+# github_branch       = "main"
+# github_access_token = "ghp_YourGitHubPersonalAccessToken"
+
+# Amplify Build Settings
+# amplify_framework         = "Next.js - SSR"
+# amplify_build_command     = "npm run build"
+# amplify_monorepo_app_root = "frontend"
+
+# Basic Authentication (optional, für Demo-Schutz)
+# basic_auth_enabled  = true
+# basic_auth_user     = "demo"
+# basic_auth_password = "secure-password-123"
+
+# ----------------------------------------------------------------------------
+# Tagging (Optional)
+# ----------------------------------------------------------------------------
+
+additional_tags = {
+  Owner       = "YourName"
+  CostCenter  = "Development"
+  Backup      = "Daily"
+}

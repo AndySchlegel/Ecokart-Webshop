@@ -22,12 +22,13 @@
 
 ## AWS Infrastruktur Übersicht
 
-### 1. Frontend - AWS Amplify
+### 1. Frontend - AWS Amplify (Customer Shop)
 
-**App ID:** d1d14e6pdoz4r
+**App Name:** ecokart-production-frontend
 **Region:** eu-north-1
 **Branch:** main
-**Framework:** Next.js 13 (App Router mit SSR)
+**Framework:** Next.js 14 (App Router mit SSR)
+**Monorepo Root:** frontend/
 
 #### Konfiguration
 ```yaml
@@ -56,7 +57,44 @@ BASIC_AUTH_PASS=test1234
 
 ---
 
-### 2. Backend - AWS Lambda + API Gateway
+### 2. Admin Frontend - AWS Amplify (Admin Dashboard)
+
+**App Name:** ecokart-production-admin-frontend
+**Region:** eu-north-1
+**Branch:** main
+**Framework:** Next.js 14 (App Router mit SSR)
+**Monorepo Root:** admin-frontend/
+
+#### Konfiguration
+```yaml
+Platform: WEB_COMPUTE
+Framework: Next.js - SSR
+Build Command: npm run build
+Output Directory: .next
+Node Version: 20
+```
+
+#### Environment Variables
+```bash
+AMPLIFY_MONOREPO_APP_ROOT=admin-frontend
+NEXT_PUBLIC_API_URL=https://ob4yi692if.execute-api.eu-north-1.amazonaws.com/Prod
+AMPLIFY_DIFF_DEPLOY=false
+```
+
+#### Features
+- ✅ Automatic deployment from GitHub
+- ✅ Server-Side Rendering (SSR)
+- ✅ Basic Authentication (STARK EMPFOHLEN)
+- ✅ CloudFront CDN Distribution
+- ✅ Separate App für Admin-Funktionen
+
+#### Zugangsdaten (Default - ÄNDERN!)
+- **Username:** admin
+- **Password:** admin1234
+
+---
+
+### 3. Backend - AWS Lambda + API Gateway
 
 **Function Name:** ecokart-backend-api
 **Region:** eu-north-1
@@ -88,7 +126,7 @@ Lambda hat volle CRUD-Rechte auf alle DynamoDB Tabellen:
 
 ---
 
-### 3. Database - Amazon DynamoDB
+### 4. Database - Amazon DynamoDB
 
 Alle Tabellen in Region **eu-north-1**
 
@@ -118,7 +156,36 @@ Alle Tabellen in Region **eu-north-1**
 
 ## Deployment-Prozess
 
-### Frontend Deployment (Amplify)
+### Vollautomatisches Deployment (Terraform)
+
+**NEU:** Mit der aktuellen Terraform-Konfiguration ist KEIN manuelles Klicken mehr nötig!
+
+1. **Kompletter Stack deployen:**
+   ```bash
+   cd terraform/examples/basic
+   terraform init
+   terraform apply -auto-approve
+   ```
+
+2. **Was passiert automatisch:**
+   - ✅ DynamoDB Tabellen erstellen
+   - ✅ Lambda Backend deployen
+   - ✅ API Gateway konfigurieren
+   - ✅ Amplify Apps erstellen (Frontend + Admin)
+   - ✅ GitHub-Verbindung herstellen
+   - ✅ **Automatischer Initial Build** (KEIN Klicken mehr!)
+   - ✅ CloudFront Distribution setup
+
+3. **Deployment dauert:** ~5-8 Minuten für den kompletten Stack
+
+4. **Daten befüllen:**
+   ```bash
+   cd ../../../backend
+   npm run dynamodb:migrate:single -- --region eu-north-1
+   node scripts/create-test-user.js
+   ```
+
+### Frontend Deployment (Amplify) - Nachfolgende Updates
 
 1. **Code pushen:**
    ```bash
@@ -136,7 +203,7 @@ Alle Tabellen in Region **eu-north-1**
 
 3. **Build Status prüfen:**
    ```bash
-   aws amplify list-jobs --app-id d1d14e6pdoz4r --branch-name main --region eu-north-1
+   aws amplify list-jobs --app-id <APP_ID> --branch-name main --region eu-north-1
    ```
 
 ### Backend Deployment (Lambda)

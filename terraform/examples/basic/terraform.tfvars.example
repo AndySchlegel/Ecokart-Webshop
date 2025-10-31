@@ -1,0 +1,25 @@
+# ============================================================================
+# Beispiel: terraform.tfvars
+# ============================================================================
+# Kopiere diese Datei zu terraform.tfvars und fülle die Werte aus.
+#
+# WICHTIG: terraform.tfvars sollte NICHT in Git committed werden!
+# (ist bereits in .gitignore)
+
+# Allgemeine Konfiguration
+aws_region   = "eu-north-1"
+project_name = "ecokart"
+environment  = "development"
+
+# JWT Secret (ERFORDERLICH - min. 32 Zeichen)
+# Generiere sicheren Wert mit: openssl rand -base64 32
+jwt_secret = "your-super-secret-jwt-key-change-me-in-production-min-32-chars"
+
+# Lambda Source Path
+# Für Minimal-Code: "../../lambda"
+# Für Production Backend: "../../../backend"
+lambda_source_path = "../../../backend"
+
+# Optional: GitHub Access Token für Amplify
+# Nur benötigt wenn enable_amplify=true in main.tf
+# github_access_token = "ghp_yourgithubaccesstoken"

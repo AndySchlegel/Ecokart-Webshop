@@ -17,3 +17,6 @@ npm-debug.log*
 # IDE
 .vscode/
 .idea/
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
