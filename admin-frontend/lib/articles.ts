@@ -4,9 +4,9 @@ export type Article = {
   price: number;
   description: string;
   imageUrl: string;
-  category?: string;
-  rating?: number;
-  reviewCount?: number;
+  category: string;
+  rating: number;
+  reviewCount: number;
 };
 
 export type ArticlePayload = Omit<Article, 'id'>;
