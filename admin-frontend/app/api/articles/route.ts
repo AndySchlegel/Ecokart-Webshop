@@ -51,9 +51,9 @@ export async function POST(request: Request) {
       description: body.description,
       imageUrl,
       price: body.price,
-      category: body.category,
-      rating: body.rating,
-      reviewCount: body.reviewCount
+      category: body.category || 'uncategorized',
+      rating: body.rating ?? 0,
+      reviewCount: body.reviewCount ?? 0
     });
     return NextResponse.json({ item }, { status: 201 });
   } catch (error) {
