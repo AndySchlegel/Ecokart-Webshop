@@ -11,10 +11,15 @@ export type Article = {
 
 export type ArticlePayload = Omit<Article, 'id'>;
 
-const API_URL = process.env.ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL;
-const API_KEY = process.env.ADMIN_API_KEY;
+const BASE_URL = process.env.ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL;
+const API_URL = BASE_URL?.endsWith('/')
+  ? `${BASE_URL}api/products`
+  : BASE_URL?.includes('/api/products')
+    ? BASE_URL
+    : `${BASE_URL}/api/products`;
 
 export async function fetchArticles() {
+  console.log('[ARTICLES] Fetching from URL:', API_URL);
   if (!API_URL) {
     throw new Error('ADMIN_API_URL ist nicht gesetzt.');
   }
