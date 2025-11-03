@@ -194,3 +194,16 @@ module "amplify_admin" {
 # ----------------------------------------------------------------------------
 # Lambda Log Group wird automatisch von Lambda-Module erstellt
 # Zusätzliche Log Groups können hier hinzugefügt werden
+
+# ----------------------------------------------------------------------------
+# Database Seeding (Optional - nur für Development)
+# ----------------------------------------------------------------------------
+
+module "database_seeding" {
+  source = "./modules/seed"
+
+  aws_region            = var.aws_region
+  backend_path          = "${path.module}/../backend"
+  enable_seeding        = var.enable_auto_seed
+  depends_on_resources  = [module.dynamodb, module.lambda]
+}

@@ -48,7 +48,7 @@ resource "null_resource" "seed_database" {
 
       # Install dependencies
       echo "📦 Installing backend dependencies..."
-      npm ci --production=false
+      npm ci
 
       # Migrate products
       echo "📋 Migrating products to DynamoDB..."

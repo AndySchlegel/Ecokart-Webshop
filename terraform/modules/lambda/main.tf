@@ -16,7 +16,7 @@ resource "null_resource" "build_lambda" {
   }
 
   provisioner "local-exec" {
-    command     = "npm ci --production=false && npm run build"
+    command     = "npm ci && npm run build"
     working_dir = var.source_path
   }
 }

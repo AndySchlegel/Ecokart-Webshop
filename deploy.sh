@@ -69,6 +69,17 @@ terraform init -upgrade
 echo -e "${GREEN}✅ Terraform initialisiert${NC}"
 echo ""
 
+# ----------------------------------------------------------------------------
+# Clean Backend Dependencies (prevent race condition)
+# ----------------------------------------------------------------------------
+
+echo -e "${YELLOW}🧹 Lösche alte Backend Dependencies...${NC}"
+cd ../../..
+rm -rf backend/node_modules
+cd terraform/examples/basic
+echo -e "${GREEN}✅ Dependencies bereinigt${NC}"
+echo ""
+
 if [ "$COMMAND" = "destroy" ]; then
     echo -e "${RED}🗑️  Lösche Infrastruktur...${NC}"
     echo ""

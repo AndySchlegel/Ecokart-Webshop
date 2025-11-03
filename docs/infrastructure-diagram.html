@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecokart - AWS Infrastruktur & Deployment Flow</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .tab {
+            padding: 12px 30px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: #666;
+        }
+
+        .tab:hover {
+            background: #e0e0e0;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Architecture Diagram */
+        .architecture {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .component {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid transparent;
+            position: relative;
+        }
+
+        .component:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+            border-color: #667eea;
+        }
+
+        .component.amplify {
+            background: linear-gradient(135deg, #FF9A56 0%, #FF6B6B 100%);
+            color: white;
+        }
+
+        .component.api-gateway {
+            background: linear-gradient(135deg, #4FACFE 0%, #00F2FE 100%);
+            color: white;
+        }
+
+        .component.lambda {
+            background: linear-gradient(135deg, #FA8BFF 0%, #2BD2FF 100%);
+            color: white;
+        }
+
+        .component.dynamodb {
+            background: linear-gradient(135deg, #FFD54F 0%, #FFA726 100%);
+            color: white;
+        }
+
+        .component-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .component-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .component-desc {
+            font-size: 0.9em;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+
+        .component-details {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 300px;
+            margin-top: 10px;
+            z-index: 1000;
+            text-align: left;
+        }
+
+        .component:hover .component-details {
+            display: block;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .component-details h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        .component-details ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .component-details li {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .component-details li:before {
+            content: "✓ ";
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        /* Arrows */
+        .arrows {
+            position: relative;
+            height: 80px;
+            margin: 20px 0;
+        }
+
+        .arrow {
+            position: absolute;
+            top: 50%;
+            width: 0;
+            height: 0;
+            border-top: 15px solid transparent;
+            border-bottom: 15px solid transparent;
+        }
+
+        .arrow-1 { left: 23%; border-left: 30px solid #FF6B6B; }
+        .arrow-2 { left: 48%; border-left: 30px solid #00F2FE; }
+        .arrow-3 { left: 73%; border-left: 30px solid #2BD2FF; }
+
+        /* Deployment Flow */
+        .deployment-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .flow-step:hover {
+            background: #e8f4f8;
+            transform: translateX(10px);
+        }
+
+        .flow-number {
+            min-width: 50px;
+            height: 50px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.5em;
+        }
+
+        .flow-content {
+            flex: 1;
+        }
+
+        .flow-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .flow-desc {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .flow-time {
+            min-width: 100px;
+            text-align: right;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        .code-block .comment {
+            color: #6A9955;
+        }
+
+        .code-block .command {
+            color: #4EC9B0;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 40px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            border-bottom: 1px dotted #667eea;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Ecokart AWS Infrastruktur</h1>
+        <p class="subtitle">Serverless E-Commerce Platform - Live Deployment Visualization</p>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('architecture')">Architektur</button>
+            <button class="tab" onclick="showTab('deployment')">Deployment Flow</button>
+            <button class="tab" onclick="showTab('components')">Komponenten</button>
+        </div>
+
+        <!-- Architecture Tab -->
+        <div id="architecture" class="tab-content active">
+            <h2 style="text-align: center; color: #667eea; margin-bottom: 30px;">AWS Architektur</h2>
+
+            <div class="architecture">
+                <div class="component amplify">
+                    <div class="component-icon">🌐</div>
+                    <div class="component-title">Amplify Hosting</div>
+                    <div class="component-desc">Next.js 15 SSR<br>Customer & Admin Frontend</div>
+                    <div class="component-details">
+                        <h4>AWS Amplify</h4>
+                        <ul>
+                            <li>Platform: WEB_COMPUTE</li>
+                            <li>Framework: Next.js 15</li>
+                            <li>Auto-Deploy bei Git Push</li>
+                            <li>Basic Auth: demo/admin</li>
+                            <li>Monorepo Support</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="component api-gateway">
+                    <div class="component-icon">🚪</div>
+                    <div class="component-title">API Gateway</div>
+                    <div class="component-desc">REST API<br>Proxy Integration</div>
+                    <div class="component-details">
+                        <h4>API Gateway</h4>
+                        <ul>
+                            <li>Type: REST API</li>
+                            <li>Integration: AWS_PROXY</li>
+                            <li>Methods: ANY (GET, POST, etc.)</li>
+                            <li>Path: {proxy+}</li>
+                            <li>Stage: Prod</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="component lambda">
+                    <div class="component-icon">⚡</div>
+                    <div class="component-title">Lambda Function</div>
+                    <div class="component-desc">Express.js Backend<br>Node.js 20.x</div>
+                    <div class="component-details">
+                        <h4>AWS Lambda</h4>
+                        <ul>
+                            <li>Runtime: Node.js 20.x</li>
+                            <li>Memory: 512 MB</li>
+                            <li>Timeout: 30s</li>
+                            <li>Handler: dist/lambda.handler</li>
+                            <li>Package: serverless-http</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="component dynamodb">
+                    <div class="component-icon">🗄️</div>
+                    <div class="component-title">DynamoDB</div>
+                    <div class="component-desc">NoSQL Database<br>4 Tabellen</div>
+                    <div class="component-details">
+                        <h4>DynamoDB</h4>
+                        <ul>
+                            <li>products (31 Items)</li>
+                            <li>users (2 Items)</li>
+                            <li>carts</li>
+                            <li>orders</li>
+                            <li>Billing: Provisioned (5 RCU/WCU)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrows">
+                <div class="arrow arrow-1"></div>
+                <div class="arrow arrow-2"></div>
+                <div class="arrow arrow-3"></div>
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+                <h3 style="color: #667eea; margin-bottom: 20px;">Request Flow</h3>
+                <p style="font-size: 1.2em; color: #666; line-height: 2;">
+                    User Browser → <strong>Amplify (Next.js SSR)</strong> → <strong>API Gateway</strong> → <strong>Lambda (Express.js)</strong> → <strong>DynamoDB</strong>
+                </p>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number">~10min</div>
+                    <div class="stat-label">Deployment Zeit</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">1</div>
+                    <div class="stat-label">Befehl: ./deploy.sh</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">31</div>
+                    <div class="stat-label">Auto-Seeded Produkte</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">16</div>
+                    <div class="stat-label">AWS Ressourcen</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deployment Flow Tab -->
+        <div id="deployment" class="tab-content">
+            <h2 style="text-align: center; color: #667eea; margin-bottom: 30px;">Deployment Ablauf</h2>
+
+            <div class="code-block">
+                <span class="comment"># ONE-CLICK Deployment</span><br>
+                <span class="command">./deploy.sh</span>
+            </div>
+
+            <div class="deployment-flow">
+                <div class="flow-step">
+                    <div class="flow-number">1</div>
+                    <div class="flow-content">
+                        <div class="flow-title">🔑 GitHub Token laden</div>
+                        <div class="flow-desc">Token aus AWS Parameter Store (<code>/ecokart/development/github-token</code>) laden</div>
+                    </div>
+                    <div class="flow-time">~1s</div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="flow-number">2</div>
+                    <div class="flow-content">
+                        <div class="flow-title">📦 Terraform Init</div>
+                        <div class="flow-desc">Module laden, Provider initialisieren, Plugins herunterladen</div>
+                    </div>
+                    <div class="flow-time">~30s</div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="flow-number">3</div>
+                    <div class="flow-content">
+                        <div class="flow-title">🧹 Dependencies bereinigen</div>
+                        <div class="flow-desc">
+                            <code>rm -rf backend/node_modules</code><br>
+                            <strong>Wichtig:</strong> Verhindert Race Condition zwischen Lambda Build & DB Seeding
+                        </div>
+                    </div>
+                    <div class="flow-time">~1s</div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="flow-number">4</div>
+                    <div class="flow-content">
+                        <div class="flow-title">🗄️ DynamoDB Tabellen erstellen</div>
+                        <div class="flow-desc">4 Tabellen: products, users, carts, orders mit GSIs und Indizes</div>
+                    </div>
+                    <div class="flow-time">~30s</div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="flow-number">5</div>
+                    <div class="flow-content">
+                        <div class="flow-title">⚡ Lambda Function bauen</div>
+                        <div class="flow-desc">
+                            <code>npm ci</code> → <code>tsc</code> (TypeScript kompilieren) → ZIP Package erstellen
+                        </div>
+                    </div>
+                    <div class="flow-time">~2min</div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="flow-number">6</div>
+                    <div class="flow-content">
+                        <div class="flow-title">🚪 API Gateway konfigurieren</div>
+                        <div class="flow-desc">REST API mit Proxy Integration ({proxy+}) zu Lambda</div>
+                    </div>
+                    <div class="flow-time">~20s</div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="flow-number">7</div>
+                    <div class="flow-content">
+                        <div class="flow-title">🌐 Amplify Apps erstellen</div>
+                        <div class="flow-desc">Customer Frontend + Admin Frontend mit Basic Auth und Environment Variables</div>
+                    </div>
+                    <div class="flow-time">~1min</div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="flow-number">8</div>
+                    <div class="flow-content">
+                        <div class="flow-title">🌱 Database Seeding</div>
+                        <div class="flow-desc">
+                            31 Produkte importieren → Test-User erstellen → Admin-User erstellen<br>
+                            <strong>Wichtig:</strong> Wartet auf Lambda Build (depends_on)
+                        </div>
+                    </div>
+                    <div class="flow-time">~2min</div>
+                </div>
+
+                <div class="flow-step">
+                    <div class="flow-number">9</div>
+                    <div class="flow-content">
+                        <div class="flow-title">✅ Deployment Abgeschlossen</div>
+                        <div class="flow-desc">Outputs anzeigen: URLs für Customer, Admin, API</div>
+                    </div>
+                    <div class="flow-time">~1s</div>
+                </div>
+
+                <div class="flow-step" style="border-left-color: #FFA726;">
+                    <div class="flow-number" style="background: #FFA726;">⚠️</div>
+                    <div class="flow-content">
+                        <div class="flow-title">🔗 GitHub OAuth verbinden (MANUELL)</div>
+                        <div class="flow-desc">
+                            <strong>Nur beim ersten Deployment:</strong><br>
+                            AWS Console → Amplify → Reconnect repository (für Customer + Admin)<br>
+                            <em>AWS Platform-Limitation - kann nicht automatisiert werden</em>
+                        </div>
+                    </div>
+                    <div class="flow-time">~2min</div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 40px; padding: 20px; background: #f0f8ff; border-radius: 10px;">
+                <h3 style="color: #667eea;">Gesamtdauer: 8-10 Minuten</h3>
+                <p style="color: #666; margin-top: 10px;">Automatisiert: 95% | Manuell: 5% (nur GitHub OAuth beim ersten Mal)</p>
+            </div>
+        </div>
+
+        <!-- Components Tab -->
+        <div id="components" class="tab-content">
+            <h2 style="text-align: center; color: #667eea; margin-bottom: 30px;">Terraform Module</h2>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <div style="background: #f8f9fa; padding: 30px; border-radius: 15px; border-left: 5px solid #FF6B6B;">
+                    <h3 style="color: #FF6B6B; margin-bottom: 15px;">📁 terraform/modules/dynamodb/</h3>
+                    <p style="margin-bottom: 10px;"><strong>Zweck:</strong> DynamoDB Tabellen erstellen</p>
+                    <ul style="list-style: none; padding-left: 0;">
+                        <li>✓ 4 Tabellen (products, users, carts, orders)</li>
+                        <li>✓ GSI für userId-basierte Queries</li>
+                        <li>✓ Billing Mode: PROVISIONED (5 RCU/WCU)</li>
+                        <li>✓ Point-in-Time Recovery (optional)</li>
+                    </ul>
+                    <div class="code-block" style="margin-top: 15px; font-size: 0.9em;">
+resource "aws_dynamodb_table" "products" {
+  name         = "ecokart-products"
+  billing_mode = "PROVISIONED"
+  hash_key     = "id"
+}
+                    </div>
+                </div>
+
+                <div style="background: #f8f9fa; padding: 30px; border-radius: 15px; border-left: 5px solid #00F2FE;">
+                    <h3 style="color: #00F2FE; margin-bottom: 15px;">📁 terraform/modules/lambda/</h3>
+                    <p style="margin-bottom: 10px;"><strong>Zweck:</strong> Lambda + API Gateway</p>
+                    <ul style="list-style: none; padding-left: 0;">
+                        <li>✓ TypeScript Build (npm ci + tsc)</li>
+                        <li>✓ ZIP Package erstellen</li>
+                        <li>✓ Lambda Function deployen</li>
+                        <li>✓ API Gateway Proxy Integration</li>
+                        <li>✓ IAM Roles & Policies</li>
+                    </ul>
+                    <div class="code-block" style="margin-top: 15px; font-size: 0.9em;">
+resource "null_resource" "build_lambda" {
+  provisioner "local-exec" {
+    command = "npm ci && npm run build"
+  }
+}
+                    </div>
+                </div>
+
+                <div style="background: #f8f9fa; padding: 30px; border-radius: 15px; border-left: 5px solid #2BD2FF;">
+                    <h3 style="color: #2BD2FF; margin-bottom: 15px;">📁 terraform/modules/amplify/</h3>
+                    <p style="margin-bottom: 10px;"><strong>Zweck:</strong> Amplify Hosting für Next.js</p>
+                    <ul style="list-style: none; padding-left: 0;">
+                        <li>✓ Platform: WEB_COMPUTE (SSR Support)</li>
+                        <li>✓ Monorepo: appRoot konfigurierbar</li>
+                        <li>✓ Basic Auth per Branch</li>
+                        <li>✓ Environment Variables</li>
+                        <li>✓ Webhook für Manual Deploy</li>
+                    </ul>
+                    <div class="code-block" style="margin-top: 15px; font-size: 0.9em;">
+resource "aws_amplify_app" "frontend" {
+  name     = var.app_name
+  platform = "WEB_COMPUTE"
+}
+                    </div>
+                </div>
+
+                <div style="background: #f8f9fa; padding: 30px; border-radius: 15px; border-left: 5px solid #FFA726;">
+                    <h3 style="color: #FFA726; margin-bottom: 15px;">📁 terraform/modules/seed/</h3>
+                    <p style="margin-bottom: 10px;"><strong>Zweck:</strong> Database Seeding</p>
+                    <ul style="list-style: none; padding-left: 0;">
+                        <li>✓ Produktdaten aus JSON importieren</li>
+                        <li>✓ Test-User erstellen (bcrypt-hashed PW)</li>
+                        <li>✓ Admin-User erstellen</li>
+                        <li>✓ Läuft NACH Lambda Build (depends_on)</li>
+                        <li>✓ Trigger: Bei jedem apply</li>
+                    </ul>
+                    <div class="code-block" style="margin-top: 15px; font-size: 0.9em;">
+provisioner "local-exec" {
+  command = &lt;&lt;EOF
+    npm run dynamodb:migrate:single
+    node scripts/create-test-user.js
+  EOF
+}
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px; padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; color: white;">
+                <h3 style="margin-bottom: 20px;">🎯 Terraform Root Module (terraform/main.tf)</h3>
+                <p style="font-size: 1.1em; line-height: 1.8;">
+                    Orchestriert alle Sub-Module:<br>
+                    <code style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px;">
+                        module.dynamodb → module.lambda → module.amplify → module.seed
+                    </code>
+                </p>
+                <p style="margin-top: 15px; opacity: 0.9;">
+                    <strong>Abhängigkeiten:</strong> Lambda wartet auf DynamoDB, Seeding wartet auf Lambda
+                </p>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #FF9A56 0%, #FF6B6B 100%);"></div>
+                <span>Amplify (Frontend)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #4FACFE 0%, #00F2FE 100%);"></div>
+                <span>API Gateway</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #FA8BFF 0%, #2BD2FF 100%);"></div>
+                <span>Lambda Function</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #FFD54F 0%, #FFA726 100%);"></div>
+                <span>DynamoDB</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            // Remove active class from all tab buttons
+            const tabButtons = document.querySelectorAll('.tab');
+            tabButtons.forEach(button => button.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
