@@ -51,7 +51,7 @@ export default function LoginPage() {
               <input
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
-                type="email"
+                type="text"
                 required
                 placeholder="admin@ecokart.com"
               />
