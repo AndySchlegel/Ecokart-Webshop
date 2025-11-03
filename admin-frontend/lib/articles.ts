@@ -11,17 +11,8 @@ export type Article = {
 
 export type ArticlePayload = Omit<Article, 'id'>;
 
-const API_URL = process.env.ADMIN_API_URL;
+const API_URL = process.env.ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL;
 const API_KEY = process.env.ADMIN_API_KEY;
-
-function ensureConfig() {
-  if (!API_URL) {
-    throw new Error('ADMIN_API_URL ist nicht gesetzt.');
-  }
-  if (!API_KEY) {
-    throw new Error('ADMIN_API_KEY ist nicht gesetzt.');
-  }
-}
 
 export async function fetchArticles() {
   if (!API_URL) {
