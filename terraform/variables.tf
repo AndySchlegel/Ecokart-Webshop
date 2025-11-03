@@ -253,6 +253,16 @@ variable "admin_basic_auth_password" {
 }
 
 # ----------------------------------------------------------------------------
+# Database Seeding
+# ----------------------------------------------------------------------------
+
+variable "enable_auto_seed" {
+  description = "Automatisches DynamoDB Seeding aktivieren (erstellt Test-Daten beim Deploy)"
+  type        = bool
+  default     = true
+}
+
+# ----------------------------------------------------------------------------
 # Tagging
 # ----------------------------------------------------------------------------
 
