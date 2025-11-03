@@ -59,10 +59,15 @@ echo -e "${GREEN}✅ Token geladen${NC}"
 echo ""
 
 # ----------------------------------------------------------------------------
-# Terraform Apply or Destroy
+# Terraform Init & Apply or Destroy
 # ----------------------------------------------------------------------------
 
 cd terraform/examples/basic
+
+echo -e "${YELLOW}📦 Initialisiere Terraform...${NC}"
+terraform init -upgrade
+echo -e "${GREEN}✅ Terraform initialisiert${NC}"
+echo ""
 
 if [ "$COMMAND" = "destroy" ]; then
     echo -e "${RED}🗑️  Lösche Infrastruktur...${NC}"
