@@ -39,3 +39,4 @@ Project Info Claude Code/
 # Misc
 *.tsbuildinfo
 .cache/
+terraform.tfstate

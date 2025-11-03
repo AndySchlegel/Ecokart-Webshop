@@ -1,3 +1,29 @@
+// ============================================================================
+// 🚀 ECOKART BACKEND - HAUPTDATEI (Express.js Application)
+// ============================================================================
+// Diese Datei ist das Herzstück des Backends und erstellt die Express.js App.
+// Sie läuft sowohl lokal (für Entwicklung) als auch auf AWS Lambda (Produktion).
+//
+// 📌 WICHTIGE KONZEPTE FÜR ANFÄNGER:
+//
+// 1️⃣ Express.js = Web-Framework für Node.js
+//    - Erstellt einen Web-Server der HTTP-Requests bearbeitet
+//    - Definiert Routen (Endpunkte) wie /api/products, /api/auth, etc.
+//
+// 2️⃣ Middleware = Funktionen die bei jedem Request ausgeführt werden
+//    - CORS: Erlaubt Frontend Zugriff auf Backend (Cross-Origin)
+//    - express.json(): Wandelt JSON-Daten aus Requests in JavaScript-Objekte
+//    - Logging: Protokolliert jeden Request (hilfreich zum Debuggen)
+//
+// 3️⃣ Routes = URL-Pfade die zu bestimmten Funktionen führen
+//    - GET /api/products → Liste alle Produkte auf
+//    - POST /api/auth/login → Melde User an
+//
+// 4️⃣ Lambda-Kompatibilität
+//    - Lokal: Server läuft auf Port 4000
+//    - AWS: Keine Port-Bindung, Lambda startet Server automatisch
+// ============================================================================
+
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -6,33 +32,61 @@ import authRoutes from './routes/authRoutes';
 import cartRoutes from './routes/cartRoutes';
 import orderRoutes from './routes/orderRoutes';
 
-// Load environment variables
+// ============================================================================
+// 📦 KONFIGURATION
+// ============================================================================
+
+// Lade Umgebungsvariablen aus .env Datei (z.B. JWT_SECRET, AWS_REGION)
 dotenv.config();
 
+// Erstelle Express Application (der Web-Server)
 const app: Application = express();
+
+// Port für lokale Entwicklung (Standard: 4000)
 const PORT = process.env.PORT || 4000;
 
-// Middleware
+// ============================================================================
+// 🛡️ MIDDLEWARE SETUP
+// ============================================================================
+
+// CORS = Cross-Origin Resource Sharing
+// 💡 Erlaubt Frontend (auf anderem Port/Domain) Zugriff auf Backend
+// ⚠️ WICHTIG: Ohne CORS würde Browser Requests blockieren!
 app.use(cors({
   origin: [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://localhost:3002',
-    'https://main.d1d14e6pdoz4r.amplifyapp.com', // Your Amplify URL
-    /\.amplifyapp\.com$/ // All Amplify URLs
+    'http://localhost:3000',      // Customer Frontend (lokal)
+    'http://localhost:3001',      // Admin Frontend (lokal)
+    'http://localhost:3002',      // Alternatives Frontend (lokal)
+    'https://main.d1d14e6pdoz4r.amplifyapp.com', // Deine Amplify URL
+    /\.amplifyapp\.com$/          // Alle Amplify URLs (Regex-Pattern)
   ],
-  credentials: true
+  credentials: true               // Erlaube Cookies/Authorization Headers
 }));
+
+// JSON Parser Middleware
+// 💡 Wandelt eingehende JSON-Requests in JavaScript-Objekte um
+// Beispiel: {"email": "test@test.com"} → req.body.email
 app.use(express.json());
+
+// URL-Encoded Parser Middleware
+// 💡 Verarbeitet Form-Daten (z.B. von HTML-Formularen)
 app.use(express.urlencoded({ extended: true }));
 
-// Logging middleware
+// Logging Middleware
+// 💡 Protokolliert jeden eingehenden Request (hilfreich für Debugging)
+// Ausgabe: 2025-11-03T10:30:45.123Z - GET /api/products
 app.use((req: Request, res: Response, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-  next();
+  next(); // Wichtig! Leitet Request an nächste Middleware/Route weiter
 });
 
-// Routes
+// ============================================================================
+// 🔗 ROUTES (API ENDPUNKTE)
+// ============================================================================
+
+// Health Check Route
+// 💡 Prüft ob Backend läuft (wird von AWS LoadBalancer genutzt)
+// ➡️ GET /api/health
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({
     status: 'healthy',
@@ -41,18 +95,41 @@ app.get('/api/health', (req: Request, res: Response) => {
   });
 });
 
+// 🏷️ Produkt-Routen
+// ➡️ Alle Requests zu /api/products/* werden an productRoutes weitergeleitet
+// Siehe: ./routes/productRoutes.ts für Details
 app.use('/api/products', productRoutes);
+
+// 🔐 Authentifizierungs-Routen
+// ➡️ Login, Register, User-Info
+// Siehe: ./routes/authRoutes.ts für Details
 app.use('/api/auth', authRoutes);
+
+// 🛒 Warenkorb-Routen
+// ➡️ Produkte hinzufügen, entfernen, anzeigen
+// Siehe: ./routes/cartRoutes.ts für Details
 app.use('/api/cart', cartRoutes);
+
+// 📦 Bestellungs-Routen
+// ➡️ Bestellungen erstellen, anzeigen, Status ändern
+// Siehe: ./routes/orderRoutes.ts für Details
 app.use('/api/orders', orderRoutes);
 
-// 404 handler
+// 404 Handler
+// 💡 Fängt alle Requests zu nicht existierenden Routen ab
+// ⚠️ Muss NACH allen anderen Routen definiert werden!
 app.use((req: Request, res: Response) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// Start server (only when not running in Lambda)
+// ============================================================================
+// 🖥️ SERVER START (NUR FÜR LOKALE ENTWICKLUNG)
+// ============================================================================
+
+// 💡 Prüfe ob wir in Lambda laufen oder lokal
+// AWS_EXECUTION_ENV existiert nur in Lambda-Umgebung
 if (process.env.AWS_EXECUTION_ENV === undefined) {
+  // Starte lokalen Server auf Port 4000
   app.listen(PORT, () => {
     console.log('┌─────────────────────────────────────────┐');
     console.log('│  🚀 EcoKart Backend API                 │');
@@ -93,5 +170,12 @@ if (process.env.AWS_EXECUTION_ENV === undefined) {
     console.log('└─────────────────────────────────────────┘');
   });
 }
+// ⚠️ In Lambda wird KEIN Server gestartet!
+// Lambda startet/stoppt automatisch bei Requests
 
+// ============================================================================
+// 📤 EXPORT
+// ============================================================================
+
+// Exportiere App für Lambda-Handler (siehe lambda.ts)
 export default app;
