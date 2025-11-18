@@ -149,6 +149,20 @@ jobs:
           echo "✅ GitHub Token retrieved successfully"
 
       # ======================================================================
+      # 6b. Generate JWT Secret
+      # ======================================================================
+      - name: 🔐 Generate JWT Secret
+        id: jwt-secret
+        run: |
+          # Generate a random 64-character JWT secret (secure!)
+          JWT_SECRET=$(openssl rand -base64 48 | tr -d '\n')
+
+          # Mask the secret in logs (security!)
+          echo "::add-mask::$JWT_SECRET"
+          echo "secret=$JWT_SECRET" >> $GITHUB_OUTPUT
+          echo "✅ JWT Secret generated (64 characters)"
+
+      # ======================================================================
       # 7. Terraform Init
       # ======================================================================
       - name: 🔧 Terraform Init
@@ -165,6 +179,7 @@ jobs:
         working-directory: terraform/examples/basic
         env:
           TF_VAR_github_access_token: ${{ steps.github-token.outputs.token }}
+          TF_VAR_jwt_secret: ${{ steps.jwt-secret.outputs.secret }}
           TF_VAR_environment: ${{ steps.env.outputs.environment }}
         run: |
           terraform plan -out=tfplan
@@ -178,6 +193,7 @@ jobs:
         working-directory: terraform/examples/basic
         env:
           TF_VAR_github_access_token: ${{ steps.github-token.outputs.token }}
+          TF_VAR_jwt_secret: ${{ steps.jwt-secret.outputs.secret }}
           TF_VAR_environment: ${{ steps.env.outputs.environment }}
         run: |
           terraform apply -auto-approve tfplan
@@ -191,6 +207,7 @@ jobs:
         working-directory: terraform/examples/basic
         env:
           TF_VAR_github_access_token: ${{ steps.github-token.outputs.token }}
+          TF_VAR_jwt_secret: ${{ steps.jwt-secret.outputs.secret }}
           TF_VAR_environment: ${{ steps.env.outputs.environment }}
         run: |
           terraform destroy -auto-approve
