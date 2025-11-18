@@ -301,6 +301,8 @@ resource "aws_iam_policy" "amplify" {
           "amplify:GetBranch",
           "amplify:ListBranches",
           "amplify:UpdateBranch",
+          "amplify:CreateWebhook",
+          "amplify:DeleteWebhook",
           "amplify:StartJob",
           "amplify:TagResource",
           "amplify:UntagResource",
@@ -313,8 +315,6 @@ resource "aws_iam_policy" "amplify" {
       {
         Effect = "Allow"
         Action = [
-          "amplify:CreateWebhook",
-          "amplify:DeleteWebhook",
           "amplify:GetWebhook",
           "amplify:ListWebhooks"
         ]
