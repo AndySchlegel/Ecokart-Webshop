@@ -24,10 +24,10 @@ LOG_GROUP_NAME="/aws/lambda/${PROJECT}-${ENVIRONMENT}-api"
 LAMBDA_FUNCTION_NAME="${PROJECT}-${ENVIRONMENT}-api"
 
 TABLES=(
-  "${PROJECT}-${ENVIRONMENT}-products"
-  "${PROJECT}-${ENVIRONMENT}-users"
-  "${PROJECT}-${ENVIRONMENT}-carts"
-  "${PROJECT}-${ENVIRONMENT}-orders"
+  "${PROJECT}-products"
+  "${PROJECT}-users"
+  "${PROJECT}-carts"
+  "${PROJECT}-orders"
 )
 
 echo -e "${BLUE}╔═══════════════════════════════════════════════════════════════════╗${NC}"
