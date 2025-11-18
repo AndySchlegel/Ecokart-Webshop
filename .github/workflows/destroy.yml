@@ -99,7 +99,7 @@ jobs:
         working-directory: terraform/examples/basic
         env:
           TF_VAR_github_access_token: ${{ steps.github-token.outputs.token }}
-          TF_VAR_jwt_secret: "dummy-secret-for-destroy"
+          TF_VAR_jwt_secret: "dummy-secret-for-destroy-minimum-32-chars-required-padding"
         run: |
           echo "📋 Creating destruction plan..."
           terraform plan -destroy -out=tfplan
@@ -139,7 +139,7 @@ jobs:
         working-directory: terraform/examples/basic
         env:
           TF_VAR_github_access_token: ${{ steps.github-token.outputs.token }}
-          TF_VAR_jwt_secret: "dummy-secret-for-destroy"
+          TF_VAR_jwt_secret: "dummy-secret-for-destroy-minimum-32-chars-required-padding"
         run: |
           echo "💥 Destroying infrastructure..."
           terraform apply -auto-approve tfplan
