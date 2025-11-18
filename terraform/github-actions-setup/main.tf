@@ -108,6 +108,8 @@ resource "aws_iam_policy" "dynamodb" {
           "dynamodb:DeleteTable",
           "dynamodb:DescribeTable",
           "dynamodb:DescribeTimeToLive",
+          "dynamodb:DescribeContinuousBackups",
+          "dynamodb:UpdateContinuousBackups",
           "dynamodb:ListTables",
           "dynamodb:ListTagsOfResource",
           "dynamodb:TagResource",
