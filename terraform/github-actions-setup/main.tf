@@ -255,7 +255,6 @@ resource "aws_iam_policy" "cloudwatch" {
           "logs:PutLogEvents",
           "logs:PutRetentionPolicy",
           "logs:DeleteRetentionPolicy",
-          "logs:DescribeLogGroups",
           "logs:DescribeLogStreams",
           "logs:DeleteLogGroup",
           "logs:TagResource",
@@ -266,6 +265,13 @@ resource "aws_iam_policy" "cloudwatch" {
           "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/aws/lambda/${var.project_name}-*",
           "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/aws/lambda/${var.project_name}-*:*"
         ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:DescribeLogGroups"
+        ]
+        Resource = "*"
       }
     ]
   })
