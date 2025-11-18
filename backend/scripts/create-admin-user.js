@@ -6,10 +6,17 @@ const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 
 async function createAdminUser() {
-  const client = new DynamoDBClient({
-    region: 'eu-north-1',
-    credentials: fromSSO({ profile: process.env.AWS_PROFILE })
-  });
+  // Use SSO credentials only if AWS_PROFILE is set (local development)
+  // Otherwise use default credential chain (works with GitHub Actions OIDC)
+  const clientConfig = {
+    region: process.env.AWS_REGION || 'eu-north-1'
+  };
+
+  if (process.env.AWS_PROFILE) {
+    clientConfig.credentials = fromSSO({ profile: process.env.AWS_PROFILE });
+  }
+
+  const client = new DynamoDBClient(clientConfig);
   const dynamodb = DynamoDBDocumentClient.from(client);
 
   console.log('🔐 Erstelle Admin-User...\n');
