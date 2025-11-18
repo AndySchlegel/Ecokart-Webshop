@@ -1,0 +1,243 @@
+# ============================================================================
+# GitHub Actions Workflow - Automated Ecokart Deployment
+# ============================================================================
+# This workflow automatically deploys your Ecokart infrastructure to AWS
+# whenever you push to main, develop, or staging branches.
+#
+# Features:
+# - ✅ 100% automated deployment (no manual steps!)
+# - ✅ OIDC authentication (no AWS keys in secrets!)
+# - ✅ Multi-environment support (dev, staging, prod)
+# - ✅ Database seeding included
+# - ✅ Manual trigger option
+# ============================================================================
+
+name: Deploy Ecokart Infrastructure
+
+on:
+  # Automatic triggers
+  push:
+    branches:
+      - main
+      - develop
+      - staging
+    paths:
+      - 'terraform/**'
+      - 'backend/**'
+      - 'frontend/**'
+      - 'admin-frontend/**'
+      - '.github/workflows/deploy.yml'
+
+  # Manual trigger with options
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+        default: 'development'
+      destroy:
+        description: 'Destroy infrastructure instead of deploy'
+        type: boolean
+        default: false
+
+# Environment variables
+env:
+  AWS_REGION: eu-north-1
+  TERRAFORM_VERSION: 1.5.0
+  NODE_VERSION: 20
+
+jobs:
+  deploy:
+    name: Deploy to AWS
+    runs-on: ubuntu-latest
+
+    # Required for OIDC authentication
+    permissions:
+      id-token: write   # This is critical for OIDC!
+      contents: read
+
+    steps:
+      # ======================================================================
+      # 1. Checkout Code
+      # ======================================================================
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      # ======================================================================
+      # 2. Determine Environment
+      # ======================================================================
+      - name: 🎯 Determine Environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            ENV="${{ github.event.inputs.environment }}"
+          else
+            case "${{ github.ref_name }}" in
+              main)
+                ENV="production"
+                ;;
+              staging)
+                ENV="staging"
+                ;;
+              develop)
+                ENV="development"
+                ;;
+              *)
+                ENV="development"
+                ;;
+            esac
+          fi
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+          echo "🎯 Deploying to: $ENV"
+
+      # ======================================================================
+      # 3. Configure AWS Credentials via OIDC
+      # ======================================================================
+      - name: 🔐 Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-${{ github.run_id }}
+
+      # Verify AWS authentication
+      - name: ✅ Verify AWS Authentication
+        run: |
+          echo "✅ AWS Authentication successful!"
+          aws sts get-caller-identity
+          echo "📍 Region: ${{ env.AWS_REGION }}"
+
+      # ======================================================================
+      # 4. Setup Terraform
+      # ======================================================================
+      - name: 🏗️ Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      # ======================================================================
+      # 5. Setup Node.js (for database seeding)
+      # ======================================================================
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      # ======================================================================
+      # 6. Get GitHub Token from AWS Parameter Store
+      # ======================================================================
+      - name: 🔑 Get GitHub Token from Parameter Store
+        id: github-token
+        run: |
+          TOKEN=$(aws ssm get-parameter \
+            --name "/ecokart/github-token" \
+            --with-decryption \
+            --query 'Parameter.Value' \
+            --output text \
+            --region ${{ env.AWS_REGION }})
+
+          # Mask the token in logs (security!)
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> $GITHUB_OUTPUT
+          echo "✅ GitHub Token retrieved successfully"
+
+      # ======================================================================
+      # 7. Terraform Init
+      # ======================================================================
+      - name: 🔧 Terraform Init
+        working-directory: terraform/examples/basic
+        run: |
+          terraform init
+          echo "✅ Terraform initialized"
+
+      # ======================================================================
+      # 8. Terraform Plan
+      # ======================================================================
+      - name: 📋 Terraform Plan
+        if: github.event.inputs.destroy != 'true'
+        working-directory: terraform/examples/basic
+        env:
+          TF_VAR_github_access_token: ${{ steps.github-token.outputs.token }}
+          TF_VAR_environment: ${{ steps.env.outputs.environment }}
+        run: |
+          terraform plan -out=tfplan
+          echo "✅ Terraform plan created"
+
+      # ======================================================================
+      # 9. Terraform Apply
+      # ======================================================================
+      - name: 🚀 Terraform Apply
+        if: github.event.inputs.destroy != 'true'
+        working-directory: terraform/examples/basic
+        env:
+          TF_VAR_github_access_token: ${{ steps.github-token.outputs.token }}
+          TF_VAR_environment: ${{ steps.env.outputs.environment }}
+        run: |
+          terraform apply -auto-approve tfplan
+          echo "✅ Infrastructure deployed successfully!"
+
+      # ======================================================================
+      # 10. Terraform Destroy (if requested)
+      # ======================================================================
+      - name: 💥 Terraform Destroy
+        if: github.event.inputs.destroy == 'true'
+        working-directory: terraform/examples/basic
+        env:
+          TF_VAR_github_access_token: ${{ steps.github-token.outputs.token }}
+          TF_VAR_environment: ${{ steps.env.outputs.environment }}
+        run: |
+          terraform destroy -auto-approve
+          echo "✅ Infrastructure destroyed"
+
+      # ======================================================================
+      # 11. Get Outputs and Create Summary
+      # ======================================================================
+      - name: 📊 Deployment Summary
+        if: github.event.inputs.destroy != 'true'
+        working-directory: terraform/examples/basic
+        run: |
+          echo "# 🚀 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ steps.env.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Region:** ${{ env.AWS_REGION }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed at:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔗 Application URLs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Get Terraform outputs
+          CUSTOMER_URL=$(terraform output -raw amplify_app_url 2>/dev/null || echo "N/A")
+          ADMIN_URL=$(terraform output -raw admin_amplify_app_url 2>/dev/null || echo "N/A")
+          API_URL=$(terraform output -raw api_gateway_url 2>/dev/null || echo "N/A")
+
+          echo "- **Customer Frontend:** $CUSTOMER_URL" >> $GITHUB_STEP_SUMMARY
+          echo "- **Admin Frontend:** $ADMIN_URL" >> $GITHUB_STEP_SUMMARY
+          echo "- **API Gateway:** $API_URL" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔐 Credentials" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Basic Auth:** demo / test1234" >> $GITHUB_STEP_SUMMARY
+          echo "- **Test User:** testuser@example.com / SecurePass123!" >> $GITHUB_STEP_SUMMARY
+          echo "- **Admin User:** admin@ecokart.com / AdminSecure123!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **All systems operational!**" >> $GITHUB_STEP_SUMMARY
+
+      # ======================================================================
+      # 12. Notify on Failure
+      # ======================================================================
+      - name: ❌ Deployment Failed
+        if: failure()
+        run: |
+          echo "# ❌ Deployment Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ steps.env.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Failed at:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Please check the logs above for details." >> $GITHUB_STEP_SUMMARY

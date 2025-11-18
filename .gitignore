@@ -36,7 +36,13 @@ yarn-error.log*
 # Claude Code
 Project Info Claude Code/
 
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform/
+.terraform.lock.hcl
+
 # Misc
 *.tsbuildinfo
 .cache/
-terraform.tfstate
