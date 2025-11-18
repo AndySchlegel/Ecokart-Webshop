@@ -1,0 +1,257 @@
+name: Destroy Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_destroy:
+        description: 'Type "destroy" to confirm deletion of ALL resources'
+        required: true
+        type: string
+      delete_amplify_apps:
+        description: 'Also delete Amplify apps?'
+        required: true
+        type: boolean
+        default: true
+
+env:
+  AWS_REGION: eu-north-1
+  TERRAFORM_VERSION: 1.5.0
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  destroy:
+    name: Destroy Infrastructure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⚠️ Validate Destroy Confirmation
+        run: |
+          if [ "${{ inputs.confirm_destroy }}" != "destroy" ]; then
+            echo "❌ ERROR: You must type 'destroy' to confirm"
+            echo "   You typed: '${{ inputs.confirm_destroy }}'"
+            exit 1
+          fi
+          echo "✅ Confirmation validated"
+
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Determine Environment
+        id: env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=development" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🔐 Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-Destroy-${{ github.run_id }}
+
+      - name: ✅ Verify AWS Authentication
+        run: |
+          echo "🔍 Verifying AWS credentials..."
+          aws sts get-caller-identity
+          echo "✅ AWS authentication successful"
+
+      - name: 🔧 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 🔑 Get GitHub Token from Parameter Store
+        id: github-token
+        run: |
+          echo "🔍 Fetching GitHub token from AWS Parameter Store..."
+          TOKEN=$(aws ssm get-parameter \
+            --name "/ecokart/github-token" \
+            --with-decryption \
+            --query 'Parameter.Value' \
+            --output text \
+            --region ${{ env.AWS_REGION }})
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> $GITHUB_OUTPUT
+          echo "✅ Token retrieved"
+
+      - name: 🔧 Terraform Init
+        working-directory: terraform/examples/basic
+        run: |
+          echo "📦 Initializing Terraform..."
+          terraform init -upgrade
+          echo "✅ Terraform initialized"
+
+      - name: 📋 Terraform Plan Destroy
+        id: plan
+        working-directory: terraform/examples/basic
+        env:
+          TF_VAR_github_access_token: ${{ steps.github-token.outputs.token }}
+          TF_VAR_jwt_secret: "dummy-secret-for-destroy"
+        run: |
+          echo "📋 Creating destruction plan..."
+          terraform plan -destroy -out=tfplan
+          echo "✅ Destruction plan created"
+
+      - name: 🗑️ Delete Amplify Apps (Optional)
+        if: inputs.delete_amplify_apps == true
+        run: |
+          echo "🗑️ Deleting all Amplify apps..."
+
+          APP_IDS=$(aws amplify list-apps \
+            --region ${{ env.AWS_REGION }} \
+            --query 'apps[*].appId' \
+            --output text)
+
+          if [ -z "$APP_IDS" ]; then
+            echo "   ℹ️  No Amplify apps found"
+          else
+            echo "   Found apps to delete:"
+            for app_id in $APP_IDS; do
+              APP_NAME=$(aws amplify get-app \
+                --app-id "$app_id" \
+                --region ${{ env.AWS_REGION }} \
+                --query 'app.name' \
+                --output text)
+
+              echo "   - Deleting: $APP_NAME ($app_id)"
+
+              aws amplify delete-app \
+                --app-id "$app_id" \
+                --region ${{ env.AWS_REGION }}
+            done
+            echo "   ✅ All Amplify apps deleted"
+          fi
+
+      - name: 💥 Terraform Destroy
+        working-directory: terraform/examples/basic
+        env:
+          TF_VAR_github_access_token: ${{ steps.github-token.outputs.token }}
+          TF_VAR_jwt_secret: "dummy-secret-for-destroy"
+        run: |
+          echo "💥 Destroying infrastructure..."
+          terraform apply -auto-approve tfplan
+          echo "✅ Infrastructure destroyed"
+
+      - name: 🧹 Cleanup DynamoDB Tables (if still exist)
+        run: |
+          echo "🧹 Checking for remaining DynamoDB tables..."
+
+          TABLES=(
+            "ecokart-products"
+            "ecokart-users"
+            "ecokart-carts"
+            "ecokart-orders"
+          )
+
+          for table in "${TABLES[@]}"; do
+            if aws dynamodb describe-table \
+              --table-name "$table" \
+              --region ${{ env.AWS_REGION }} &>/dev/null; then
+
+              echo "   - Deleting remaining table: $table"
+              aws dynamodb delete-table \
+                --table-name "$table" \
+                --region ${{ env.AWS_REGION }}
+
+              # Wait for deletion
+              echo "   - Waiting for $table to be deleted..."
+              aws dynamodb wait table-not-exists \
+                --table-name "$table" \
+                --region ${{ env.AWS_REGION }}
+
+              echo "   ✅ $table deleted"
+            else
+              echo "   ℹ️  $table already deleted"
+            fi
+          done
+
+      - name: 🧹 Cleanup IAM Role (if still exists)
+        run: |
+          echo "🧹 Checking for remaining IAM role..."
+
+          ROLE_NAME="ecokart-development-api-exec-role"
+
+          if aws iam get-role --role-name "$ROLE_NAME" &>/dev/null; then
+            echo "   - Detaching managed policies..."
+            aws iam detach-role-policy \
+              --role-name "$ROLE_NAME" \
+              --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole \
+              2>/dev/null || true
+
+            echo "   - Deleting inline policies..."
+            aws iam delete-role-policy \
+              --role-name "$ROLE_NAME" \
+              --policy-name ecokart-development-api-dynamodb-policy \
+              2>/dev/null || true
+
+            echo "   - Deleting role..."
+            aws iam delete-role --role-name "$ROLE_NAME"
+
+            echo "   ✅ IAM role deleted"
+          else
+            echo "   ℹ️  IAM role already deleted"
+          fi
+
+      - name: 🧹 Cleanup CloudWatch Log Group (if still exists)
+        run: |
+          echo "🧹 Checking for remaining CloudWatch log group..."
+
+          LOG_GROUP="/aws/lambda/ecokart-development-api"
+
+          if aws logs describe-log-groups \
+            --log-group-name-prefix "$LOG_GROUP" \
+            --region ${{ env.AWS_REGION }} \
+            --query 'logGroups[0].logGroupName' \
+            --output text 2>/dev/null | grep -q "$LOG_GROUP"; then
+
+            echo "   - Deleting log group: $LOG_GROUP"
+            aws logs delete-log-group \
+              --log-group-name "$LOG_GROUP" \
+              --region ${{ env.AWS_REGION }}
+
+            echo "   ✅ Log group deleted"
+          else
+            echo "   ℹ️  Log group already deleted"
+          fi
+
+      - name: 📊 Destruction Summary
+        if: always()
+        run: |
+          echo ""
+          echo "╔═══════════════════════════════════════════════════════════════════╗"
+          echo "║                    🗑️  DESTRUCTION COMPLETE                       ║"
+          echo "╚═══════════════════════════════════════════════════════════════════╝"
+          echo ""
+          echo "Environment: ${{ steps.env.outputs.environment }}"
+          echo "Region: ${{ env.AWS_REGION }}"
+          echo "Destroyed at: $(date -u)"
+          echo ""
+          echo "🗑️  Deleted Resources:"
+          echo "   - DynamoDB Tables (4)"
+          echo "   - Lambda Function"
+          echo "   - API Gateway"
+          if [ "${{ inputs.delete_amplify_apps }}" == "true" ]; then
+            echo "   - Amplify Apps (all)"
+          fi
+          echo "   - CloudWatch Log Groups"
+          echo "   - IAM Roles & Policies"
+          echo ""
+          echo "✅ All resources have been destroyed!"
+          echo ""
+          echo "╔═══════════════════════════════════════════════════════════════════╗"
+          echo "║  To redeploy, run the 'Deploy Infrastructure' workflow           ║"
+          echo "╚═══════════════════════════════════════════════════════════════════╝"
+          echo ""
