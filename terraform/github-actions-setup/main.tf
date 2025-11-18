@@ -146,6 +146,7 @@ resource "aws_iam_policy" "lambda" {
           "lambda:GetFunction",
           "lambda:GetFunctionConfiguration",
           "lambda:GetFunctionCodeSigningConfig",
+          "lambda:GetPolicy",
           "lambda:ListFunctions",
           "lambda:ListVersionsByFunction",
           "lambda:UpdateFunctionCode",
