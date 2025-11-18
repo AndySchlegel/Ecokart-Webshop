@@ -163,7 +163,16 @@ jobs:
           echo "✅ JWT Secret generated (64 characters)"
 
       # ======================================================================
-      # 7. Terraform Init
+      # 7. Clean Backend Dependencies (prevent race condition)
+      # ======================================================================
+      - name: 🧹 Clean Backend Dependencies
+        run: |
+          echo "🧹 Removing old backend node_modules to prevent race condition..."
+          rm -rf backend/node_modules
+          echo "✅ Dependencies cleaned"
+
+      # ======================================================================
+      # 8. Terraform Init
       # ======================================================================
       - name: 🔧 Terraform Init
         working-directory: terraform/examples/basic
@@ -172,7 +181,7 @@ jobs:
           echo "✅ Terraform initialized"
 
       # ======================================================================
-      # 8. Terraform Plan
+      # 9. Terraform Plan
       # ======================================================================
       - name: 📋 Terraform Plan
         if: github.event.inputs.destroy != 'true'
@@ -186,7 +195,7 @@ jobs:
           echo "✅ Terraform plan created"
 
       # ======================================================================
-      # 9. Terraform Apply
+      # 10. Terraform Apply
       # ======================================================================
       - name: 🚀 Terraform Apply
         if: github.event.inputs.destroy != 'true'
@@ -200,7 +209,7 @@ jobs:
           echo "✅ Infrastructure deployed successfully!"
 
       # ======================================================================
-      # 10. Terraform Destroy (if requested)
+      # 11. Terraform Destroy (if requested)
       # ======================================================================
       - name: 💥 Terraform Destroy
         if: github.event.inputs.destroy == 'true'
@@ -214,7 +223,7 @@ jobs:
           echo "✅ Infrastructure destroyed"
 
       # ======================================================================
-      # 11. Get Outputs and Create Summary
+      # 12. Get Outputs and Create Summary
       # ======================================================================
       - name: 📊 Deployment Summary
         if: github.event.inputs.destroy != 'true'
@@ -247,7 +256,7 @@ jobs:
           echo "✅ **All systems operational!**" >> $GITHUB_STEP_SUMMARY
 
       # ======================================================================
-      # 12. Notify on Failure
+      # 13. Notify on Failure
       # ======================================================================
       - name: ❌ Deployment Failed
         if: failure()
