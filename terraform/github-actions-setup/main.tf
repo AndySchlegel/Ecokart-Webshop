@@ -232,15 +232,44 @@ resource "aws_iam_policy" "apigateway" {
           "apigateway:*"
         ]
         Resource = [
-          "arn:aws:apigateway:${var.aws_region}::/restapis",
-          "arn:aws:apigateway:${var.aws_region}::/restapis/*"
+          "arn:aws:apigateway:${var.aws_region}::/*"
         ]
       }
     ]
   })
 }
 
-# Policy 5: Amplify Permissions
+# Policy 5: CloudWatch Logs Permissions
+resource "aws_iam_policy" "cloudwatch" {
+  name        = "${var.project_name}-github-actions-cloudwatch"
+  description = "Permissions for CloudWatch Logs operations"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams",
+          "logs:DeleteLogGroup",
+          "logs:TagResource",
+          "logs:UntagResource",
+          "logs:ListTagsForResource"
+        ]
+        Resource = [
+          "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/aws/lambda/${var.project_name}-*",
+          "arn:aws:logs:${var.aws_region}:${var.aws_account_id}:log-group:/aws/lambda/${var.project_name}-*:*"
+        ]
+      }
+    ]
+  })
+}
+
+# Policy 6: Amplify Permissions
 resource "aws_iam_policy" "amplify" {
   name        = "${var.project_name}-github-actions-amplify"
   description = "Permissions for AWS Amplify operations"
@@ -274,7 +303,7 @@ resource "aws_iam_policy" "amplify" {
   })
 }
 
-# Policy 6: SSM Parameter Store (for secrets)
+# Policy 7: SSM Parameter Store (for secrets)
 resource "aws_iam_policy" "ssm" {
   name        = "${var.project_name}-github-actions-ssm"
   description = "Permissions for AWS Systems Manager Parameter Store"
@@ -297,7 +326,7 @@ resource "aws_iam_policy" "ssm" {
   })
 }
 
-# Policy 7: S3 (for Terraform state if needed)
+# Policy 8: S3 (for Terraform state if needed)
 resource "aws_iam_policy" "s3" {
   name        = "${var.project_name}-github-actions-s3"
   description = "Permissions for S3 operations"
@@ -350,6 +379,11 @@ resource "aws_iam_role_policy_attachment" "iam" {
 resource "aws_iam_role_policy_attachment" "apigateway" {
   role       = aws_iam_role.github_actions.name
   policy_arn = aws_iam_policy.apigateway.arn
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch" {
+  role       = aws_iam_role.github_actions.name
+  policy_arn = aws_iam_policy.cloudwatch.arn
 }
 
 resource "aws_iam_role_policy_attachment" "amplify" {
