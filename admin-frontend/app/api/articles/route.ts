@@ -88,28 +88,40 @@ export async function PUT(request: Request) {
     }
 
     // Update via Backend API
-    const API_URL = process.env.ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL;
-    const updateUrl = `${API_URL}/api/products/${body.id}`;
+    const BASE_URL = process.env.ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL;
+    if (!BASE_URL) {
+      throw new Error('API URL not configured');
+    }
+    // Ensure proper URL formatting
+    const apiUrl = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
+    const updateUrl = `${apiUrl}/api/products/${body.id}`;
+
+    const updatePayload = {
+      name: body.name,
+      description: body.description,
+      imageUrl,
+      price: body.price,
+      category: body.category || 'uncategorized',
+      rating: body.rating ?? 0,
+      reviewCount: body.reviewCount ?? 0,
+      stock: body.stock ?? 0
+    };
+
+    console.log('[PUT] Updating product:', body.id);
+    console.log('[PUT] URL:', updateUrl);
+    console.log('[PUT] Payload:', updatePayload);
 
     const response = await fetch(updateUrl, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        name: body.name,
-        description: body.description,
-        imageUrl,
-        price: body.price,
-        category: body.category || 'uncategorized',
-        rating: body.rating ?? 0,
-        reviewCount: body.reviewCount ?? 0,
-        stock: body.stock ?? 0
-      })
+      body: JSON.stringify(updatePayload)
     });
 
     if (!response.ok) {
       const error = await response.text();
+      console.error('[PUT] Backend error:', response.status, error);
       throw new Error(`Backend update failed: ${response.status} ${error}`);
     }
 
