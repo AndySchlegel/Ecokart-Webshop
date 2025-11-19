@@ -75,7 +75,7 @@ terraform apply -var-file="../../environments/development.tfvars" \
 - **DynamoDB:** PAY_PER_REQUEST (zahlst nur bei Nutzung)
 - **Backups:** AUS (Daten nicht kritisch)
 - **Logging:** Minimal (weniger Kosten)
-- **Passwörter:** Schwach OK (dev/dev1234)
+- **Passwörter:** Schwach OK (demo/test1234)
 
 **Für:** Schnelles Entwickeln, Features ausprobieren, kaputt machen erlaubt!
 

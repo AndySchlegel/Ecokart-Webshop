@@ -316,7 +316,7 @@ API Gateway:       https://xyz.execute-api.eu-north-1.amazonaws.com/prod/
 | **Backups** | ❌ Aus | ✅ An | ✅ An |
 | **Logging** | Minimal | Voll | Voll + Alarms |
 | **API Gateway Stage** | `dev` | `staging` | `prod` |
-| **Passwörter** | Schwach (dev/dev1234) | Mittel | Sehr stark |
+| **Passwörter** | Schwach (demo/test1234) | Mittel | Sehr stark |
 | **Kosten/Monat** | ~20-30 EUR | ~40-60 EUR | ~100-150 EUR |
 | **Zweck** | Experimentieren | Finale Tests | Echte Kunden |
 | **Kaputt gehen OK?** | ✅ Ja, kein Problem! | ⚠️ Sollte nicht, aber OK | ❌ NEIN! Kritisch! |
