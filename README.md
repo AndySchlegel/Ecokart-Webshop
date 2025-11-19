@@ -1,11 +1,14 @@
 # 🚀 Ecokart - Serverless E-Commerce Platform
 
-**Vollständig serverlose E-Commerce-Plattform auf AWS mit ONE-CLICK Deployment**
+**Vollständig serverlose E-Commerce-Plattform auf AWS mit automatischem Multi-Environment Deployment**
 
 [![AWS](https://img.shields.io/badge/AWS-Serverless-orange)](https://aws.amazon.com)
 [![Terraform](https://img.shields.io/badge/IaC-Terraform-purple)](https://terraform.io)
 [![Next.js](https://img.shields.io/badge/Frontend-Next.js%2015-black)](https://nextjs.org)
 [![Node.js](https://img.shields.io/badge/Backend-Node.js%2020-green)](https://nodejs.org)
+[![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue)](https://github.com/features/actions)
+
+> **Portfolio-Projekt** von Andy Schlegel - Von Demo zu Production-Ready E-Commerce Platform
 
 ---
 
@@ -13,12 +16,21 @@
 
 Ecokart ist eine **moderne E-Commerce-Plattform** die komplett auf AWS Serverless Services läuft:
 
+### 🛍️ Features
 - ✅ **Customer Shop** - Next.js 15 Frontend auf Amplify
 - ✅ **Admin Panel** - Next.js 15 Admin-Interface auf Amplify
 - ✅ **REST API** - Express.js Backend auf AWS Lambda
-- ✅ **NoSQL Database** - DynamoDB mit Auto-Seeding
+- ✅ **NoSQL Database** - DynamoDB mit Auto-Seeding (31 Produkte)
+- ✅ **User Auth** - JWT-basierte Authentifizierung
+- ✅ **Cart System** - Vollständiger Warenkorb-Flow
+- ✅ **Order Management** - Bestellungen erstellen und verwalten
+
+### 🚀 DevOps & Infrastructure
 - ✅ **Infrastructure as Code** - 100% Terraform
-- ✅ **ONE-CLICK Deployment** - `./deploy.sh`
+- ✅ **Multi-Environment Setup** - Development, Staging, Production
+- ✅ **CI/CD Pipeline** - GitHub Actions mit OIDC (keine AWS Keys!)
+- ✅ **Automated Deployment** - Push to branch → Auto-Deploy
+- ✅ **Cost-Optimized** - Environment-spezifische Ressourcen-Sizing
 
 ---
 
@@ -68,38 +80,50 @@ Ecokart ist eine **moderne E-Commerce-Plattform** die komplett auf AWS Serverles
 
 ## 🚀 Quick Start
 
-### Voraussetzungen
+### 🎯 Empfohlener Weg: GitHub Actions (Automatisch!)
 
+**Keine lokale Installation nötig!** Einfach Code pushen → Automatisches Deployment! ✨
+
+1. **Repository forken/clonen**
+2. **GitHub Secrets einrichten** (einmalig):
+   - `AWS_ROLE_ARN` - IAM Role für OIDC (siehe [Setup-Guide](docs/GITHUB_ACTIONS_SUCCESS.md))
+3. **Code zu `develop` pushen:**
+   ```bash
+   git push origin develop
+   ```
+4. **Fertig!** GitHub Actions deployt automatisch zu Development Environment (~10-12 Min)
+
+**📚 Ausführliche Anleitung:** [Multi-Environment Setup Guide](docs/MULTI_ENVIRONMENT_SETUP.md)
+
+---
+
+### 🔧 Alternative: Lokales Deployment
+
+**Für lokale Tests oder wenn GitHub Actions nicht verfügbar:**
+
+#### Voraussetzungen
 - AWS Account mit konfigurierten Credentials
-- Terraform ≥ 1.0
+- Terraform ≥ 1.5
 - Node.js ≥ 20.x
 - GitHub Personal Access Token
 
-### 1. Einmalige Vorbereitung (5 Minuten)
+#### Deployment
 
 ```bash
-# GitHub Token in AWS Parameter Store speichern
+# 1. GitHub Token in AWS Parameter Store speichern (einmalig)
 ./scripts/setup-automation.sh
-```
 
-Folge den Anweisungen:
-1. Erstelle GitHub Token: https://github.com/settings/tokens
-2. Permissions: `repo` (full access)
-3. Token wird automatisch in AWS Parameter Store gespeichert
-
-### 2. ONE-CLICK Deployment (8-10 Minuten)
-
-```bash
-# Komplette Infrastruktur deployen
+# 2. Infrastruktur deployen
 ./deploy.sh
 ```
 
 **Das passiert automatisch:**
 - ✅ DynamoDB Tabellen erstellen (4 Tabellen)
-- ✅ Lambda Backend bauen & deployen (TypeScript → JavaScript)
-- ✅ API Gateway konfigurieren (REST API mit Proxy Integration)
-- ✅ Amplify Apps erstellen (Customer + Admin Frontend)
-- ✅ Basic Auth setzen (`demo:test1234`, `admin:admin1234`)
+- ✅ Lambda Backend bauen & deployen
+- ✅ API Gateway konfigurieren
+- ✅ Amplify Apps erstellen (Customer + Admin)
+- ✅ Datenbank mit 31 Produkten füllen
+- ✅ Test-User erstellen
 - ✅ **DynamoDB befüllen** (31 Produkte + 2 User)
 
 ### 3. GitHub OAuth verbinden (2 Minuten, nur beim ersten Mal)
