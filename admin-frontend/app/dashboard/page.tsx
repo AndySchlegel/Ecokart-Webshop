@@ -35,7 +35,7 @@ export default function DashboardPage() {
     void loadArticles();
   }, []);
 
-  async function handleAddArticle(values: { name: string; price: string; description: string; imageUrl: string; category: string; rating: string; reviewCount: string }, articleId?: string) {
+  async function handleAddArticle(values: { name: string; price: string; description: string; imageUrl: string; category: string; rating: string; reviewCount: string; stock: string }, articleId?: string) {
     const localRoot = '/Users/his4irness23/GitHub/Repositories/Ecokart-Webshop/pics/';
     let imageUrl = values.imageUrl.trim();
     if (imageUrl.startsWith(localRoot)) {
@@ -55,7 +55,8 @@ export default function DashboardPage() {
       imageUrl,
       category: values.category,
       rating: Number.parseFloat(values.rating),
-      reviewCount: Number.parseInt(values.reviewCount, 10)
+      reviewCount: Number.parseInt(values.reviewCount, 10),
+      stock: Number.parseInt(values.stock, 10)
     };
     if (Number.isNaN(payload.price)) {
       throw new Error('Bitte einen gültigen Preis hinterlegen.');
@@ -65,6 +66,9 @@ export default function DashboardPage() {
     }
     if (Number.isNaN(payload.reviewCount) || payload.reviewCount < 0) {
       throw new Error('Bitte eine gültige Anzahl an Reviews hinterlegen.');
+    }
+    if (Number.isNaN(payload.stock) || payload.stock < 0) {
+      throw new Error('Bitte einen gültigen Lagerbestand hinterlegen.');
     }
     const request = await fetch('/api/articles', {
       method: articleId ? 'PUT' : 'POST',

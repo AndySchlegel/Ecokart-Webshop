@@ -40,6 +40,7 @@ export function ArticleTable({ articles, onDelete, onEdit }: ArticleTableProps) 
             <th>Kategorie</th>
             <th>Rating</th>
             <th>Reviews</th>
+            <th>Lager</th>
             <th>Beschreibung</th>
             <th>Aktionen</th>
           </tr>
@@ -58,6 +59,16 @@ export function ArticleTable({ articles, onDelete, onEdit }: ArticleTableProps) 
               </td>
               <td data-label="Reviews">
                 {article.reviewCount || 0}
+              </td>
+              <td data-label="Lager">
+                {article.stock !== undefined ? (
+                  <span style={{
+                    color: article.stock <= 0 ? '#dc2626' : article.stock <= 10 ? '#f59e0b' : '#10b981',
+                    fontWeight: '600'
+                  }}>
+                    {article.stock} {article.reserved ? `(${article.reserved} res.)` : ''}
+                  </span>
+                ) : '–'}
               </td>
               <td data-label="Beschreibung">{article.description}</td>
               <td data-label="Aktionen">
