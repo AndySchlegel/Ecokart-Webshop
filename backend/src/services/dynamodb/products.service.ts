@@ -1,4 +1,4 @@
-import { GetCommand, PutCommand, DeleteCommand, ScanCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, PutCommand, DeleteCommand, ScanCommand, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { dynamodb, TableNames } from './client';
 import { Product } from '../../models/Product';
 
@@ -80,6 +80,51 @@ export class ProductsService {
     await dynamodb.send(new DeleteCommand({
       TableName: TableNames.PRODUCTS,
       Key: { id },
+    }));
+  }
+
+  /**
+   * ✅ INVENTORY: Reserve stock (increment reserved field)
+   * Used when adding items to cart
+   */
+  async reserveStock(id: string, quantity: number): Promise<void> {
+    await dynamodb.send(new UpdateCommand({
+      TableName: TableNames.PRODUCTS,
+      Key: { id },
+      UpdateExpression: 'ADD reserved :quantity',
+      ExpressionAttributeValues: {
+        ':quantity': quantity,
+      },
+    }));
+  }
+
+  /**
+   * ✅ INVENTORY: Release reserved stock (decrement reserved field)
+   * Used when removing items from cart or cart expires
+   */
+  async releaseReservedStock(id: string, quantity: number): Promise<void> {
+    await dynamodb.send(new UpdateCommand({
+      TableName: TableNames.PRODUCTS,
+      Key: { id },
+      UpdateExpression: 'ADD reserved :quantity',
+      ExpressionAttributeValues: {
+        ':quantity': -quantity, // Negative value to decrement
+      },
+    }));
+  }
+
+  /**
+   * ✅ INVENTORY: Decrease actual stock (when order is placed)
+   * Decreases both stock and reserved
+   */
+  async decreaseStock(id: string, quantity: number): Promise<void> {
+    await dynamodb.send(new UpdateCommand({
+      TableName: TableNames.PRODUCTS,
+      Key: { id },
+      UpdateExpression: 'ADD stock :negQuantity, reserved :negQuantity',
+      ExpressionAttributeValues: {
+        ':negQuantity': -quantity, // Decrease both stock and reserved
+      },
     }));
   }
 }

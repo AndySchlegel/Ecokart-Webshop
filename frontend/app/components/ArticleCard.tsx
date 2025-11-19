@@ -59,6 +59,13 @@ export function ArticleCard({ article }: ArticleCardProps) {
 
   const detailHrefWithAnchor = `/product/${article.id}?from=${encodeURIComponent(`product-${article.id}`)}`;
 
+  // ✅ INVENTORY: Calculate available stock
+  const availableStock = article.stock !== undefined
+    ? article.stock - (article.reserved || 0)
+    : null;
+  const isOutOfStock = availableStock !== null && availableStock <= 0;
+  const isLowStock = availableStock !== null && availableStock > 0 && availableStock <= 5;
+
   return (
     <article className="card" id={`product-${article.id}`}>
       <Link href={detailHrefWithAnchor} className="card__link">
@@ -92,6 +99,24 @@ export function ArticleCard({ article }: ArticleCardProps) {
         <p className="card__description">
           {article.description}
         </p>
+
+        {/* ✅ INVENTORY: Stock Display */}
+        {availableStock !== null && (
+          <div className="card__stock" style={{
+            marginTop: '0.5rem',
+            fontSize: '0.875rem',
+            fontWeight: '500'
+          }}>
+            {isOutOfStock ? (
+              <span style={{ color: '#dc2626' }}>❌ Ausverkauft</span>
+            ) : isLowStock ? (
+              <span style={{ color: '#f59e0b' }}>⚠️ Nur noch {availableStock} auf Lager</span>
+            ) : (
+              <span style={{ color: '#10b981' }}>✅ {availableStock} auf Lager</span>
+            )}
+          </div>
+        )}
+
         <div className="card__footer">
           <span className="card__price">
             €{article.price.toFixed(2)}
@@ -100,9 +125,16 @@ export function ArticleCard({ article }: ArticleCardProps) {
             className="card__cta"
             type="button"
             onClick={handleAddToCart}
-            disabled={isAdding}
+            disabled={isAdding || isOutOfStock}
+            style={isOutOfStock ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
           >
-            {isAdding ? 'Wird hinzugefügt...' : showSuccess ? '✓ Hinzugefügt!' : 'In den Warenkorb'}
+            {isAdding
+              ? 'Wird hinzugefügt...'
+              : showSuccess
+              ? '✓ Hinzugefügt!'
+              : isOutOfStock
+              ? 'Ausverkauft'
+              : 'In den Warenkorb'}
           </button>
         </div>
       </div>
