@@ -273,7 +273,7 @@ jobs:
           echo "## 🔐 Credentials" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Basic Auth (Amplify - first layer):" >> $GITHUB_STEP_SUMMARY
-          echo "- **Customer Frontend:** dev / dev1234 (development)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Customer Frontend:** demo / test1234 (development)" >> $GITHUB_STEP_SUMMARY
           echo "- **Admin Frontend:** admin / admin1234 (development)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### App Login (Backend Users - second layer):" >> $GITHUB_STEP_SUMMARY
