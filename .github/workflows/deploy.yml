@@ -181,7 +181,24 @@ jobs:
           echo "✅ Terraform initialized"
 
       # ======================================================================
-      # 9. Terraform Plan
+      # 8b. Verify Environment Config exists
+      # ======================================================================
+      - name: ✅ Verify Environment Config
+        working-directory: terraform
+        run: |
+          CONFIG_FILE="environments/${{ steps.env.outputs.environment }}.tfvars"
+          if [ ! -f "$CONFIG_FILE" ]; then
+            echo "❌ ERROR: Config file not found: $CONFIG_FILE"
+            echo "Available configs:"
+            ls -la environments/
+            exit 1
+          fi
+          echo "✅ Config file found: $CONFIG_FILE"
+          echo "📄 Config preview:"
+          head -20 "$CONFIG_FILE"
+
+      # ======================================================================
+      # 9. Terraform Plan (mit Environment-spezifischer Config!)
       # ======================================================================
       - name: 📋 Terraform Plan
         if: github.event.inputs.destroy != 'true'
@@ -189,38 +206,44 @@ jobs:
         env:
           TF_VAR_github_access_token: ${{ steps.github-token.outputs.token }}
           TF_VAR_jwt_secret: ${{ steps.jwt-secret.outputs.secret }}
-          TF_VAR_environment: ${{ steps.env.outputs.environment }}
         run: |
-          terraform plan -out=tfplan
-          echo "✅ Terraform plan created"
+          echo "📋 Planning deployment for: ${{ steps.env.outputs.environment }}"
+          echo "📁 Using config: ../../environments/${{ steps.env.outputs.environment }}.tfvars"
+
+          terraform plan \
+            -var-file="../../environments/${{ steps.env.outputs.environment }}.tfvars" \
+            -var="github_access_token=${{ steps.github-token.outputs.token }}" \
+            -var="jwt_secret=${{ steps.jwt-secret.outputs.secret }}" \
+            -out=tfplan
+
+          echo "✅ Terraform plan created for ${{ steps.env.outputs.environment }}"
 
       # ======================================================================
-      # 10. Terraform Apply
+      # 10. Terraform Apply (mit Environment-spezifischer Config!)
       # ======================================================================
       - name: 🚀 Terraform Apply
         if: github.event.inputs.destroy != 'true'
         working-directory: terraform/examples/basic
-        env:
-          TF_VAR_github_access_token: ${{ steps.github-token.outputs.token }}
-          TF_VAR_jwt_secret: ${{ steps.jwt-secret.outputs.secret }}
-          TF_VAR_environment: ${{ steps.env.outputs.environment }}
         run: |
+          echo "🚀 Applying infrastructure for: ${{ steps.env.outputs.environment }}"
           terraform apply -auto-approve tfplan
-          echo "✅ Infrastructure deployed successfully!"
+          echo "✅ Infrastructure deployed successfully to ${{ steps.env.outputs.environment }}!"
 
       # ======================================================================
-      # 11. Terraform Destroy (if requested)
+      # 11. Terraform Destroy (if requested, mit Environment-Config!)
       # ======================================================================
       - name: 💥 Terraform Destroy
         if: github.event.inputs.destroy == 'true'
         working-directory: terraform/examples/basic
-        env:
-          TF_VAR_github_access_token: ${{ steps.github-token.outputs.token }}
-          TF_VAR_jwt_secret: ${{ steps.jwt-secret.outputs.secret }}
-          TF_VAR_environment: ${{ steps.env.outputs.environment }}
         run: |
-          terraform destroy -auto-approve
-          echo "✅ Infrastructure destroyed"
+          echo "💥 Destroying infrastructure for: ${{ steps.env.outputs.environment }}"
+
+          terraform destroy -auto-approve \
+            -var-file="../../environments/${{ steps.env.outputs.environment }}.tfvars" \
+            -var="github_access_token=${{ steps.github-token.outputs.token }}" \
+            -var="jwt_secret=${{ steps.jwt-secret.outputs.secret }}"
+
+          echo "✅ Infrastructure destroyed for ${{ steps.env.outputs.environment }}"
 
       # ======================================================================
       # 12. Get Outputs and Create Summary
