@@ -80,6 +80,30 @@ class DatabaseAdapter {
     }
   }
 
+  // ✅ INVENTORY: Reserve stock
+  async reserveStock(id: string, quantity: number): Promise<void> {
+    if (this.useDynamoDB) {
+      await productsService.reserveStock(id, quantity);
+    }
+    // JSON mode: No-op (not implemented for local dev)
+  }
+
+  // ✅ INVENTORY: Release reserved stock
+  async releaseReservedStock(id: string, quantity: number): Promise<void> {
+    if (this.useDynamoDB) {
+      await productsService.releaseReservedStock(id, quantity);
+    }
+    // JSON mode: No-op (not implemented for local dev)
+  }
+
+  // ✅ INVENTORY: Decrease stock when order is placed
+  async decreaseStock(id: string, quantity: number): Promise<void> {
+    if (this.useDynamoDB) {
+      await productsService.decreaseStock(id, quantity);
+    }
+    // JSON mode: No-op (not implemented for local dev)
+  }
+
   // ========== USERS ==========
 
   async getAllUsers(): Promise<User[]> {

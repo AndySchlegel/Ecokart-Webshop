@@ -52,6 +52,8 @@ async function migrateProducts() {
             description: product.description || '',
             imageUrl: product.imageUrl,
             category: product.category || 'uncategorized',
+            stock: product.stock || 0,        // ← NEU: Stock-Feld
+            reserved: product.reserved || 0,  // ← NEU: Reserved-Feld
             rating: product.rating || 0,
             reviewCount: product.reviewCount || 0,
           }
