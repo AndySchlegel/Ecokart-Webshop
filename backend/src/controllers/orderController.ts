@@ -42,6 +42,11 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<void
 
     const created = await database.createOrder(newOrder);
 
+    // ✅ INVENTORY: Decrease stock for each item (stock and reserved)
+    for (const item of items) {
+      await database.decreaseStock(item.productId, item.quantity);
+    }
+
     // Clear the user's cart after successful order
     const cart = await database.getCartByUserId(userId);
     if (cart) {

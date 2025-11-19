@@ -203,6 +203,25 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
             {/* Price */}
             <div className="product-price">€{product.price.toFixed(2)}</div>
 
+            {/* ✅ INVENTORY: Stock Display */}
+            {product.stock !== undefined && (
+              <div className="product-stock">
+                {product.stock - (product.reserved || 0) <= 0 ? (
+                  <span style={{ color: '#dc2626', fontSize: '1.25rem', fontWeight: '700' }}>
+                    ❌ Ausverkauft
+                  </span>
+                ) : product.stock - (product.reserved || 0) <= 5 ? (
+                  <span style={{ color: '#f59e0b', fontSize: '1.25rem', fontWeight: '700' }}>
+                    ⚠️ Nur noch {product.stock - (product.reserved || 0)} auf Lager
+                  </span>
+                ) : (
+                  <span style={{ color: '#10b981', fontSize: '1.25rem', fontWeight: '700' }}>
+                    ✅ {product.stock - (product.reserved || 0)} auf Lager
+                  </span>
+                )}
+              </div>
+            )}
+
             {/* Description */}
             <p className="product-description">{product.description}</p>
 
@@ -248,9 +267,16 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
             <button
               className="add-to-cart-button"
               onClick={handleAddToCart}
-              disabled={isAdding}
+              disabled={isAdding || (product.stock !== undefined && product.stock - (product.reserved || 0) <= 0)}
+              style={(product.stock !== undefined && product.stock - (product.reserved || 0) <= 0) ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
             >
-              {isAdding ? 'Wird hinzugefügt...' : showSuccess ? '✓ Zum Warenkorb hinzugefügt!' : 'In den Warenkorb'}
+              {isAdding
+                ? 'Wird hinzugefügt...'
+                : showSuccess
+                ? '✓ Zum Warenkorb hinzugefügt!'
+                : (product.stock !== undefined && product.stock - (product.reserved || 0) <= 0)
+                ? 'Ausverkauft'
+                : 'In den Warenkorb'}
             </button>
 
             {/* Product Details */}
