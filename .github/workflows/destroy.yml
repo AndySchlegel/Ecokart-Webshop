@@ -94,16 +94,32 @@ jobs:
           terraform init -upgrade
           echo "✅ Terraform initialized"
 
-      - name: 📋 Terraform Plan Destroy
+      - name: ✅ Verify Environment Config
+        working-directory: terraform
+        run: |
+          CONFIG_FILE="environments/${{ steps.env.outputs.environment }}.tfvars"
+          if [ ! -f "$CONFIG_FILE" ]; then
+            echo "❌ ERROR: Config file not found: $CONFIG_FILE"
+            echo "Available configs:"
+            ls -la environments/
+            exit 1
+          fi
+          echo "✅ Config file found: $CONFIG_FILE"
+
+      - name: 📋 Terraform Plan Destroy (mit Environment-Config!)
         id: plan
         working-directory: terraform/examples/basic
-        env:
-          TF_VAR_github_access_token: ${{ steps.github-token.outputs.token }}
-          TF_VAR_jwt_secret: "dummy-secret-for-destroy-minimum-32-chars-required-padding"
         run: |
-          echo "📋 Creating destruction plan..."
-          terraform plan -destroy -out=tfplan
-          echo "✅ Destruction plan created"
+          echo "📋 Creating destruction plan for: ${{ steps.env.outputs.environment }}"
+          echo "📁 Using config: ../../environments/${{ steps.env.outputs.environment }}.tfvars"
+
+          terraform plan -destroy \
+            -var-file="../../environments/${{ steps.env.outputs.environment }}.tfvars" \
+            -var="github_access_token=${{ steps.github-token.outputs.token }}" \
+            -var="jwt_secret=dummy-secret-for-destroy-minimum-32-chars-required-padding" \
+            -out=tfplan
+
+          echo "✅ Destruction plan created for ${{ steps.env.outputs.environment }}"
 
       - name: 🗑️ Delete Amplify Apps (Optional)
         if: inputs.delete_amplify_apps == true
@@ -137,18 +153,16 @@ jobs:
 
       - name: 💥 Terraform Destroy
         working-directory: terraform/examples/basic
-        env:
-          TF_VAR_github_access_token: ${{ steps.github-token.outputs.token }}
-          TF_VAR_jwt_secret: "dummy-secret-for-destroy-minimum-32-chars-required-padding"
         run: |
-          echo "💥 Destroying infrastructure..."
+          echo "💥 Destroying infrastructure for: ${{ steps.env.outputs.environment }}"
           terraform apply -auto-approve tfplan
-          echo "✅ Infrastructure destroyed"
+          echo "✅ Infrastructure destroyed for ${{ steps.env.outputs.environment }}"
 
       - name: 🧹 Cleanup DynamoDB Tables (if still exist)
         run: |
-          echo "🧹 Checking for remaining DynamoDB tables..."
+          echo "🧹 Checking for remaining DynamoDB tables for ${{ steps.env.outputs.environment }}..."
 
+          # Table names ohne Environment-Suffix (laut aktuellem Setup)
           TABLES=(
             "ecokart-products"
             "ecokart-users"
@@ -180,9 +194,9 @@ jobs:
 
       - name: 🧹 Cleanup IAM Role (if still exists)
         run: |
-          echo "🧹 Checking for remaining IAM role..."
+          echo "🧹 Checking for remaining IAM role for ${{ steps.env.outputs.environment }}..."
 
-          ROLE_NAME="ecokart-development-api-exec-role"
+          ROLE_NAME="ecokart-${{ steps.env.outputs.environment }}-api-exec-role"
 
           if aws iam get-role --role-name "$ROLE_NAME" &>/dev/null; then
             echo "   - Detaching managed policies..."
@@ -194,22 +208,22 @@ jobs:
             echo "   - Deleting inline policies..."
             aws iam delete-role-policy \
               --role-name "$ROLE_NAME" \
-              --policy-name ecokart-development-api-dynamodb-policy \
+              --policy-name ecokart-${{ steps.env.outputs.environment }}-api-dynamodb-policy \
               2>/dev/null || true
 
             echo "   - Deleting role..."
             aws iam delete-role --role-name "$ROLE_NAME"
 
-            echo "   ✅ IAM role deleted"
+            echo "   ✅ IAM role deleted: $ROLE_NAME"
           else
-            echo "   ℹ️  IAM role already deleted"
+            echo "   ℹ️  IAM role already deleted: $ROLE_NAME"
           fi
 
       - name: 🧹 Cleanup CloudWatch Log Group (if still exists)
         run: |
-          echo "🧹 Checking for remaining CloudWatch log group..."
+          echo "🧹 Checking for remaining CloudWatch log group for ${{ steps.env.outputs.environment }}..."
 
-          LOG_GROUP="/aws/lambda/ecokart-development-api"
+          LOG_GROUP="/aws/lambda/ecokart-${{ steps.env.outputs.environment }}-api"
 
           if aws logs describe-log-groups \
             --log-group-name-prefix "$LOG_GROUP" \
@@ -222,9 +236,9 @@ jobs:
               --log-group-name "$LOG_GROUP" \
               --region ${{ env.AWS_REGION }}
 
-            echo "   ✅ Log group deleted"
+            echo "   ✅ Log group deleted: $LOG_GROUP"
           else
-            echo "   ℹ️  Log group already deleted"
+            echo "   ℹ️  Log group already deleted: $LOG_GROUP"
           fi
 
       - name: 📊 Destruction Summary

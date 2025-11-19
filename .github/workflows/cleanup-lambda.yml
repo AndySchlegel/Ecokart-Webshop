@@ -1,0 +1,59 @@
+name: Emergency Lambda Cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      lambda_name:
+        description: 'Lambda function name to delete'
+        required: true
+        type: string
+        default: 'ecokart-development-api'
+
+env:
+  AWS_REGION: eu-north-1
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  cleanup:
+    name: Delete Lambda Function
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔐 Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-Cleanup-${{ github.run_id }}
+
+      - name: 🗑️ Delete Lambda Function
+        run: |
+          LAMBDA_NAME="${{ inputs.lambda_name }}"
+          echo "🔍 Checking Lambda: $LAMBDA_NAME"
+
+          if aws lambda get-function --function-name "$LAMBDA_NAME" --region ${{ env.AWS_REGION }} &>/dev/null; then
+            echo "❗ Lambda found! Deleting..."
+
+            aws lambda delete-function \
+              --function-name "$LAMBDA_NAME" \
+              --region ${{ env.AWS_REGION }}
+
+            echo "✅ Lambda deleted: $LAMBDA_NAME"
+            echo "⏰ Waiting 30 seconds..."
+            sleep 30
+            echo "✅ Done!"
+          else
+            echo "ℹ️  Lambda not found (already deleted or never existed)"
+          fi
+
+      - name: 📊 Summary
+        run: |
+          echo "# 🧹 Lambda Cleanup Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Lambda:** ${{ inputs.lambda_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Region:** ${{ env.AWS_REGION }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ You can now deploy again!" >> $GITHUB_STEP_SUMMARY

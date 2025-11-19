@@ -55,6 +55,27 @@ export const addToCart = async (req: AuthRequest, res: Response): Promise<void> 
       return;
     }
 
+    // ✅ STOCK CHECK: Verify availability
+    if (product.stock !== undefined) {
+      const availableStock = product.stock - (product.reserved || 0);
+
+      if (availableStock <= 0) {
+        res.status(400).json({
+          error: 'Product is out of stock',
+          availableStock: 0
+        });
+        return;
+      }
+
+      if (quantity > availableStock) {
+        res.status(400).json({
+          error: `Only ${availableStock} units available`,
+          availableStock
+        });
+        return;
+      }
+    }
+
     // Get or create cart
     let cart = await database.getCartByUserId(userId);
     if (!cart) {
@@ -86,6 +107,10 @@ export const addToCart = async (req: AuthRequest, res: Response): Promise<void> 
     }
 
     const updated = await database.updateCart(userId, { items: cart.items });
+
+    // ✅ INVENTORY: Reserve stock in DynamoDB
+    await database.reserveStock(productId, quantity);
+
     res.json(updated);
   } catch (error) {
     console.error('Add to cart error:', error);
@@ -114,17 +139,54 @@ export const updateCartItem = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
+    // Find existing item
+    const itemIndex = cart.items.findIndex(item => item.productId === productId);
+    if (itemIndex === -1) {
+      res.status(404).json({ error: 'Item not in cart' });
+      return;
+    }
+
+    const oldQuantity = cart.items[itemIndex].quantity;
+    const quantityDiff = quantity - oldQuantity;
+
     if (quantity === 0) {
-      // Remove item
+      // Remove item - release all reserved stock
       cart.items = cart.items.filter(item => item.productId !== productId);
+
+      // ✅ INVENTORY: Release reserved stock
+      await database.releaseReservedStock(productId, oldQuantity);
     } else {
-      // Update quantity
-      const itemIndex = cart.items.findIndex(item => item.productId === productId);
-      if (itemIndex === -1) {
-        res.status(404).json({ error: 'Item not in cart' });
+      // ✅ STOCK CHECK: Verify availability when increasing quantity
+      const product = await database.getProductById(productId);
+      if (!product) {
+        res.status(404).json({ error: 'Product not found' });
         return;
       }
+
+      if (product.stock !== undefined) {
+        const availableStock = product.stock - (product.reserved || 0);
+
+        if (quantity > availableStock) {
+          res.status(400).json({
+            error: `Only ${availableStock} units available`,
+            availableStock
+          });
+          return;
+        }
+      }
+
+      // Update quantity
       cart.items[itemIndex].quantity = quantity;
+
+      // ✅ INVENTORY: Adjust reserved stock
+      if (quantityDiff > 0) {
+        // Increasing - reserve more
+        await database.reserveStock(productId, quantityDiff);
+      } else if (quantityDiff < 0) {
+        // Decreasing - release some
+        await database.releaseReservedStock(productId, -quantityDiff);
+      }
+      // If quantityDiff === 0, no change needed
     }
 
     const updated = await database.updateCart(userId, { items: cart.items });
@@ -151,6 +213,13 @@ export const removeFromCart = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
+    // Find the item to get its quantity
+    const item = cart.items.find(item => item.productId === productId);
+    if (item) {
+      // ✅ INVENTORY: Release reserved stock
+      await database.releaseReservedStock(productId, item.quantity);
+    }
+
     cart.items = cart.items.filter(item => item.productId !== productId);
     const updated = await database.updateCart(userId, { items: cart.items });
     res.json(updated);
@@ -172,6 +241,11 @@ export const clearCart = async (req: AuthRequest, res: Response): Promise<void> 
     if (!cart) {
       res.status(404).json({ error: 'Cart not found' });
       return;
+    }
+
+    // ✅ INVENTORY: Release all reserved stock
+    for (const item of cart.items) {
+      await database.releaseReservedStock(item.productId, item.quantity);
     }
 
     const updated = await database.updateCart(userId, { items: [] });

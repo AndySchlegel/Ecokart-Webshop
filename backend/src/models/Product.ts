@@ -6,6 +6,7 @@ export interface Product {
   imageUrl: string;
   category?: string;
   stock?: number;
+  reserved?: number; // ← NEU: Für Inventory Management
   rating?: number;
   reviewCount?: number;
   createdAt?: string;
@@ -19,6 +20,7 @@ export interface ProductCreateInput {
   imageUrl: string;
   category?: string;
   stock?: number;
+  reserved?: number;
   rating?: number;
   reviewCount?: number;
 }
@@ -30,6 +32,7 @@ export interface ProductUpdateInput {
   imageUrl?: string;
   category?: string;
   stock?: number;
+  reserved?: number;
   rating?: number;
   reviewCount?: number;
 }
