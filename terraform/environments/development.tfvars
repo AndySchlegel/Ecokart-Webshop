@@ -58,8 +58,8 @@ github_branch     = "develop"  # WICHTIG: Dieser Branch!
 
 # Basic Auth - Schutz vor neugierigen Augen (nicht Production-ready!)
 basic_auth_enabled  = true
-basic_auth_user     = "dev"
-basic_auth_password = "dev1234"  # Schwaches Passwort OK für Dev
+basic_auth_user     = "demo"
+basic_auth_password = "test1234"  # Schwaches Passwort OK für Dev
 
 # Admin Frontend
 enable_admin_amplify      = true

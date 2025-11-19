@@ -48,8 +48,8 @@
 │   - Database Seeding                │
 │   - User Creation                   │
 └────────┬────────────────────────────┘
-         │
-         ▼
+         │   
+         ▼     
 ┌─────────────────────────────────────┐
 │         AWS Account                 │
 │  ┌──────────────────────────────┐  │
@@ -118,7 +118,44 @@
 
 **Durchschnittliche Laufzeit:** 10-12 Minuten
 
-### 3. **Cleanup Scripts**
+### 3. **Destroy Workflow** (`.github/workflows/destroy.yml`)
+
+**Zweck:** Sichere, automatisierte Infrastructure Destruction via GitHub Actions
+
+**Trigger:**
+
+- Nur manuell via "Run workflow" Button
+
+- **Sicherheits-Bestätigung erforderlich:** "destroy" tippen
+
+**Features:**
+- ✅ Terraform Destroy (DynamoDB, Lambda, API Gateway)
+- ✅ Optional: Amplify Apps löschen (Checkbox)
+- ✅ Cleanup remaining resources (IAM, CloudWatch)
+- ✅ Wait Logic für DynamoDB Table Deletion
+- ✅ Post-Destruction Verification
+
+**Schritte:**
+
+1. **Bestätigung validieren** - Prüft dass "destroy" eingegeben wurde
+2. **OIDC Authentication** - Authentifiziert mit AWS
+3. **Terraform Plan Destroy** - Erstellt Destruction Plan
+4. **Amplify Apps löschen** - Optional, wenn Checkbox gesetzt
+5. **Terraform Destroy** - Führt Destruction aus
+6. **Cleanup Tables** - Löscht verbleibende DynamoDB Tables (mit Wait)
+7. **Cleanup IAM** - Löscht verbleibende IAM Roles
+8. **Cleanup Logs** - Löscht verbleibende CloudWatch Log Groups
+9. **Destruction Summary** - Zeigt was gelöscht wurde
+
+**Durchschnittliche Laufzeit:** 8-10 Minuten
+
+**Sicherheitsfeatures:**
+
+- Manuelle Bestätigung erforderlich (kein Auto-Trigger)
+- Separate Checkbox für Amplify Apps
+- Vollständige Logging was gelöscht wird
+
+### 4. **Cleanup Scripts**
 
 #### `cleanup-dev.sh` - Komplettes Infrastructure Cleanup
 
@@ -173,6 +210,30 @@ Löscht **ALLE** Amplify Apps in der Region. Nützlich zum Aufräumen alter/kapu
 ./deploy.sh
 # Funktioniert weiterhin! (mit manuellem Amplify-Schritt)
 ```
+
+### Infrastructure Destruction (Automated)
+**Via GitHub Actions Destroy Workflow:**
+```
+1. Gehe zu: https://github.com/AndySchlegel/Ecokart-Webshop/actions/workflows/destroy.yml
+2. Klicke "Run workflow"
+3. Tippe "destroy" ins Bestätigungsfeld
+4. ✅ "Also delete Amplify apps?" → true (empfohlen)
+5. Klicke "Run workflow"
+6. Warten (~8-10 Min)
+7. ✅ Alles gelöscht!
+```
+
+**Was der Destroy Workflow macht:**
+- ✅ Terraform Destroy (DynamoDB, Lambda, API Gateway)
+- ✅ Löscht Amplify Apps (optional)
+- ✅ Cleanup remaining resources (IAM Roles, CloudWatch Logs)
+- ✅ Wartet bis Tables wirklich gelöscht sind
+- ✅ Verifiziert dass alles weg ist
+
+**Sicherheit:**
+- Manuelle Bestätigung erforderlich ("destroy" tippen)
+- Kein versehentliches Löschen möglich
+- Zeigt genau was gelöscht wird
 
 ### Komplettes Cleanup & Neustart
 
@@ -308,9 +369,15 @@ aws iam delete-role --role-name ecokart-development-api-exec-role
 ## 🎯 Nächste Schritte / Roadmap
 
 ### Kurzfristig:
+<<<<<<< HEAD
+- [x] Destroy Workflow hinzufügen (für sauberes Cleanup via GitHub Actions) ✅
+- [ ] Multi-Environment Support (dev, staging, prod)
+- [ ] Notification bei erfolgreichem/fehlgeschlagenem Deployment
+=======
 - [x] **Destroy Workflow hinzufügen** ✅ (für sauberes Cleanup via GitHub Actions)
 - [x] **Multi-Environment Support** ✅ (dev, staging, prod) - [Siehe Doku](MULTI_ENVIRONMENT_SETUP.md)
 - [ ] Deployment Notifications (Slack/Discord/Email bei erfolg/fehler)
+>>>>>>> develop
 
 ### Mittelfristig (aus ROADMAP_PLANNING.md):
 - [ ] AWS Cognito User Pool Integration
@@ -356,7 +423,8 @@ aws iam delete-role --role-name ecokart-development-api-exec-role
 ```
 Ecokart-Webshop/
 ├── .github/workflows/
-│   └── deploy.yml                          # GitHub Actions Workflow
+│   ├── deploy.yml                          # Deploy Workflow (automatisch)
+│   └── destroy.yml                         # Destroy Workflow (manuell)
 │
 ├── terraform/github-actions-setup/
 │   ├── main.tf                             # OIDC Provider + IAM Role + Policies

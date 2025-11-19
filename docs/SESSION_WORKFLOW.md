@@ -70,7 +70,7 @@ Development URLs:
 - API: https://...execute-api.eu-north-1.amazonaws.com/dev/
 
 Credentials:
-- Basic Auth: dev / dev1234
+- Basic Auth: demo / test1234
 - Test User: demo@ecokart.com / Demo1234!
 - Admin User: admin@ecokart.com / ecokart2025
 ```

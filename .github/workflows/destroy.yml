@@ -158,6 +158,28 @@ jobs:
           terraform apply -auto-approve tfplan
           echo "✅ Infrastructure destroyed for ${{ steps.env.outputs.environment }}"
 
+      - name: 🧹 Cleanup Lambda Function (if still exists)
+        run: |
+          echo "🧹 Checking for remaining Lambda function for ${{ steps.env.outputs.environment }}..."
+
+          LAMBDA_NAME="ecokart-${{ steps.env.outputs.environment }}-api"
+
+          if aws lambda get-function \
+            --function-name "$LAMBDA_NAME" \
+            --region ${{ env.AWS_REGION }} &>/dev/null; then
+
+            echo "   - Deleting Lambda function: $LAMBDA_NAME"
+            aws lambda delete-function \
+              --function-name "$LAMBDA_NAME" \
+              --region ${{ env.AWS_REGION }}
+
+            echo "   ✅ Lambda function deleted: $LAMBDA_NAME"
+            echo "   ⏰ Waiting 10 seconds for AWS to process..."
+            sleep 10
+          else
+            echo "   ℹ️  Lambda function already deleted: $LAMBDA_NAME"
+          fi
+
       - name: 🧹 Cleanup DynamoDB Tables (if still exist)
         run: |
           echo "🧹 Checking for remaining DynamoDB tables for ${{ steps.env.outputs.environment }}..."
@@ -254,8 +276,8 @@ jobs:
           echo "Destroyed at: $(date -u)"
           echo ""
           echo "🗑️  Deleted Resources:"
+          echo "   - Lambda Function (auto-cleanup)"
           echo "   - DynamoDB Tables (4)"
-          echo "   - Lambda Function"
           echo "   - API Gateway"
           if [ "${{ inputs.delete_amplify_apps }}" == "true" ]; then
             echo "   - Amplify Apps (all)"
