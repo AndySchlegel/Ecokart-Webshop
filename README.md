@@ -151,82 +151,118 @@ Deine URLs:
 ## 📁 Repository-Struktur
 
 ```
-Ecokart Webshop/
+Ecokart-Webshop/
 │
-├── README.md                          # This file
-├── DEPLOYMENT_QUICK_REFERENCE.md      # Quick Reference (1 Seite)
-├── deploy.sh                          # ONE-CLICK Deployment
+├── README.md                          # Projekt-Übersicht
+├── deploy.sh                          # Lokales ONE-CLICK Deployment
+├── cleanup-dev.sh                     # Cleanup-Script (local)
+├── cleanup-amplify-apps.sh            # Amplify Apps cleanup
+├── manual-cleanup-lambda.sh           # Lambda cleanup (emergency)
 │
-├── docs/
-│   ├── MASTER_DOCUMENTATION.md        # Technische Referenz (900+ Zeilen)
+├── .github/                           # GitHub Actions CI/CD ⭐ NEW!
+│   └── workflows/
+│       ├── deploy.yml                 # Automated Deployment
+│       ├── destroy.yml                # Automated Cleanup
+│       └── cleanup-lambda.yml         # Emergency Lambda Cleanup
+│
+├── docs/                              # Dokumentation
+│   ├── MULTI_ENVIRONMENT_SETUP.md     # Multi-Environment Guide ⭐ NEW!
+│   ├── LESSONS_LEARNED.md             # Learnings & Portfolio ⭐ NEW!
+│   ├── SESSION_WORKFLOW.md            # Daily Workflow Guide ⭐ NEW!
+│   ├── GITHUB_ACTIONS_SUCCESS.md      # CI/CD Setup Documentation
+│   ├── ROADMAP_PLANNING.md            # Feature Roadmap
+│   ├── MASTER_DOCUMENTATION.md        # Technische Referenz
 │   ├── PRESENTATION_GUIDE.md          # Vortrag-Drehbuch
-│   ├── SESSION_SUMMARY_2025-11-03.md  # Latest Session Notes
-│   ├── infrastructure-diagram.html    # Interaktives Diagramm
-│   ├── AMPLIFY_GITHUB_TOKEN.md        # GitHub Token Guide
-│   └── CI_CD_AUTOMATION.md            # CI/CD Konzepte
+│   └── infrastructure-diagram.html    # Interaktives Diagramm
 │
 ├── frontend/                          # Customer Shop (Next.js 15)
-│   ├── src/app/                      # App Router
-│   ├── src/components/               # React Components
+│   ├── src/app/                       # App Router
+│   ├── src/components/                # React Components
 │   └── package.json
 │
-├── admin-frontend/                   # Admin Panel (Next.js 15)
-│   ├── src/app/                      # App Router
-│   ├── src/components/               # Admin Components
+├── admin-frontend/                    # Admin Panel (Next.js 15)
+│   ├── src/app/                       # App Router
+│   ├── src/components/                # Admin Components
 │   └── package.json
 │
-├── backend/                          # Express.js Backend
+├── backend/                           # Express.js Backend
 │   ├── src/
-│   │   ├── index.ts                 # Express App
-│   │   ├── lambda.ts                # Lambda Handler
-│   │   ├── routes/                  # API Routes
-│   │   └── services/                # Business Logic
+│   │   ├── index.ts                   # Express App
+│   │   ├── lambda.ts                  # Lambda Handler
+│   │   ├── routes/                    # API Routes
+│   │   └── services/                  # Business Logic
 │   ├── scripts/
-│   │   ├── create-test-user.js      # Demo User
-│   │   ├── create-admin-user.js     # Admin User
-│   │   └── migrate-to-dynamodb-single.js  # Product Import
+│   │   ├── create-test-user.js        # Demo User (demo@ecokart.com)
+│   │   ├── create-admin-user.js       # Admin User (admin@ecokart.com)
+│   │   └── migrate-to-dynamodb-single.js  # Product Import (31 products)
 │   └── package.json
 │
-├── terraform/                        # Infrastructure as Code
-│   ├── main.tf                      # Root Module
-│   ├── variables.tf                 # Input Variables
-│   ├── outputs.tf                   # Output Values
+├── terraform/                         # Infrastructure as Code
+│   ├── main.tf                        # Root Module
+│   ├── variables.tf                   # Input Variables
+│   ├── outputs.tf                     # Output Values
 │   │
-│   ├── modules/                     # Wiederverwendbare Module
-│   │   ├── dynamodb/                # 4 DynamoDB Tabellen
-│   │   ├── lambda/                  # Lambda + API Gateway + Build
-│   │   ├── amplify/                 # Amplify Hosting + Basic Auth
-│   │   └── seed/                    # Database Auto-Seeding
+│   ├── environments/                  # Environment Configs ⭐ NEW!
+│   │   ├── development.tfvars         # Dev: Small & cheap
+│   │   ├── staging.tfvars             # Staging: Production-like
+│   │   ├── production.tfvars          # Prod: Full power
+│   │   └── README.md                  # Config Guide
 │   │
-│   └── examples/
-│       └── basic/                   # Deployment Config
-│           ├── main.tf              # Ruft Root Module auf
-│           └── terraform.tfvars.example
+│   ├── github-actions-setup/          # OIDC Setup ⭐ NEW!
+│   │   ├── main.tf                    # IAM OIDC Provider + Role
+│   │   └── outputs.tf                 # Setup Instructions
+│   │
+│   ├── modules/                       # Wiederverwendbare Module
+│   │   ├── dynamodb/                  # 4 DynamoDB Tabellen
+│   │   ├── lambda/                    # Lambda + API Gateway + Build
+│   │   ├── amplify/                   # Amplify Hosting + Basic Auth
+│   │   └── seed/                      # Database Auto-Seeding
+│   │
+│   ├── examples/
+│   │   └── basic/                     # Deployment Config
+│   │       ├── main.tf                # Ruft Root Module auf
+│   │       └── terraform.tfvars.example
+│   │
+│   └── scripts/
+│       └── seed-database.js           # Database Seeding
 │
 └── scripts/
-    ├── setup-automation.sh          # GitHub Token Setup
-    └── connect-github.sh            # GitHub OAuth Helper
+    ├── setup-automation.sh            # GitHub Token Setup
+    └── setup-github.sh                # GitHub OAuth Helper
 ```
 
-**Dokumentation:**
+**⭐ = Neu im Multi-Environment Setup**
+
+**Wichtige Dokumentation:**
+- 🚀 [Multi-Environment Setup](./docs/MULTI_ENVIRONMENT_SETUP.md) - Development/Staging/Production Guide
+- 📚 [Lessons Learned](./docs/LESSONS_LEARNED.md) - Learnings & Portfolio-Text
+- 🔄 [Session Workflow](./docs/SESSION_WORKFLOW.md) - Daily Workflow für Budget-optimiertes Arbeiten
+- ✅ [GitHub Actions Success](./docs/GITHUB_ACTIONS_SUCCESS.md) - CI/CD Pipeline Dokumentation
+- 🗺️ [Roadmap](./docs/ROADMAP_PLANNING.md) - Geplante Features
 - 📖 [Master Documentation](./docs/MASTER_DOCUMENTATION.md) - Komplette technische Referenz
-- 🎤 [Presentation Guide](./docs/PRESENTATION_GUIDE.md) - Schritt-für-Schritt Vortrag
-- ⚡ [Quick Reference](./DEPLOYMENT_QUICK_REFERENCE.md) - Häufige Commands
+- 🎤 [Presentation Guide](./docs/PRESENTATION_GUIDE.md) - Vortrag-Drehbuch
 
 ---
 
 ## 🔑 Login-Daten
 
-### Customer Frontend
+**Hinweis:** Die Credentials unterscheiden sich je nach Environment!
 
-**URL:** `terraform output amplify_app_url`
+### Development Environment
 
-**Basic Auth (Amplify):**
-- Username: `demo`
-- Password: `test1234`
+**Basic Auth (Amplify - 1st Layer):**
+- Username: `dev`
+- Password: `dev1234`
 
-**App Login:**
-- E-Mail: `demo@ecokart.com`
+**App Login (Backend - 2nd Layer):**
+- Test User: `demo@ecokart.com` / `Demo1234!`
+- Admin User: `admin@ecokart.com` / `ecokart2025`
+
+### Staging & Production
+
+**Basic Auth:** Siehe `terraform/environments/staging.tfvars` bzw. `production.tfvars`
+
+**App Login:** Gleiche User wie Development (werden automatisch erstellt)
 - Password: `Demo1234!`
 
 ### Admin Frontend
