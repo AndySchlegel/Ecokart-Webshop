@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const LOCAL_IMAGES = [
   {
@@ -81,6 +81,39 @@ export function ArticleForm({ onSubmit, editingArticle, onCancelEdit }: ArticleF
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const previewSrc = (values.imageSource === 'local' ? values.localImage : values.imageUrl).trim();
+
+  // Update form values when editingArticle changes
+  useEffect(() => {
+    if (editingArticle) {
+      const isLocal = editingArticle.imageUrl.startsWith('/pics');
+      setValues({
+        name: editingArticle.name,
+        price: editingArticle.price.toString(),
+        description: editingArticle.description,
+        imageUrl: isLocal ? '' : editingArticle.imageUrl,
+        imageSource: isLocal ? 'local' : 'url',
+        localImage: isLocal ? editingArticle.imageUrl : LOCAL_IMAGES[0]?.value ?? '',
+        category: editingArticle.category,
+        rating: editingArticle.rating.toString(),
+        reviewCount: editingArticle.reviewCount.toString(),
+        stock: editingArticle.stock?.toString() ?? '0'
+      });
+    } else {
+      // Reset form when not editing
+      setValues({
+        name: '',
+        price: '',
+        description: '',
+        imageUrl: '',
+        imageSource: 'url',
+        localImage: LOCAL_IMAGES[0]?.value ?? '',
+        category: 'shoes',
+        rating: '4.5',
+        reviewCount: '0',
+        stock: '0'
+      });
+    }
+  }, [editingArticle]);
 
   function updateField<K extends keyof ArticleFormValues>(field: K, value: ArticleFormValues[K]) {
     setValues((current) => ({
