@@ -272,9 +272,13 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 🔐 Credentials" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Basic Auth:** demo / test1234" >> $GITHUB_STEP_SUMMARY
-          echo "- **Test User:** testuser@example.com / SecurePass123!" >> $GITHUB_STEP_SUMMARY
-          echo "- **Admin User:** admin@ecokart.com / AdminSecure123!" >> $GITHUB_STEP_SUMMARY
+          echo "### Basic Auth (Amplify - first layer):" >> $GITHUB_STEP_SUMMARY
+          echo "- **Customer Frontend:** dev / dev1234 (development)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Admin Frontend:** admin / admin1234 (development)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### App Login (Backend Users - second layer):" >> $GITHUB_STEP_SUMMARY
+          echo "- **Test User:** demo@ecokart.com / Demo1234!" >> $GITHUB_STEP_SUMMARY
+          echo "- **Admin User:** admin@ecokart.com / ecokart2025" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ **All systems operational!**" >> $GITHUB_STEP_SUMMARY
 
