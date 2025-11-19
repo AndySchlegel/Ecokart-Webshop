@@ -1,0 +1,77 @@
+name: Re-Seed Database
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to re-seed (development, staging, production)'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+        default: development
+
+env:
+  AWS_REGION: eu-north-1
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  reseed:
+    name: Re-Seed DynamoDB Tables
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🔐 Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-Reseed-${{ github.run_id }}
+
+      - name: ✅ Verify AWS Authentication
+        run: |
+          echo "🔍 Verifying AWS credentials..."
+          aws sts get-caller-identity
+          echo "✅ AWS authentication successful"
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 🌱 Re-Seed Database
+        working-directory: backend
+        run: |
+          echo "🌱 Starting database re-seeding for: ${{ inputs.environment }}"
+
+          # Install dependencies
+          echo "📦 Installing backend dependencies..."
+          npm ci
+
+          # Migrate products (overwrites existing)
+          echo "📋 Re-seeding products to DynamoDB..."
+          npm run dynamodb:migrate:single -- --region ${{ env.AWS_REGION }}
+
+          echo "✅ Database re-seeding completed successfully!"
+
+      - name: 📊 Summary
+        run: |
+          echo "# 🌱 Database Re-Seed Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Region:** ${{ env.AWS_REGION }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Products table updated with stock fields!**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Test the API:" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "curl https://YOUR_API_URL/api/products | jq '.[0]'" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
