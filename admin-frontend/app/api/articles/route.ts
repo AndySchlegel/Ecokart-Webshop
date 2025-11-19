@@ -53,11 +53,82 @@ export async function POST(request: Request) {
       price: body.price,
       category: body.category || 'uncategorized',
       rating: body.rating ?? 0,
-      reviewCount: body.reviewCount ?? 0
+      reviewCount: body.reviewCount ?? 0,
+      stock: body.stock ?? 0
     });
     return NextResponse.json({ item }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ message: error instanceof Error ? error.message : 'Speichern fehlgeschlagen.' }, { status: 500 });
+  }
+}
+
+export async function PUT(request: Request) {
+  const session = await ensureAuthenticated(request);
+  if (!session) {
+    return NextResponse.json({ message: 'Nicht autorisiert.' }, { status: 401 });
+  }
+  const body = await request.json() as Partial<ArticlePayload & { id: string }>;
+  if (!body.id) {
+    return NextResponse.json({ message: 'id fehlt.' }, { status: 400 });
+  }
+  if (!body.name || !body.description || !body.imageUrl || typeof body.price !== 'number' || Number.isNaN(body.price)) {
+    return NextResponse.json({ message: 'Alle Felder müssen korrekt gefüllt werden.' }, { status: 400 });
+  }
+  try {
+    const localRoot = '/Users/his4irness23/GitHub/Repositories/Ecokart-Webshop/pics/';
+    let imageUrl = body.imageUrl.trim();
+    if (imageUrl.startsWith(localRoot)) {
+      imageUrl = `/pics/${imageUrl.slice(localRoot.length)}`;
+    } else if (!imageUrl.startsWith('http')) {
+      if (imageUrl.startsWith('pics/')) {
+        imageUrl = `/${imageUrl}`;
+      } else if (!imageUrl.startsWith('/pics/') && imageUrl) {
+        imageUrl = `/pics/${imageUrl}`;
+      }
+    }
+
+    // Update via Backend API
+    const BASE_URL = process.env.ADMIN_API_URL || process.env.NEXT_PUBLIC_API_URL;
+    if (!BASE_URL) {
+      throw new Error('API URL not configured');
+    }
+    // Ensure proper URL formatting
+    const apiUrl = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
+    const updateUrl = `${apiUrl}/api/products/${body.id}`;
+
+    const updatePayload = {
+      name: body.name,
+      description: body.description,
+      imageUrl,
+      price: body.price,
+      category: body.category || 'uncategorized',
+      rating: body.rating ?? 0,
+      reviewCount: body.reviewCount ?? 0,
+      stock: body.stock ?? 0
+    };
+
+    console.log('[PUT] Updating product:', body.id);
+    console.log('[PUT] URL:', updateUrl);
+    console.log('[PUT] Payload:', updatePayload);
+
+    const response = await fetch(updateUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updatePayload)
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('[PUT] Backend error:', response.status, error);
+      throw new Error(`Backend update failed: ${response.status} ${error}`);
+    }
+
+    const item = await response.json();
+    return NextResponse.json({ item });
+  } catch (error) {
+    return NextResponse.json({ message: error instanceof Error ? error.message : 'Update fehlgeschlagen.' }, { status: 500 });
   }
 }
 
