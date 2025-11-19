@@ -7,6 +7,8 @@ export type Article = {
   category: string;
   rating: number;
   reviewCount: number;
+  stock?: number;
+  reserved?: number;
 };
 
 export type ArticlePayload = Omit<Article, 'id'>;
