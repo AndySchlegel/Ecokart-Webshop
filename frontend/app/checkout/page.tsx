@@ -6,14 +6,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { API_BASE_URL } from '../../lib/config';
+import { fetchAuthSession } from 'aws-amplify/auth';
 
 export default function CheckoutPage() {
   const { cart, cartTotal, isLoading: cartLoading, clearCart } = useCart();
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
 
   const [shippingAddress, setShippingAddress] = useState({
-    name: user?.name || '',
+    name: '', // User gibt Namen im Formular ein
     street: '',
     city: '',
     postalCode: '',
@@ -57,6 +58,14 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
 
     try {
+      // Cognito Token holen
+      const session = await fetchAuthSession();
+      const token = session.tokens?.idToken?.toString();
+
+      if (!token) {
+        throw new Error('Nicht eingeloggt - bitte melde dich erneut an');
+      }
+
       const orderData = {
         items: cart.items,
         total: cartTotal,
@@ -106,6 +115,19 @@ export default function CheckoutPage() {
                 {error}
               </div>
             )}
+
+            <div className="form-group">
+              <label htmlFor="name">Vollständiger Name *</label>
+              <input
+                id="name"
+                type="text"
+                value={shippingAddress.name}
+                onChange={(e) => setShippingAddress({ ...shippingAddress, name: e.target.value })}
+                placeholder="Max Mustermann"
+                required
+                disabled={isSubmitting}
+              />
+            </div>
 
             <div className="form-group">
               <label htmlFor="street">Straße und Hausnummer *</label>

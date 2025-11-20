@@ -49,15 +49,9 @@ export function configureAmplify() {
         // User Pool Configuration
         // ----------------------------------------------------------------
         // Das ist dein Cognito User Pool aus Terraform
+        // Die Region ist in der User Pool ID enthalten (z.B. "eu-north-1_...")
         userPoolId,                   // z.B. "eu-north-1_AbCdEfG"
         userPoolClientId,             // z.B. "1a2b3c4d5e..."
-
-        // ----------------------------------------------------------------
-        // Region
-        // ----------------------------------------------------------------
-        // In welcher AWS Region liegt dein User Pool?
-        // WICHTIG: Muss gleich sein wie in Terraform!
-        region,                       // z.B. "eu-north-1"
 
         // ----------------------------------------------------------------
         // Login Flow
