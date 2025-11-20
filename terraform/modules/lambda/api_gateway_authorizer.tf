@@ -19,8 +19,8 @@
 # Prüft ob User einen gültigen Cognito Token hat
 
 resource "aws_api_gateway_authorizer" "cognito" {
-  # Nur erstellen wenn Cognito User Pool ARN übergeben wurde
-  count = var.cognito_user_pool_arn != "" ? 1 : 0
+  # Nur erstellen wenn Cognito Auth aktiviert ist
+  count = var.enable_cognito_auth ? 1 : 0
 
   name          = "${var.function_name}-cognito-authorizer"
   type          = "COGNITO_USER_POOLS"
@@ -107,7 +107,7 @@ resource "aws_api_gateway_authorizer" "cognito" {
 # Spart Lambda-Kosten!
 
 resource "aws_api_gateway_request_validator" "main" {
-  count = var.cognito_user_pool_arn != "" ? 1 : 0
+  count = var.enable_cognito_auth ? 1 : 0
 
   name                        = "${var.function_name}-request-validator"
   rest_api_id                 = aws_api_gateway_rest_api.api.id
@@ -126,7 +126,7 @@ resource "aws_api_gateway_request_validator" "main" {
 # Deshalb: OPTIONS Method OHNE Authorizer
 
 resource "aws_api_gateway_method" "proxy_options" {
-  count = var.cognito_user_pool_arn != "" ? 1 : 0
+  count = var.enable_cognito_auth ? 1 : 0
 
   rest_api_id   = aws_api_gateway_rest_api.api.id
   resource_id   = aws_api_gateway_resource.proxy.id
@@ -135,7 +135,7 @@ resource "aws_api_gateway_method" "proxy_options" {
 }
 
 resource "aws_api_gateway_integration" "proxy_options" {
-  count = var.cognito_user_pool_arn != "" ? 1 : 0
+  count = var.enable_cognito_auth ? 1 : 0
 
   rest_api_id = aws_api_gateway_rest_api.api.id
   resource_id = aws_api_gateway_resource.proxy.id
@@ -151,7 +151,7 @@ resource "aws_api_gateway_integration" "proxy_options" {
 }
 
 resource "aws_api_gateway_method_response" "proxy_options" {
-  count = var.cognito_user_pool_arn != "" ? 1 : 0
+  count = var.enable_cognito_auth ? 1 : 0
 
   rest_api_id = aws_api_gateway_rest_api.api.id
   resource_id = aws_api_gateway_resource.proxy.id
@@ -170,7 +170,7 @@ resource "aws_api_gateway_method_response" "proxy_options" {
 }
 
 resource "aws_api_gateway_integration_response" "proxy_options" {
-  count = var.cognito_user_pool_arn != "" ? 1 : 0
+  count = var.enable_cognito_auth ? 1 : 0
 
   rest_api_id = aws_api_gateway_rest_api.api.id
   resource_id = aws_api_gateway_resource.proxy.id
@@ -191,10 +191,10 @@ resource "aws_api_gateway_integration_response" "proxy_options" {
 
 output "cognito_authorizer_enabled" {
   description = "Ist Cognito Authorizer aktiviert?"
-  value       = var.cognito_user_pool_arn != "" ? true : false
+  value       = var.enable_cognito_auth
 }
 
 output "cognito_authorizer_id" {
   description = "ID des Cognito Authorizers (falls aktiviert)"
-  value       = var.cognito_user_pool_arn != "" ? aws_api_gateway_authorizer.cognito[0].id : null
+  value       = var.enable_cognito_auth ? aws_api_gateway_authorizer.cognito[0].id : null
 }
