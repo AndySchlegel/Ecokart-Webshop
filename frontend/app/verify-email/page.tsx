@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { confirmSignUp, autoSignIn } from 'aws-amplify/auth';
 
-export default function VerifyEmailPage() {
+// Inner component that uses useSearchParams
+function VerifyEmailContent() {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -414,5 +415,24 @@ export default function VerifyEmailPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+// Main export with Suspense boundary
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #000000 0%, #1a1a1a 100%)'
+      }}>
+        <div style={{ color: '#00ff87', fontSize: '1.5rem' }}>Loading...</div>
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }
