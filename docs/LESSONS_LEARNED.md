@@ -365,9 +365,7 @@ aws dynamodb wait table-not-exists --table-name ecokart-products
 - Schritt-für-Schritt Approach
 - Dokumentation während Development
 
-✅ **Kostenbe
-
-wusstsein**
+✅ **Kostenbewusstsein**
 - Cloud-Kosten verstehen
 - Optimization-Strategien
 - Budget-Management (15$/Monat Sandbox!)
@@ -405,24 +403,184 @@ wusstsein**
 
 ---
 
-## 🚀 Nächste Schritte (Roadmap)
+## 🆕 Recent Learnings (November 2025)
 
-### Kurzfristig
-- [ ] Inventory Management (Stock-Tracking)
-- [ ] AWS Cognito (echte User-Auth)
-- [ ] Deployment Notifications (Slack/Discord)
+### 9. Migration Scripts müssen synchron sein
 
-### Mittelfristig
-- [ ] Stripe Payment Integration
-- [ ] Email Notifications (SES)
-- [ ] Product Image Upload (S3)
-- [ ] CloudWatch Alarms & Dashboards
+**Herausforderung: Stock-Felder fehlten in DynamoDB**
 
-### Langfristig
-- [ ] Blue/Green Deployments
-- [ ] Automated Testing (Unit, Integration, E2E)
-- [ ] Performance Monitoring
-- [ ] Remote Terraform State (S3)
+**Das Problem:**
+Nach Implementierung des Inventory Management Systems im Frontend funktionierte nichts - Stock-Felder waren in DynamoDB leer!
+
+**Die Ursache:**
+```
+Es gibt 2 Migration Scripts:
+1. migrate-to-dynamodb.js (original)
+2. migrate-to-dynamodb-single.js (für CI/CD)
+
+Stock/Reserved Felder waren nur in Script #1 → CI/CD nutzt Script #2!
+```
+
+**Die Lösung:**
+```javascript
+// BEIDE Scripts müssen identisch sein!
+// migrate-to-dynamodb-single.js
+Item: {
+  id: product.id,
+  name: product.name,
+  price: product.price,
+  stock: product.stock || 0,      // ← NEU
+  reserved: product.reserved || 0, // ← NEU
+  // ...
+}
+```
+
+**Was ich gelernt habe:**
+- Bei Duplicate Scripts: IMMER beide updaten
+- Scripts die von CI/CD genutzt werden extra markieren
+- Re-Seed Workflow spart Zeit vs. Destroy/Deploy
+- Dokumentieren welches Script wofür verwendet wird
+
+---
+
+### 10. Data vs. Code Mismatches sind schwer zu finden
+
+**Das Problem:**
+- ✅ Frontend-Code hatte Stock-UI
+- ✅ Backend-Code hatte Stock-Logic
+- ❌ DynamoDB-Daten hatten KEINE Stock-Felder
+
+**Die Symptome:**
+- Keine offensichtlichen Errors
+- UI zeigte "undefined" oder "0"
+- Backend-Logs zeigten keine Fehler
+- Schwer zu debuggen!
+
+**Was ich gelernt habe:**
+- Schema-Änderungen brauchen 3 Updates:
+  1. **Code** (Frontend + Backend)
+  2. **Database Schema** (Terraform/Models)
+  3. **Data Migration** (Seed Scripts!)
+- Bei Schema-Änderungen IMMER re-seed testen
+- Database-First oder Code-First Approach konsequent durchziehen
+
+---
+
+### 11. URL Construction ist wichtiger als gedacht
+
+**Das Problem:**
+```
+Backend URL: https://api.example.com/Prod/
+API Call: /api/products
+Result: /Prod//api/products  ← Doppelter Slash!
+```
+
+**Die Lösung:**
+```typescript
+const apiUrl = BASE_URL.endsWith('/')
+  ? BASE_URL.slice(0, -1)
+  : BASE_URL;
+const fullUrl = `${apiUrl}/api/products`;
+```
+
+**Was ich gelernt habe:**
+- Trailing Slashes IMMER normalisieren
+- URL-Construction als eigene Util-Function
+- Debug-Logging für API-Calls hilft enorm
+- Testen mit/ohne Trailing Slash
+
+---
+
+### 12. AWS Config ist ein Cost-Trap
+
+**Herausforderung: Unerwartete AWS-Kosten**
+
+**Das Problem:**
+AWS Kosten: $17.08/Monat statt erwartet <$10/Monat
+```
+AWS Config:  $5.87 (34%)
+VPC:         $2.98 (17%)
+RDS:         $2.34 (14%) ← Sollte nicht existieren!
+ECS:         $1.39 (8%)  ← Sollte nicht existieren!
+```
+
+**Die Ursache:**
+- **AWS Config** tracked jede Ressourcen-Änderung
+- Destroy/Rebuild Cycles → Hunderte von Config Changes
+- **RDS + ECS:** Orphaned Resources von früherem Setup
+- **VPC:** NAT Gateway von nicht gelöschter Infrastruktur
+
+**Die Lösung:**
+```bash
+# 1. AWS Config deaktivieren (für Development)
+aws configservice stop-configuration-recorder
+
+# 2. Orphaned Resources finden
+aws rds describe-db-instances
+aws ecs list-clusters
+
+# 3. Manuell löschen
+aws rds delete-db-instance --db-instance-identifier xxx
+aws ecs delete-cluster --cluster xxx
+
+# 4. NAT Gateways checken (teuer!)
+aws ec2 describe-nat-gateways
+```
+
+**Was ich gelernt habe:**
+- **AWS Config ist teuer** bei Destroy/Rebuild Workflows
+- Für Development: Disable Config → spart ~$6/Monat
+- Für Production: Config ist sinnvoll (Compliance/Audit)
+- **Terraform Destroy ≠ Alles gelöscht**
+  - Immer manuell AWS Console checken
+  - Orphaned Resources können teuer sein
+- NAT Gateways kosten $32/Monat → nur wenn wirklich nötig!
+
+**Cost Optimization:**
+```
+Vorher: $17.08/Monat
+Nachher (erwartet): $5-6/Monat (65% Reduction!)
+```
+
+---
+
+### 13. Lambda Cleanup braucht besseres Error Handling
+
+**Das Problem:**
+Trotz Auto-Cleanup Step in `.github/workflows/destroy.yml` musste Lambda mehrfach manuell gelöscht werden.
+
+**Die Ursache:**
+- CloudWatch Log Groups blockieren Lambda Deletion
+- Lambda kann gelöscht werden, aber CloudWatch bleibt
+- Beim Re-Deploy: "Lambda already exists" Error
+
+**Die Lösung (teilweise):**
+```yaml
+# .github/workflows/destroy.yml
+- name: 🧹 Cleanup Lambda Function
+  run: |
+    aws lambda delete-function --function-name "$LAMBDA_NAME" || true
+    aws logs delete-log-group --log-group-name "/aws/lambda/$LAMBDA_NAME" || true
+```
+
+**Was ich gelernt habe:**
+- AWS Resource Dependencies sind komplex
+- Reihenfolge beim Löschen ist wichtig
+- `|| true` für fehlertolerante Scripts
+- Manueller Workflow als Backup ist gut
+- **TODO:** Weitere Verbesserung nötig
+
+---
+
+## 🚀 Roadmap
+
+Für aktuelle Tasks und Roadmap siehe: **[docs/ACTION_PLAN.md](ACTION_PLAN.md)**
+
+Die ACTION_PLAN.md ist das Living Document für:
+- Current Sprint (was läuft gerade)
+- Next Up (was kommt als nächstes)
+- Known Issues (aktuelle Blocker)
+- Metrics (Project Health)
 
 ---
 

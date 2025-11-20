@@ -156,7 +156,16 @@ variable "github_repository" {
 }
 
 variable "github_branch" {
-  description = "GitHub Branch für Amplify Auto-Deploy"
+  description = <<-EOT
+    GitHub Branch für Amplify Auto-Deploy (Fallback-Wert).
+
+    HINWEIS: Wird automatisch überschrieben durch Environment-Mapping:
+    - development → develop
+    - staging     → staging
+    - production  → main
+
+    Dieser Wert wird nur verwendet wenn Environment nicht gemappt ist.
+  EOT
   type        = string
   default     = "main"
 }
@@ -250,6 +259,82 @@ variable "admin_basic_auth_password" {
   type        = string
   sensitive   = true
   default     = ""
+}
+
+# ============================================================================
+# COGNITO USER AUTHENTICATION
+# ============================================================================
+# AWS Cognito User Pool für User-Management und Authentication
+# Ersetzt JWT-basierte Authentication durch AWS-managed Lösung
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# Cognito Admin User Auto-Provisioning
+# ----------------------------------------------------------------------------
+
+variable "enable_cognito_admin_provisioning" {
+  description = <<-EOT
+    Admin User automatisch beim Deployment erstellen?
+
+    true  = Admin User wird automatisch via Script erstellt
+    false = Manuelles Setup in AWS Console erforderlich
+
+    Empfehlung:
+    - Development: true  (schnelles Testing)
+    - Staging:     true  (konsistent)
+    - Production:  false (volle Kontrolle, manuelle Erstellung)
+  EOT
+  type        = bool
+  default     = true
+}
+
+variable "cognito_admin_email" {
+  description = "Email für automatisch erstellten Admin User"
+  type        = string
+  default     = "admin@ecokart.com"
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.cognito_admin_email))
+    error_message = "Cognito Admin Email muss eine gültige Email-Adresse sein"
+  }
+}
+
+variable "cognito_admin_temp_password" {
+  description = <<-EOT
+    Temporäres Passwort für Admin User.
+    Muss beim ersten Login geändert werden.
+
+    Anforderungen:
+    - Mindestens 8 Zeichen
+    - Groß- und Kleinbuchstaben
+    - Mindestens eine Zahl
+  EOT
+  type        = string
+  sensitive   = true
+  default     = "EcokartAdmin2025!"
+
+  validation {
+    condition     = length(var.cognito_admin_temp_password) >= 8
+    error_message = "Password muss mindestens 8 Zeichen haben"
+  }
+}
+
+# ----------------------------------------------------------------------------
+# Cognito API Gateway Integration
+# ----------------------------------------------------------------------------
+
+variable "enable_cognito_auth" {
+  description = <<-EOT
+    API Gateway Cognito Authorizer aktivieren?
+
+    true  = Cognito Token-Validation auf API Gateway Ebene
+    false = Keine Cognito-Auth (nur für Development/Testing)
+
+    Empfehlung: true für alle Environments
+    (nur false wenn du reines Public API ohne Auth testen willst)
+  EOT
+  type        = bool
+  default     = true
 }
 
 # ----------------------------------------------------------------------------

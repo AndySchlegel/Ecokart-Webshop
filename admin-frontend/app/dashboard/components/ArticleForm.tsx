@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const LOCAL_IMAGES = [
   {
@@ -33,6 +33,7 @@ type ArticleFormValues = {
   category: string;
   rating: string;
   reviewCount: string;
+  stock: string;
 };
 
 type ArticleFormSubmitValues = {
@@ -43,6 +44,7 @@ type ArticleFormSubmitValues = {
   category: string;
   rating: string;
   reviewCount: string;
+  stock: string;
 };
 
 type ArticleFormProps = {
@@ -56,6 +58,7 @@ type ArticleFormProps = {
     category: string;
     rating: number;
     reviewCount: number;
+    stock?: number;
   } | null;
   onCancelEdit?: () => void;
 };
@@ -71,12 +74,46 @@ export function ArticleForm({ onSubmit, editingArticle, onCancelEdit }: ArticleF
     localImage: isLocalImage ? (editingArticle?.imageUrl ?? LOCAL_IMAGES[0]?.value ?? '') : LOCAL_IMAGES[0]?.value ?? '',
     category: editingArticle?.category ?? 'shoes',
     rating: editingArticle?.rating.toString() ?? '4.5',
-    reviewCount: editingArticle?.reviewCount.toString() ?? '0'
+    reviewCount: editingArticle?.reviewCount.toString() ?? '0',
+    stock: editingArticle?.stock?.toString() ?? '0'
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const previewSrc = (values.imageSource === 'local' ? values.localImage : values.imageUrl).trim();
+
+  // Update form values when editingArticle changes
+  useEffect(() => {
+    if (editingArticle) {
+      const isLocal = editingArticle.imageUrl.startsWith('/pics');
+      setValues({
+        name: editingArticle.name,
+        price: editingArticle.price.toString(),
+        description: editingArticle.description,
+        imageUrl: isLocal ? '' : editingArticle.imageUrl,
+        imageSource: isLocal ? 'local' : 'url',
+        localImage: isLocal ? editingArticle.imageUrl : LOCAL_IMAGES[0]?.value ?? '',
+        category: editingArticle.category,
+        rating: editingArticle.rating.toString(),
+        reviewCount: editingArticle.reviewCount.toString(),
+        stock: editingArticle.stock?.toString() ?? '0'
+      });
+    } else {
+      // Reset form when not editing
+      setValues({
+        name: '',
+        price: '',
+        description: '',
+        imageUrl: '',
+        imageSource: 'url',
+        localImage: LOCAL_IMAGES[0]?.value ?? '',
+        category: 'shoes',
+        rating: '4.5',
+        reviewCount: '0',
+        stock: '0'
+      });
+    }
+  }, [editingArticle]);
 
   function updateField<K extends keyof ArticleFormValues>(field: K, value: ArticleFormValues[K]) {
     setValues((current) => ({
@@ -99,7 +136,8 @@ export function ArticleForm({ onSubmit, editingArticle, onCancelEdit }: ArticleF
         imageUrl: finalImageUrl,
         category: values.category,
         rating: values.rating,
-        reviewCount: values.reviewCount
+        reviewCount: values.reviewCount,
+        stock: values.stock
       }, editingArticle?.id);
 
       if (!editingArticle) {
@@ -113,7 +151,8 @@ export function ArticleForm({ onSubmit, editingArticle, onCancelEdit }: ArticleF
           localImage: LOCAL_IMAGES[0]?.value ?? '',
           category: 'shoes',
           rating: '4.5',
-          reviewCount: '0'
+          reviewCount: '0',
+          stock: '0'
         });
       }
       setSuccess(true);
@@ -216,6 +255,18 @@ export function ArticleForm({ onSubmit, editingArticle, onCancelEdit }: ArticleF
               min="0"
               required
               placeholder="100"
+            />
+          </label>
+
+          <label>
+            <span>Lagerbestand</span>
+            <input
+              value={values.stock}
+              onChange={(event) => updateField('stock', event.target.value)}
+              type="number"
+              min="0"
+              required
+              placeholder="50"
             />
           </label>
 
