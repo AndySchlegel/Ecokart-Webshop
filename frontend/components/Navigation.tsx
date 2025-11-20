@@ -17,7 +17,7 @@ interface Product {
 
 export default function Navigation() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const { cartItemCount } = useCart();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -276,8 +276,8 @@ export default function Navigation() {
         </div>
         {user && (
           <div className="sidebar-user">
-            <p>Angemeldet als: <strong>{user.name}</strong></p>
-            <button onClick={() => { logout(); setSidebarOpen(false); }} className="sidebar-logout">
+            <p>Angemeldet als: <strong>{user.email}</strong></p>
+            <button onClick={() => { signOut(); setSidebarOpen(false); }} className="sidebar-logout">
               Abmelden
             </button>
           </div>
