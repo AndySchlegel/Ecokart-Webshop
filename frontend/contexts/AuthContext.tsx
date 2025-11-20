@@ -9,7 +9,15 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getCurrentUser, signOut as amplifySignOut, fetchAuthSession } from 'aws-amplify/auth';
+import {
+  getCurrentUser,
+  signOut as amplifySignOut,
+  fetchAuthSession,
+  signIn,
+  signUp,
+  confirmSignUp,
+  autoSignIn
+} from 'aws-amplify/auth';
 import { useRouter } from 'next/navigation';
 
 // ============================================================================
@@ -27,6 +35,8 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -85,13 +95,103 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // ----------------------------------------------------------------
+  // Login mit Cognito
+  // ----------------------------------------------------------------
+  const login = async (email: string, password: string) => {
+    try {
+      console.log('🔐 Versuche Login für:', email);
+
+      // Cognito Sign In
+      const { isSignedIn, nextStep } = await signIn({
+        username: email, // Bei Cognito ist username = email
+        password,
+      });
+
+      if (isSignedIn) {
+        console.log('✅ Login erfolgreich');
+        // User-Daten neu laden
+        await loadUser();
+      } else {
+        console.warn('⚠️ Login incomplete, next step:', nextStep);
+        throw new Error('Login konnte nicht abgeschlossen werden');
+      }
+    } catch (error: any) {
+      console.error('❌ Login Error:', error);
+
+      // Benutzerfreundliche Fehlermeldungen (auf Deutsch)
+      if (error.name === 'UserNotFoundException' || error.name === 'NotAuthorizedException') {
+        throw new Error('E-Mail oder Passwort falsch');
+      } else if (error.name === 'UserNotConfirmedException') {
+        throw new Error('Bitte bestätige zuerst deine E-Mail');
+      } else {
+        throw new Error(error.message || 'Login fehlgeschlagen');
+      }
+    }
+  };
+
+  // ----------------------------------------------------------------
+  // Registrierung mit Cognito
+  // ----------------------------------------------------------------
+  const register = async (email: string, password: string, name: string) => {
+    try {
+      console.log('📝 Versuche Registrierung für:', email);
+
+      // Cognito Sign Up
+      const { isSignUpComplete, userId, nextStep } = await signUp({
+        username: email, // Bei Cognito ist username = email
+        password,
+        options: {
+          userAttributes: {
+            email,
+            name, // Optional: Name speichern
+            'custom:role': 'customer', // Standard-Role = customer
+          },
+          autoSignIn: true, // Auto-Login nach Bestätigung
+        },
+      });
+
+      console.log('✅ Registrierung erfolgreich, User ID:', userId);
+      console.log('Next Step:', nextStep);
+
+      // Bei Cognito mit Email-Verification:
+      // User muss Email bestätigen (bekommt Code per Email)
+      // Dann automatisch eingeloggt werden
+      if (nextStep.signUpStep === 'CONFIRM_SIGN_UP') {
+        console.log('📧 Bestätigungs-Email wurde versendet');
+        // Redirect zur Verification-Page
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+        return; // Funktion beenden, kein Error werfen
+      }
+
+      if (isSignUpComplete) {
+        console.log('✅ Sign Up komplett - User kann sich einloggen');
+        // User-Daten neu laden
+        await loadUser();
+      }
+    } catch (error: any) {
+      console.error('❌ Registrierungs Error:', error);
+
+      // Benutzerfreundliche Fehlermeldungen (auf Deutsch)
+      if (error.name === 'UsernameExistsException') {
+        throw new Error('Diese E-Mail ist bereits registriert');
+      } else if (error.name === 'InvalidPasswordException') {
+        throw new Error('Passwort erfüllt nicht die Anforderungen (min. 8 Zeichen, Groß-/Kleinbuchstaben, Zahlen)');
+      } else if (error.name === 'InvalidParameterException') {
+        throw new Error('Ungültige Eingabe. Bitte prüfe deine Daten.');
+      } else {
+        throw new Error(error.message || 'Registrierung fehlgeschlagen');
+      }
+    }
+  };
+
+  // ----------------------------------------------------------------
   // Logout
   // ----------------------------------------------------------------
   const signOut = async () => {
     try {
       await amplifySignOut();
       setUser(null);
-      router.push('/auth/login');
+      router.push('/login');
       console.log('✅ User ausgeloggt');
     } catch (error) {
       console.error('Logout Error:', error);
@@ -124,6 +224,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     isLoading,
     isAuthenticated: user !== null,
+    login,
+    register,
     signOut,
     refreshUser: loadUser,
   };
