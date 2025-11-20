@@ -23,6 +23,29 @@ resource "aws_cognito_user_pool" "main" {
   name = "${var.project_name}-${var.environment}-users"
 
   # ----------------------------------------------------------------
+  # 🚨 LIFECYCLE PROTECTION - WICHTIG!
+  # ----------------------------------------------------------------
+  # PROBLEM: Bei "terraform destroy" werden ALLE User gelöscht!
+  # - Alle Emails, Passwörter, Admin-User weg!
+  # - Muss nach Redeploy alles neu erstellt werden
+  #
+  # LÖSUNG: prevent_destroy verhindert versehentliches Löschen
+  #
+  # ⚠️ Für Development (Testing):
+  # Wenn du den User Pool wirklich destroyen willst, kommentiere
+  # den lifecycle Block temporär aus:
+  #
+  # lifecycle {
+  #   prevent_destroy = true  # <- Auskommentieren für Destroy
+  # }
+  #
+  # ✅ Für Production: NIEMALS auskommentieren!
+  # ----------------------------------------------------------------
+  lifecycle {
+    prevent_destroy = true
+  }
+
+  # ----------------------------------------------------------------
   # Username Configuration
   # ----------------------------------------------------------------
   # Email als Username nutzen (statt separatem Username)

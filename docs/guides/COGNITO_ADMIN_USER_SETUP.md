@@ -179,6 +179,97 @@ Dein Cognito User Pool hat folgende Einstellungen:
 
 ---
 
+## 🔐 Lifecycle Protection & Destroy/Redeploy
+
+### ⚠️ WICHTIG: User Pool Lifecycle
+
+**Problem:**
+```bash
+terraform destroy  # → Cognito User Pool wird GELÖSCHT!
+                   # → ALLE User weg (inkl. Admin!)
+                   # → ALLE Emails, Passwörter weg!
+```
+
+**Lösung implementiert:**
+```hcl
+# In terraform/modules/cognito/main.tf
+resource "aws_cognito_user_pool" "main" {
+  lifecycle {
+    prevent_destroy = true  # ← Verhindert versehentliches Löschen
+  }
+}
+```
+
+### Was bedeutet das?
+
+**✅ Protection aktiviert (Standard):**
+- `terraform destroy` wird **FEHLSCHLAGEN** für Cognito User Pool
+- Du bekommst einen Error: "Cannot destroy resource with prevent_destroy"
+- **Das ist GEWOLLT!** - Schützt deine Production-User
+
+**⚠️ Für Development/Testing:**
+Wenn du den User Pool wirklich destroyen willst (z.B. komplettes Cleanup):
+
+1. Öffne: `terraform/modules/cognito/main.tf`
+2. Finde den `lifecycle` Block (Zeile ~44)
+3. Kommentiere ihn temporär aus:
+   ```hcl
+   # lifecycle {
+   #   prevent_destroy = true  # <- Auskommentiert
+   # }
+   ```
+4. Jetzt kannst du destroyen: `terraform destroy`
+5. **WICHTIG:** Nach Redeploy wieder einkommentieren!
+
+### Redeploy Strategy
+
+**Szenario: Infrastructure neu aufsetzen**
+
+```bash
+# 1. Lifecycle Protection temporär deaktivieren (siehe oben)
+# 2. Destroy
+cd terraform/examples/basic
+terraform destroy
+
+# 3. Lifecycle Protection wieder aktivieren
+# 4. Deploy
+terraform apply
+
+# 5. Admin User NEU erstellen (siehe oben)
+# → AWS Console → Create User → admin@ecokart.com
+# → custom:role = admin setzen
+```
+
+### Best Practice: User Backup
+
+**Für Production UNBEDINGT:**
+
+1. **User Export** (vor Destroy):
+   ```bash
+   aws cognito-idp list-users \
+     --user-pool-id <pool-id> \
+     --region eu-north-1 \
+     > users_backup.json
+   ```
+
+2. **User Import** (nach Deploy):
+   - AWS Console → User Pool → Import users
+   - Oder: AWS CLI `create-user` für jeden User
+
+3. **Alternative: Database Migration Scripts**
+   - User-Daten in separate DynamoDB Table exportieren
+   - Nach Redeploy re-importieren
+
+### Development vs Production
+
+| Environment | Lifecycle Protection | Empfehlung |
+|-------------|---------------------|------------|
+| **Development** | ✅ Aktiviert (kann deaktiviert werden) | OK zu destroyen für Testing |
+| **Staging** | ✅ Aktiviert | Nur destroyen wenn nötig |
+| **Production** | ✅ Aktiviert | **NIEMALS destroyen!** |
+
+---
+
 ## 🔗 Nächste Schritte
 
 Nach dem Admin User Setup:
