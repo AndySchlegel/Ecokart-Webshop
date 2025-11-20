@@ -12,6 +12,20 @@ locals {
   # Naming Convention: {project}-{resource}-{environment}
   name_prefix = "${var.project_name}-${var.environment}"
 
+  # Automatisches Branch-Mapping basierend auf Environment
+  # Das stellt sicher dass GitHub Actions automatisch den richtigen Branch deployed:
+  # - development → develop Branch
+  # - staging     → staging Branch
+  # - production  → main Branch
+  branch_map = {
+    development = "develop"
+    staging     = "staging"
+    production  = "main"
+  }
+
+  # Verwende gemappten Branch oder Fallback auf var.github_branch
+  github_branch = lookup(local.branch_map, var.environment, var.github_branch)
+
   # Alle Ressourcen erhalten diese Standard-Tags
   common_tags = merge(
     {
@@ -105,7 +119,7 @@ module "amplify" {
 
   # GitHub Integration
   repository          = var.github_repository
-  branch_name         = var.github_branch
+  branch_name         = local.github_branch  # Automatisch gemappt basierend auf Environment
   github_access_token = var.github_access_token
 
   # Build Settings
@@ -157,7 +171,7 @@ module "amplify_admin" {
 
   # GitHub Integration
   repository          = var.github_repository
-  branch_name         = var.github_branch
+  branch_name         = local.github_branch  # Automatisch gemappt basierend auf Environment
   github_access_token = var.github_access_token
 
   # Build Settings (Admin-Frontend spezifisch)

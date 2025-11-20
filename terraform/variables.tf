@@ -156,7 +156,16 @@ variable "github_repository" {
 }
 
 variable "github_branch" {
-  description = "GitHub Branch für Amplify Auto-Deploy"
+  description = <<-EOT
+    GitHub Branch für Amplify Auto-Deploy (Fallback-Wert).
+
+    HINWEIS: Wird automatisch überschrieben durch Environment-Mapping:
+    - development → develop
+    - staging     → staging
+    - production  → main
+
+    Dieser Wert wird nur verwendet wenn Environment nicht gemappt ist.
+  EOT
   type        = string
   default     = "main"
 }
