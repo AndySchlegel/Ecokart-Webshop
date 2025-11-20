@@ -124,3 +124,72 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+# ================================================================
+# ADMIN USER AUTO-PROVISIONING
+# ================================================================
+# Automatische Admin User Erstellung beim Deployment
+# Verhindert manuelles Setup in AWS Console
+# ================================================================
+
+# ----------------------------------------------------------------
+# Enable Admin Provisioning
+# ----------------------------------------------------------------
+# Soll ein Admin User automatisch erstellt werden?
+
+variable "enable_admin_provisioning" {
+  description = <<-EOT
+    Admin User automatisch beim Deployment erstellen?
+
+    true  = Admin User wird automatisch erstellt
+    false = Manuelles Setup in AWS Console nötig
+
+    Empfehlung:
+    - Development: true  (bequem für Testing)
+    - Staging:     true  (konsistent)
+    - Production:  false (manuelle Kontrolle)
+  EOT
+  type        = bool
+  default     = true
+}
+
+# ----------------------------------------------------------------
+# Admin Email
+# ----------------------------------------------------------------
+# Email-Adresse für den Admin User
+
+variable "admin_email" {
+  description = "Email für Admin User (Standard: admin@ecokart.com)"
+  type        = string
+  default     = "admin@ecokart.com"
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.admin_email))
+    error_message = "Admin Email muss eine gültige Email-Adresse sein"
+  }
+}
+
+# ----------------------------------------------------------------
+# Admin Temporary Password
+# ----------------------------------------------------------------
+# Initiales Passwort - muss beim ersten Login geändert werden
+
+variable "admin_temp_password" {
+  description = <<-EOT
+    Temporäres Passwort für Admin User.
+    Muss beim ersten Login geändert werden.
+
+    Anforderungen:
+    - Mindestens 8 Zeichen
+    - Groß- und Kleinbuchstaben
+    - Mindestens eine Zahl
+  EOT
+  type        = string
+  default     = "EcokartAdmin2025!"
+  sensitive   = true
+
+  validation {
+    condition     = length(var.admin_temp_password) >= 8
+    error_message = "Password muss mindestens 8 Zeichen haben"
+  }
+}

@@ -60,6 +60,34 @@ module "dynamodb" {
 }
 
 # ----------------------------------------------------------------------------
+# Cognito Module - User Authentication
+# ----------------------------------------------------------------------------
+# Erstellt:
+# - Cognito User Pool (User-Datenbank)
+# - User Pool Client (für Frontend)
+# - Auto Admin User Provisioning (optional)
+#
+# Features:
+# - Email als Username
+# - Automatische Email-Verification
+# - Custom Attribute "role" (admin/customer)
+# - Lifecycle Protection (prevent_destroy für staging/production)
+
+module "cognito" {
+  source = "./modules/cognito"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  # Admin User Auto-Provisioning
+  enable_admin_provisioning = var.enable_cognito_admin_provisioning
+  admin_email               = var.cognito_admin_email
+  admin_temp_password       = var.cognito_admin_temp_password
+
+  tags = local.common_tags
+}
+
+# ----------------------------------------------------------------------------
 # Lambda Module - Backend API + API Gateway
 # ----------------------------------------------------------------------------
 # Erstellt:
@@ -91,13 +119,17 @@ module "lambda" {
   # DynamoDB Table Names für IAM Permissions
   dynamodb_table_arns = module.dynamodb.table_arns
 
+  # Cognito Integration (API Gateway Authorizer)
+  cognito_user_pool_arn = module.cognito.user_pool_arn
+  enable_cognito_auth   = var.enable_cognito_auth
+
   # API Gateway
   api_stage_name         = var.api_gateway_stage_name
   enable_access_logs     = var.enable_api_gateway_access_logs
 
   tags = local.common_tags
 
-  depends_on = [module.dynamodb]
+  depends_on = [module.dynamodb, module.cognito]
 }
 
 # ----------------------------------------------------------------------------
@@ -133,10 +165,15 @@ module "amplify" {
   # Environment Variables (an Frontend übergeben)
   # AMPLIFY_MONOREPO_APP_ROOT ist erforderlich für Monorepo-Setup
   # Amplify nutzt dies um package.json im richtigen Pfad zu finden
+  # Cognito Credentials für Amplify Auth
   environment_variables = {
-    AMPLIFY_MONOREPO_APP_ROOT = var.amplify_monorepo_app_root
-    NEXT_PUBLIC_API_URL       = module.lambda.api_gateway_url
-    AMPLIFY_DIFF_DEPLOY       = "false"
+    AMPLIFY_MONOREPO_APP_ROOT      = var.amplify_monorepo_app_root
+    NEXT_PUBLIC_API_URL            = module.lambda.api_gateway_url
+    AMPLIFY_DIFF_DEPLOY            = "false"
+    # Cognito Configuration
+    NEXT_PUBLIC_USER_POOL_ID       = module.cognito.user_pool_id
+    NEXT_PUBLIC_USER_POOL_CLIENT_ID = module.cognito.user_pool_client_id
+    NEXT_PUBLIC_AWS_REGION         = var.aws_region
   }
 
   # Basic Auth (optional)
@@ -148,7 +185,7 @@ module "amplify" {
 
   tags = local.common_tags
 
-  depends_on = [module.lambda]
+  depends_on = [module.lambda, module.cognito]
 }
 
 # ----------------------------------------------------------------------------
@@ -185,10 +222,15 @@ module "amplify_admin" {
   # Environment Variables (an Admin Frontend übergeben)
   # AMPLIFY_MONOREPO_APP_ROOT ist erforderlich für Monorepo-Setup
   # Admin Frontend nutzt Backend API für Admin-Operationen
+  # Cognito Credentials für Amplify Auth
   environment_variables = {
-    AMPLIFY_MONOREPO_APP_ROOT = var.admin_amplify_monorepo_app_root
-    NEXT_PUBLIC_API_URL       = module.lambda.api_gateway_url
-    AMPLIFY_DIFF_DEPLOY       = "false"
+    AMPLIFY_MONOREPO_APP_ROOT      = var.admin_amplify_monorepo_app_root
+    NEXT_PUBLIC_API_URL            = module.lambda.api_gateway_url
+    AMPLIFY_DIFF_DEPLOY            = "false"
+    # Cognito Configuration (gleicher User Pool wie Customer Frontend)
+    NEXT_PUBLIC_USER_POOL_ID       = module.cognito.user_pool_id
+    NEXT_PUBLIC_USER_POOL_CLIENT_ID = module.cognito.user_pool_client_id
+    NEXT_PUBLIC_AWS_REGION         = var.aws_region
   }
 
   # Basic Auth für Admin (empfohlen!)
@@ -200,7 +242,7 @@ module "amplify_admin" {
 
   tags = local.common_tags
 
-  depends_on = [module.lambda]
+  depends_on = [module.lambda, module.cognito]
 }
 
 # ----------------------------------------------------------------------------
