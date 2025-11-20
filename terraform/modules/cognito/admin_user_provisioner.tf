@@ -41,7 +41,7 @@ resource "null_resource" "create_admin_user" {
 
   depends_on = [
     aws_cognito_user_pool.main,
-    aws_cognito_user_pool_client.client
+    aws_cognito_user_pool_client.frontend
   ]
 }
 
