@@ -159,10 +159,11 @@ export function attachCognitoUser(req: Request, res: Response, next: NextFunctio
  */
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   if (!req.user) {
-    return res.status(401).json({
+    res.status(401).json({
       error: 'Unauthorized',
       message: 'Du musst eingeloggt sein um diese Aktion durchzuführen'
     });
+    return;
   }
 
   next();
@@ -183,18 +184,20 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
 export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
   // Erst prüfen ob überhaupt eingeloggt
   if (!req.user) {
-    return res.status(401).json({
+    res.status(401).json({
       error: 'Unauthorized',
       message: 'Du musst eingeloggt sein'
     });
+    return;
   }
 
   // Dann prüfen ob Admin
   if (req.user.role !== 'admin') {
-    return res.status(403).json({
+    res.status(403).json({
       error: 'Forbidden',
       message: 'Diese Aktion ist nur für Admins erlaubt'
     });
+    return;
   }
 
   next();
@@ -262,10 +265,11 @@ export function requireAuthLegacy(req: Request, res: Response, next: NextFunctio
   }
 
   // 3. Kein gültiger Token
-  return res.status(401).json({
+  res.status(401).json({
     error: 'Unauthorized',
     message: 'Login erforderlich'
   });
+  return;
 }
 
 // ============================================================================
