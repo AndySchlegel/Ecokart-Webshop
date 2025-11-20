@@ -76,6 +76,27 @@ variable "enable_access_logs" {
 }
 
 # ----------------------------------------------------------------------------
+# Cognito Integration (Optional)
+# ----------------------------------------------------------------------------
+
+variable "cognito_user_pool_arn" {
+  description = "ARN des Cognito User Pools (für API Gateway Authorizer). Leer = kein Cognito Auth"
+  type        = string
+  default     = ""
+
+  # Beispiel: "arn:aws:cognito-idp:eu-north-1:123456789:userpool/eu-north-1_XXXXXXX"
+}
+
+variable "enable_cognito_auth" {
+  description = "Cognito Authorizer für API Gateway aktivieren? (true/false)"
+  type        = bool
+  default     = false
+
+  # true  = Alle Requests brauchen Cognito Token (außer öffentliche Routes)
+  # false = Keine Authentication (Development)
+}
+
+# ----------------------------------------------------------------------------
 # Tagging
 # ----------------------------------------------------------------------------
 

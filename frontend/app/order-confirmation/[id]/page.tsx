@@ -5,6 +5,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { API_BASE_URL } from '../../../lib/config';
+import { fetchAuthSession } from 'aws-amplify/auth';
 
 interface Order {
   id: string;
@@ -30,19 +31,27 @@ interface Order {
 export default function OrderConfirmationPage() {
   const params = useParams();
   const orderId = params.id as string;
-  const { token, user } = useAuth();
+  const { user } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!token || !orderId) {
+    if (!user || !orderId) {
       setIsLoading(false);
       return;
     }
 
     const fetchOrder = async () => {
       try {
+        // Cognito Token holen
+        const session = await fetchAuthSession();
+        const token = session.tokens?.idToken?.toString();
+
+        if (!token) {
+          throw new Error('Nicht eingeloggt');
+        }
+
         const response = await fetch(`${API_BASE_URL}/api/orders/${orderId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -63,7 +72,7 @@ export default function OrderConfirmationPage() {
     };
 
     fetchOrder();
-  }, [token, orderId]);
+  }, [user, orderId]);
 
   if (!user) {
     return (

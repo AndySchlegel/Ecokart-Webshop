@@ -3,6 +3,18 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { API_BASE_URL } from '../lib/config';
+import { fetchAuthSession } from 'aws-amplify/auth';
+
+// Helper function um Cognito Token zu holen
+async function getAuthToken(): Promise<string | null> {
+  try {
+    const session = await fetchAuthSession();
+    return session.tokens?.idToken?.toString() || null;
+  } catch (error) {
+    console.error('Failed to get auth token:', error);
+    return null;
+  }
+}
 
 interface CartItem {
   productId: string;
@@ -37,7 +49,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<Cart | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { token, user } = useAuth();
+  const { user } = useAuth();
 
   // Calculate cart totals
   const cartTotal = cart?.items.reduce((total, item) => total + (item.price * item.quantity), 0) || 0;
@@ -45,14 +57,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch cart when user logs in
   useEffect(() => {
-    if (token && user) {
+    if (user) {
       refreshCart();
     } else {
       setCart(null);
     }
-  }, [token, user]);
+  }, [user]);
 
   const refreshCart = async () => {
+    const token = await getAuthToken();
     if (!token) return;
 
     try {
@@ -75,6 +88,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addToCart = async (productId: string, quantity: number) => {
+    const token = await getAuthToken();
     if (!token) {
       throw new Error('Please login to add items to cart');
     }
@@ -106,6 +120,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateQuantity = async (productId: string, quantity: number) => {
+    const token = await getAuthToken();
     if (!token) return;
 
     try {
@@ -135,6 +150,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const removeFromCart = async (productId: string) => {
+    const token = await getAuthToken();
     if (!token) return;
 
     try {
@@ -162,6 +178,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const clearCart = async () => {
+    const token = await getAuthToken();
     if (!token) return;
 
     try {

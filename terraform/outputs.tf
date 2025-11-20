@@ -81,6 +81,42 @@ output "api_gateway_stage" {
 }
 
 # ----------------------------------------------------------------------------
+# Cognito Outputs
+# ----------------------------------------------------------------------------
+
+output "cognito_user_pool_id" {
+  description = "Cognito User Pool ID (für Frontend NEXT_PUBLIC_USER_POOL_ID)"
+  value       = module.cognito.user_pool_id
+}
+
+output "cognito_user_pool_arn" {
+  description = "Cognito User Pool ARN"
+  value       = module.cognito.user_pool_arn
+}
+
+output "cognito_user_pool_client_id" {
+  description = "Cognito User Pool Client ID (für Frontend NEXT_PUBLIC_USER_POOL_CLIENT_ID)"
+  value       = module.cognito.user_pool_client_id
+}
+
+output "cognito_user_pool_endpoint" {
+  description = "Cognito User Pool Endpoint"
+  value       = module.cognito.user_pool_endpoint
+}
+
+output "cognito_admin_user_credentials" {
+  description = "Admin User Credentials (nur wenn enable_cognito_admin_provisioning=true)"
+  value = var.enable_cognito_admin_provisioning ? {
+    email              = var.cognito_admin_email
+    temporary_password = var.cognito_admin_temp_password
+    note               = "⚠️ Beim ersten Login musst du das Passwort ändern!"
+  } : {
+    note = "Admin Provisioning deaktiviert. Erstelle Admin User manuell in AWS Console."
+  }
+  sensitive = true
+}
+
+# ----------------------------------------------------------------------------
 # Amplify Outputs (conditional)
 # ----------------------------------------------------------------------------
 
