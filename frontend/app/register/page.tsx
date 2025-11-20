@@ -24,8 +24,14 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Passwort muss mindestens 6 Zeichen lang sein');
+    if (password.length < 8) {
+      setError('Passwort muss mindestens 8 Zeichen lang sein (mit Großbuchstaben, Kleinbuchstaben und Zahlen)');
+      return;
+    }
+
+    // Cognito Password Policy prüfen
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+      setError('Passwort muss Großbuchstaben, Kleinbuchstaben und Zahlen enthalten');
       return;
     }
 
@@ -33,7 +39,8 @@ export default function RegisterPage() {
 
     try {
       await register(email, password, name);
-      router.push('/');
+      // AuthContext kümmert sich um den Redirect zur Verify-Seite
+      // Kein router.push() hier nötig!
     } catch (err: any) {
       setError(err.message || 'Registrierung fehlgeschlagen');
     } finally {
@@ -94,11 +101,14 @@ export default function RegisterPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mindestens 6 Zeichen"
+              placeholder="Mind. 8 Zeichen (Aa-Zz, 0-9)"
               required
               disabled={isLoading}
-              minLength={6}
+              minLength={8}
             />
+            <small style={{ color: '#999', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+              Groß-/Kleinbuchstaben + Zahlen (z.B. Test1234!)
+            </small>
           </div>
 
           <div className="form-group">
