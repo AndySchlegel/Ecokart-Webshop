@@ -95,14 +95,12 @@ output "user_pool_name" {
 # Beispiel: "eu-north-1"
 #
 # WICHTIG für Frontend Configuration!
+# (data source ist in admin_user_provisioner.tf definiert)
 
 output "region" {
   description = "AWS Region des User Pools"
   value       = data.aws_region.current.name
 }
-
-# Data Source für Region
-data "aws_region" "current" {}
 
 # ----------------------------------------------------------------
 # Optional: Hosted UI URL
