@@ -1,123 +1,203 @@
+// ============================================================================
+// 🔐 AUTH CONTEXT - AWS Cognito Authentication
+// ============================================================================
+//
+// UMGESCHRIEBEN von JWT → Cognito
+// Datum: 20. November 2025
+// ============================================================================
+
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { API_BASE_URL } from '../lib/config';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { getCurrentUser, signOut as amplifySignOut, fetchAuthSession } from 'aws-amplify/auth';
+import { useRouter } from 'next/navigation';
 
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  createdAt: string;
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface User {
+  userId: string;         // Cognito User ID
+  email: string;          // Email
+  role: string;           // "admin" oder "customer"
+  emailVerified: boolean; // Email bestätigt?
 }
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => void;
   isLoading: boolean;
+  isAuthenticated: boolean;
+  signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
+
+// ============================================================================
+// CONTEXT
+// ============================================================================
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+// ============================================================================
+// PROVIDER
+// ============================================================================
+
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
-  // Load token from localStorage on mount
-  useEffect(() => {
-    const savedToken = localStorage.getItem('airlegacy_token');
-    if (savedToken) {
-      setToken(savedToken);
-      // Fetch user data
-      fetchCurrentUser(savedToken);
-    } else {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const fetchCurrentUser = async (authToken: string) => {
+  // ----------------------------------------------------------------
+  // Load User von Cognito
+  // ----------------------------------------------------------------
+  const loadUser = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
+      setIsLoading(true);
 
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-      } else {
-        // Token is invalid
-        localStorage.removeItem('airlegacy_token');
-        setToken(null);
+      // 1. Prüfe ob User eingeloggt ist
+      await getCurrentUser();
+
+      // 2. Hole User-Daten aus Token
+      const session = await fetchAuthSession();
+      const idToken = session.tokens?.idToken;
+
+      if (!idToken) {
+        setUser(null);
+        return;
       }
+
+      // 3. User-Info extrahieren
+      const userData: User = {
+        userId: idToken.payload.sub as string,
+        email: idToken.payload.email as string,
+        role: (idToken.payload['custom:role'] as string) || 'customer',
+        emailVerified: idToken.payload.email_verified as boolean,
+      };
+
+      setUser(userData);
+      console.log('✅ User eingeloggt:', userData.email, `(${userData.role})`);
+
     } catch (error) {
-      console.error('Failed to fetch user:', error);
+      // Nicht eingeloggt (ist OK)
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const login = async (email: string, password: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email, password })
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Login failed');
+  // ----------------------------------------------------------------
+  // Logout
+  // ----------------------------------------------------------------
+  const signOut = async () => {
+    try {
+      await amplifySignOut();
+      setUser(null);
+      router.push('/auth/login');
+      console.log('✅ User ausgeloggt');
+    } catch (error) {
+      console.error('Logout Error:', error);
+      setUser(null);
     }
-
-    const data = await response.json();
-    setUser(data.user);
-    setToken(data.token);
-    localStorage.setItem('airlegacy_token', data.token);
   };
 
-  const register = async (email: string, password: string, name: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email, password, name })
-    });
+  // ----------------------------------------------------------------
+  // Effects
+  // ----------------------------------------------------------------
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Registration failed');
-    }
+  // Beim Start: User laden
+  useEffect(() => {
+    loadUser();
+  }, []);
 
-    const data = await response.json();
-    setUser(data.user);
-    setToken(data.token);
-    localStorage.setItem('airlegacy_token', data.token);
-  };
+  // Alle 30 Sekunden: User-Status prüfen
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadUser();
+    }, 30000);
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('airlegacy_token');
+    return () => clearInterval(interval);
+  }, []);
+
+  // ----------------------------------------------------------------
+  // Context Value
+  // ----------------------------------------------------------------
+  const value: AuthContextType = {
+    user,
+    isLoading,
+    isAuthenticated: user !== null,
+    signOut,
+    refreshUser: loadUser,
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, isLoading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
+// ============================================================================
+// HOOKS
+// ============================================================================
+
+/**
+ * useAuth - Nutze das in Komponenten
+ *
+ * const { user, isAuthenticated, signOut } = useAuth();
+ */
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth muss innerhalb von AuthProvider verwendet werden');
   }
   return context;
 }
+
+/**
+ * useRequireAuth - Automatischer Redirect wenn nicht eingeloggt
+ *
+ * Nutze das in geschützten Pages:
+ *   useRequireAuth();
+ */
+export function useRequireAuth() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (!isAuthenticated) {
+      const currentPath = window.location.pathname;
+      router.push(`/auth/login?redirect=${encodeURIComponent(currentPath)}`);
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  return { isLoading, isAuthenticated };
+}
+
+/**
+ * useRequireAdmin - Automatischer Redirect wenn nicht Admin
+ *
+ * Nutze das in Admin-Pages:
+ *   useRequireAdmin();
+ */
+export function useRequireAdmin() {
+  const { user, isLoading, isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+      return;
+    }
+
+    if (user?.role !== 'admin') {
+      console.warn('⚠️ Kein Admin-Zugriff');
+      router.push('/');
+    }
+  }, [user, isAuthenticated, isLoading, router]);
+
+  return { user, isLoading, isAdmin: user?.role === 'admin' };
+}
+
+export default AuthContext;
