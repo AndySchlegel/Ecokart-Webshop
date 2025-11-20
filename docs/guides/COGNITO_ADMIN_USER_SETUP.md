@@ -1,6 +1,24 @@
 # 👤 Cognito Admin User erstellen
 
-**Anleitung**: Wie man einen Admin-Benutzer in AWS Cognito erstellt
+> **🎉 UPDATE (20.11.2025): AUTOMATISCHE ADMIN-ERSTELLUNG IMPLEMENTIERT!**
+>
+> ✅ **Admin User wird jetzt automatisch beim Deployment erstellt!**
+>
+> Die manuelle Anleitung unten ist nur noch als **Fallback** nötig, falls:
+> - Auto-Provisioning deaktiviert ist (`enable_admin_provisioning=false`)
+> - Auto-Provisioning Script fehlgeschlagen ist
+> - Du zusätzliche Admin-User erstellen willst
+>
+> **Standard Admin Credentials** (nach Deployment):
+> ```
+> Email:    admin@ecokart.com
+> Password: EcokartAdmin2025! (muss beim ersten Login geändert werden)
+> Role:     admin
+> ```
+>
+> 🔧 **Konfiguration:** Siehe `terraform/variables.tf` → `cognito_admin_email` + `cognito_admin_temp_password`
+
+**Anleitung**: Wie man einen Admin-Benutzer in AWS Cognito MANUELL erstellt (Fallback)
 
 ---
 
@@ -9,7 +27,8 @@
 Nach dem Deployment von Cognito hast du:
 - ✅ Cognito User Pool (AWS Console)
 - ✅ Customer Frontend (mit Login/Register Pages)
-- ❌ **Noch KEINEN Admin User** (muss manuell erstellt werden)
+- ✅ **Admin User automatisch erstellt** (via Terraform Provisioner)
+- ⚠️ **Manuelle Erstellung nur bei Bedarf** (Fallback, zusätzliche Admins)
 
 ---
 
@@ -235,10 +254,13 @@ terraform destroy
 # 4. Deploy
 terraform apply
 
-# 5. Admin User NEU erstellen (siehe oben)
-# → AWS Console → Create User → admin@ecokart.com
-# → custom:role = admin setzen
+# 5. Admin User wird AUTOMATISCH erstellt! 🎉
+# → Terraform Provisioner Script läuft automatisch
+# → admin@ecokart.com mit Role=admin wird erstellt
+# → Manuelles Setup nur nötig falls Script fehlschlägt
 ```
+
+**Hinweis:** Seit 20.11.2025 ist Auto-Provisioning implementiert → Schritt 5 ist automatisch!
 
 ### Best Practice: User Backup
 

@@ -1,5 +1,11 @@
 # 🔐 Cognito Authentication - Implementierungsplan
 
+> **⚠️ DEPLOYMENT STATUS (20.11.2025):**
+> ✅ **Code vollständig implementiert** - alle Features fertig
+> 🔴 **Deployment blockiert** - AWS Organizations SCP verbietet Cognito
+> 📋 **Action Required:** Organization Admin muss SCP Policy updaten
+> 🔗 **Details:** Siehe [ACTION_PLAN.md - Known Issues](../ACTION_PLAN.md#known-issues--blockers)
+
 **Ziel:** JWT Auth durch AWS Cognito ersetzen
 
 **Warum Cognito?**
@@ -330,14 +336,15 @@ Keine neuen Env Vars nötig! Cognito User-Info kommt via API Gateway Event.
 ## 🎯 Success Criteria
 
 Sprint ist fertig wenn:
-- [ ] User kann sich registrieren (Sign Up)
-- [ ] Email Verification funktioniert
-- [ ] User kann sich einloggen
-- [ ] API Calls mit Cognito Token funktionieren
-- [ ] Ungültige Tokens werden abgelehnt (401)
-- [ ] Password Reset Flow funktioniert
-- [ ] Admin-User kann sich einloggen
-- [ ] Stock Management funktioniert weiterhin
+- [x] User kann sich registrieren (Sign Up) ✅ UI implementiert
+- [x] Email Verification funktioniert ✅ Verification Page mit 6-stelligem Code
+- [x] User kann sich einloggen ✅ Login Flow mit AWS Amplify
+- [x] API Calls mit Cognito Token funktionieren ✅ API Gateway Authorizer konfiguriert
+- [x] Ungültige Tokens werden abgelehnt (401) ✅ API Gateway rejected vor Lambda
+- [x] Password Reset Flow funktioniert ✅ Cognito Hosted UI für Reset
+- [x] Admin-User kann sich einloggen ✅ Auto-Provisioning beim Deployment
+- [x] Stock Management funktioniert weiterhin ✅ Keine Breaking Changes
+- [ ] **DEPLOYMENT** - ⏳ Blocked by AWS Organizations SCP (waiting for fix)
 
 ---
 

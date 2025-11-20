@@ -27,6 +27,7 @@
 ### 🚧 Current Sprint
 - 🚧 **AWS Cost Optimization** - Removing unnecessary services
 - 🚧 **Documentation Restructure** - Better organization
+- 🔒 **Cognito Authentication** - Code complete, deployment blocked by AWS Organizations SCP
 
 ### 📋 Next Up
 See [docs/ACTION_PLAN.md](docs/ACTION_PLAN.md) for detailed roadmap
