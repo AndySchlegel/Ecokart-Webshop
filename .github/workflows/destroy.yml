@@ -158,6 +158,18 @@ jobs:
           terraform apply -auto-approve tfplan
           echo "✅ Infrastructure destroyed for ${{ steps.env.outputs.environment }}"
 
+      # ======================================================================
+      # Wait for AWS to process deletions
+      # ======================================================================
+      # AWS needs time to propagate deletions (eventual consistency)
+      # Without this, cleanup steps might fail due to dependencies
+      - name: ⏰ Wait for AWS Deletion Propagation
+        run: |
+          echo "⏰ Waiting 60 seconds for AWS to process deletions..."
+          echo "   (This prevents dependency conflicts during cleanup)"
+          sleep 60
+          echo "✅ Wait complete"
+
       - name: 🧹 Cleanup Lambda Function (if still exists)
         run: |
           echo "🧹 Checking for remaining Lambda function for ${{ steps.env.outputs.environment }}..."
