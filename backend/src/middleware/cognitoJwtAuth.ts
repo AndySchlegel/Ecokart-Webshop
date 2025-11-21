@@ -149,7 +149,7 @@ export async function verifyJwtToken(
 
     // 2. Token validieren mit Cognito Public Keys
     const verifier = getJwtVerifier();
-    const payload = await verifier.verify(token) as CognitoTokenPayload;
+    const payload = await verifier.verify(token) as unknown as CognitoTokenPayload;
 
     // 3. User-Info extrahieren
     const user: AuthUser = {
