@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { getCart, addToCart, updateCartItem, removeFromCart, clearCart } from '../controllers/cartController';
-import { authenticateToken } from '../middleware/auth';
+import { requireAuth } from '../middleware/cognitoJwtAuth';
 
 const router = Router();
 
-// All cart routes require authentication
-router.use(authenticateToken);
+// All cart routes require authentication (Cognito JWT)
+router.use(requireAuth);
 
 router.get('/', getCart);
 router.post('/items', addToCart);
