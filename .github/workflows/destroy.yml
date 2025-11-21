@@ -88,7 +88,7 @@ jobs:
           echo "✅ Token retrieved"
 
       - name: 🔧 Terraform Init
-        working-directory: terraform/examples/basic
+        working-directory: terraform
         run: |
           echo "📦 Initializing Terraform..."
           terraform init -upgrade
@@ -108,7 +108,7 @@ jobs:
 
       - name: 📋 Terraform Plan Destroy (mit Environment-Config!)
         id: plan
-        working-directory: terraform/examples/basic
+        working-directory: terraform
         run: |
           echo "📋 Creating destruction plan for: ${{ steps.env.outputs.environment }}"
           echo "📁 Using config: environments/${{ steps.env.outputs.environment }}.tfvars"
@@ -152,7 +152,7 @@ jobs:
           fi
 
       - name: 💥 Terraform Destroy
-        working-directory: terraform/examples/basic
+        working-directory: terraform
         run: |
           echo "💥 Destroying infrastructure for: ${{ steps.env.outputs.environment }}"
           terraform apply -auto-approve tfplan
