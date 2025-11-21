@@ -1,6 +1,33 @@
 # 🚀 Deployment Quick Reference
 
-## Setup (Einmalig - 5 Minuten)
+## Setup (Einmalig - 3 Minuten)
+
+### S3 Backend für Terraform State (WICHTIG!)
+
+**Muss EINMAL ausgeführt werden bevor das erste Deployment:**
+
+1. Gehe zu [GitHub Actions](https://github.com/AndySchlegel/Ecokart-Webshop/actions)
+2. Wähle Workflow: **"Setup Terraform Backend"**
+3. Klicke **"Run workflow"**
+4. Gib `setup` ein zur Bestätigung
+5. Klicke **"Run workflow"**
+
+**Was wird erstellt:**
+- ✅ S3 Bucket für Terraform State Storage
+- ✅ DynamoDB Table für State Locking
+- ✅ Encryption & Versioning aktiviert
+- ✅ Public Access blockiert
+
+**Warum wichtig:**
+- Verhindert duplicate User Pools/API Gateways
+- State bleibt persistent über Deploys
+- Destroy → Deploy funktioniert sauber
+
+**Dauer:** ~2-3 Minuten
+
+---
+
+## Parameter Store Token Setup (Täglich in Sandbox)
 
 ```bash
 # Automation Setup ausführen
