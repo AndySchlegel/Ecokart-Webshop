@@ -106,9 +106,12 @@ module "lambda" {
 
   # Environment Variables für Lambda
   environment_variables = {
-    NODE_ENV   = "production"
-    DB_TYPE    = "dynamodb"
-    JWT_SECRET = var.jwt_secret
+    NODE_ENV                = "production"
+    DB_TYPE                 = "dynamodb"
+    JWT_SECRET              = var.jwt_secret
+    # Cognito Configuration for JWT Validation
+    COGNITO_USER_POOL_ID    = module.cognito.user_pool_id
+    COGNITO_CLIENT_ID       = module.cognito.user_pool_client_id
   }
 
   # DynamoDB Table Names für IAM Permissions
