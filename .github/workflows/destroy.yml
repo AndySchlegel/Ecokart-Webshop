@@ -233,7 +233,39 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: eu-north-1 
+          AWS_DEFAULT_REGION: eu-north-1
+
+      - name: 🧹 Cleanup API Gateways (if still exist)
+        run: |
+          echo "🧹 Checking for remaining API Gateways for ${{ steps.env.outputs.environment }}..."
+
+          # Liste alle API Gateways mit "ecokart" im Namen
+          API_IDS=$(aws apigatewayv2 get-apis \
+            --region ${{ env.AWS_REGION }} \
+            --query "Items[?contains(Name, 'ecokart-${{ steps.env.outputs.environment }}')].ApiId" \
+            --output text)
+
+          if [ -z "$API_IDS" ]; then
+            echo "   ℹ️  No API Gateways found for ${{ steps.env.outputs.environment }}"
+          else
+            for api_id in $API_IDS; do
+              API_NAME=$(aws apigatewayv2 get-api \
+                --api-id "$api_id" \
+                --region ${{ env.AWS_REGION }} \
+                --query 'Name' \
+                --output text)
+
+              echo "   - Deleting API Gateway: $API_NAME ($api_id)"
+
+              aws apigatewayv2 delete-api \
+                --api-id "$api_id" \
+                --region ${{ env.AWS_REGION }} || true
+
+              echo "   ✅ API Gateway deleted: $api_id"
+            done
+          fi
+        continue-on-error: true
+
       - name: 🧹 Cleanup IAM Role (if still exists)
         run: |
           echo "🧹 Checking for remaining IAM role for ${{ steps.env.outputs.environment }}..."
@@ -298,7 +330,8 @@ jobs:
           echo "🗑️  Deleted Resources:"
           echo "   - Lambda Function (auto-cleanup)"
           echo "   - DynamoDB Tables (4)"
-          echo "   - API Gateway"
+          echo "   - API Gateways (all ecokart-${{ steps.env.outputs.environment }})"
+          echo "   - Cognito User Pools (all ecokart-development)"
           if [ "${{ inputs.delete_amplify_apps }}" == "true" ]; then
             echo "   - Amplify Apps (all)"
           fi

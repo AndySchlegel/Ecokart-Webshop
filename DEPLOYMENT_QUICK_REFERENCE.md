@@ -65,7 +65,7 @@ terraform apply -auto-approve
 
 **Was wird automatisch gelöscht:**
 - ✅ Lambda Functions
-- ✅ API Gateway
+- ✅ **API Gateways** (alle ecokart-* Gateways) - NEU seit 21.11.2025!
 - ✅ DynamoDB Tables (alle 4)
 - ✅ IAM Roles & Policies
 - ✅ CloudWatch Log Groups
