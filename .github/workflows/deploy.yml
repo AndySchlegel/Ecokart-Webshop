@@ -239,7 +239,31 @@ jobs:
           echo "✅ Dependencies cleaned"
 
       # ======================================================================
-      # 10. Terraform Init
+      # 10. Clear Corrupted State (if exists)
+      # ======================================================================
+      - name: 🧹 Clear Corrupted State (if exists)
+        run: |
+          echo "🧹 Checking for corrupted state file..."
+
+          BUCKET_NAME="ecokart-terraform-state-729403197965"
+          STATE_KEY="development/terraform.tfstate"
+
+          # Check if state file exists
+          if aws s3api head-object \
+            --bucket "$BUCKET_NAME" \
+            --key "$STATE_KEY" \
+            --region ${{ env.AWS_REGION }} &>/dev/null; then
+
+            echo "   ⚠️  Old state file found - deleting for fresh start"
+            aws s3 rm "s3://$BUCKET_NAME/$STATE_KEY" --region ${{ env.AWS_REGION }}
+            echo "   ✅ Old state deleted"
+          else
+            echo "   ℹ️  No state file found (fresh start)"
+          fi
+        continue-on-error: true
+
+      # ======================================================================
+      # 11. Terraform Init
       # ======================================================================
       - name: 🔧 Terraform Init
         working-directory: terraform
@@ -248,7 +272,7 @@ jobs:
           echo "✅ Terraform initialized"
 
       # ======================================================================
-      # 11. Verify Environment Config exists
+      # 12. Verify Environment Config exists
       # ======================================================================
       - name: ✅ Verify Environment Config
         working-directory: terraform
@@ -265,7 +289,7 @@ jobs:
           head -20 "$CONFIG_FILE"
 
       # ======================================================================
-      # 12. Terraform Plan (mit Environment-spezifischer Config!)
+      # 13. Terraform Plan (mit Environment-spezifischer Config!)
       # ======================================================================
       - name: 📋 Terraform Plan
         if: github.event.inputs.destroy != 'true'
@@ -286,7 +310,7 @@ jobs:
           echo "✅ Terraform plan created for ${{ steps.env.outputs.environment }}"
 
       # ======================================================================
-      # 13. Terraform Apply (mit Environment-spezifischer Config!)
+      # 14. Terraform Apply (mit Environment-spezifischer Config!)
       # ======================================================================
       - name: 🚀 Terraform Apply
         if: github.event.inputs.destroy != 'true'
@@ -297,7 +321,7 @@ jobs:
           echo "✅ Infrastructure deployed successfully to ${{ steps.env.outputs.environment }}!"
 
       # ======================================================================
-      # 14. Terraform Destroy (if requested, mit Environment-Config!)
+      # 15. Terraform Destroy (if requested, mit Environment-Config!)
       # ======================================================================
       - name: 💥 Terraform Destroy
         if: github.event.inputs.destroy == 'true'
@@ -313,7 +337,7 @@ jobs:
           echo "✅ Infrastructure destroyed for ${{ steps.env.outputs.environment }}"
 
       # ======================================================================
-      # 15. Get Outputs and Create Summary
+      # 16. Get Outputs and Create Summary
       # ======================================================================
       - name: 📊 Deployment Summary
         if: github.event.inputs.destroy != 'true'
@@ -350,7 +374,7 @@ jobs:
           echo "✅ **All systems operational!**" >> $GITHUB_STEP_SUMMARY
 
       # ======================================================================
-      # 16. Notify on Failure
+      # 17. Notify on Failure
       # ======================================================================
       - name: ❌ Deployment Failed
         if: failure()
