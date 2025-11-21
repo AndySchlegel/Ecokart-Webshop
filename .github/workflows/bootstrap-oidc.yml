@@ -1,0 +1,386 @@
+# ============================================================================
+# Bootstrap Workflow - OIDC Provider + IAM Role Setup
+# ============================================================================
+# Dieser Workflow erstellt die grundlegende CI/CD Infrastruktur:
+# - GitHub OIDC Provider (falls nicht vorhanden)
+# - IAM Role für GitHub Actions
+# - Alle benötigten Policies
+#
+# WICHTIG: Dieser Workflow läuft mit AWS Credentials aus Secrets!
+# Er wird nur einmalig oder bei Disaster Recovery benötigt.
+# Danach läuft alles über OIDC (deploy.yml, destroy.yml)
+# ============================================================================
+
+name: Bootstrap OIDC Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type "bootstrap" to confirm OIDC setup'
+        required: true
+      force_recreate:
+        description: 'Force recreate even if exists?'
+        type: boolean
+        default: false
+
+env:
+  AWS_REGION: eu-north-1
+  ROLE_NAME: ecokart-github-actions-role
+  GITHUB_REPO: AndySchlegel/Ecokart-Webshop
+
+jobs:
+  bootstrap:
+    name: Bootstrap OIDC Infrastructure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔐 Validate Confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirmation }}" != "bootstrap" ]; then
+            echo "❌ Confirmation failed. Please type 'bootstrap' to confirm."
+            exit 1
+          fi
+          echo "✅ Confirmation validated"
+
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🔐 Configure AWS Credentials (from Secrets)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_BOOTSTRAP_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_BOOTSTRAP_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: ✅ Verify AWS Authentication
+        run: |
+          echo "✅ AWS Authentication successful!"
+          aws sts get-caller-identity
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "ACCOUNT_ID=$ACCOUNT_ID" >> $GITHUB_ENV
+
+      # ======================================================================
+      # 1. Setup GitHub OIDC Provider
+      # ======================================================================
+      - name: 🔗 Setup GitHub OIDC Provider
+        run: |
+          echo "🔗 Checking for GitHub OIDC Provider..."
+
+          OIDC_ARN=$(aws iam list-open-id-connect-providers \
+            --query "OpenIDConnectProviderList[?contains(Arn, 'token.actions.githubusercontent.com')].Arn" \
+            --output text)
+
+          if [ -n "$OIDC_ARN" ]; then
+            echo "✅ GitHub OIDC Provider already exists: $OIDC_ARN"
+
+            if [ "${{ github.event.inputs.force_recreate }}" == "true" ]; then
+              echo "🔄 Force recreate enabled - deleting existing provider..."
+              aws iam delete-open-id-connect-provider --open-id-connect-provider-arn "$OIDC_ARN"
+              echo "✅ Deleted existing provider"
+            else
+              echo "OIDC_PROVIDER_ARN=$OIDC_ARN" >> $GITHUB_ENV
+              exit 0
+            fi
+          fi
+
+          echo "📦 Creating GitHub OIDC Provider..."
+          THUMBPRINT="6938fd4d98bab03faadb97b34396831e3780aea1"
+
+          OIDC_ARN=$(aws iam create-open-id-connect-provider \
+            --url https://token.actions.githubusercontent.com \
+            --client-id-list sts.amazonaws.com \
+            --thumbprint-list "$THUMBPRINT" \
+            --query OpenIDConnectProviderArn \
+            --output text)
+
+          echo "✅ GitHub OIDC Provider created: $OIDC_ARN"
+          echo "OIDC_PROVIDER_ARN=$OIDC_ARN" >> $GITHUB_ENV
+
+      # ======================================================================
+      # 2. Create IAM Role for GitHub Actions
+      # ======================================================================
+      - name: 🔐 Create IAM Role
+        run: |
+          echo "🔐 Checking for IAM Role: $ROLE_NAME"
+
+          if aws iam get-role --role-name "$ROLE_NAME" 2>/dev/null; then
+            echo "✅ IAM Role already exists: $ROLE_NAME"
+
+            if [ "${{ github.event.inputs.force_recreate }}" == "true" ]; then
+              echo "🔄 Force recreate enabled - would need to delete role first..."
+              echo "⚠️ Skipping delete for safety - use AWS Console for manual cleanup"
+              exit 0
+            else
+              exit 0
+            fi
+          fi
+
+          echo "📦 Creating IAM Role: $ROLE_NAME"
+
+          # Trust Policy for GitHub OIDC
+          cat > /tmp/trust-policy.json <<EOF
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Principal": {
+                  "Federated": "arn:aws:iam::${ACCOUNT_ID}:oidc-provider/token.actions.githubusercontent.com"
+                },
+                "Action": "sts:AssumeRoleWithWebIdentity",
+                "Condition": {
+                  "StringEquals": {
+                    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+                  },
+                  "StringLike": {
+                    "token.actions.githubusercontent.com:sub": "repo:${GITHUB_REPO}:*"
+                  }
+                }
+              }
+            ]
+          }
+          EOF
+
+          aws iam create-role \
+            --role-name "$ROLE_NAME" \
+            --assume-role-policy-document file:///tmp/trust-policy.json \
+            --description "IAM Role for GitHub Actions to deploy Ecokart infrastructure" \
+            --max-session-duration 3600
+
+          echo "✅ IAM Role created: $ROLE_NAME"
+
+      # ======================================================================
+      # 3. Create and Attach Policies
+      # ======================================================================
+      - name: 📜 Create IAM Policies
+        run: |
+          echo "📜 Creating IAM Policies for $ROLE_NAME..."
+
+          # Function to create policy if not exists
+          create_policy() {
+            local POLICY_NAME=$1
+            local POLICY_FILE=$2
+
+            echo "Checking policy: $POLICY_NAME"
+            POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName=='$POLICY_NAME'].Arn" --output text)
+
+            if [ -n "$POLICY_ARN" ]; then
+              echo "✅ Policy already exists: $POLICY_NAME"
+            else
+              echo "📦 Creating policy: $POLICY_NAME"
+              POLICY_ARN=$(aws iam create-policy \
+                --policy-name "$POLICY_NAME" \
+                --policy-document "file://$POLICY_FILE" \
+                --query Policy.Arn \
+                --output text)
+              echo "✅ Policy created: $POLICY_ARN"
+            fi
+
+            # Attach to role
+            echo "🔗 Attaching policy to role..."
+            aws iam attach-role-policy \
+              --role-name "$ROLE_NAME" \
+              --policy-arn "$POLICY_ARN" 2>/dev/null || echo "Already attached"
+          }
+
+          # 1. Amplify Policy
+          cat > /tmp/amplify-policy.json <<'EOF'
+          {
+            "Version": "2012-10-17",
+            "Statement": [{
+              "Effect": "Allow",
+              "Action": ["amplify:*"],
+              "Resource": "*"
+            }]
+          }
+          EOF
+          create_policy "${ROLE_NAME}-amplify" /tmp/amplify-policy.json
+
+          # 2. API Gateway Policy
+          cat > /tmp/apigateway-policy.json <<'EOF'
+          {
+            "Version": "2012-10-17",
+            "Statement": [{
+              "Effect": "Allow",
+              "Action": ["apigateway:*"],
+              "Resource": "*"
+            }]
+          }
+          EOF
+          create_policy "${ROLE_NAME}-apigateway" /tmp/apigateway-policy.json
+
+          # 3. CloudWatch Policy
+          cat > /tmp/cloudwatch-policy.json <<'EOF'
+          {
+            "Version": "2012-10-17",
+            "Statement": [{
+              "Effect": "Allow",
+              "Action": ["logs:*"],
+              "Resource": "*"
+            }]
+          }
+          EOF
+          create_policy "${ROLE_NAME}-cloudwatch" /tmp/cloudwatch-policy.json
+
+          # 4. DynamoDB Policy
+          cat > /tmp/dynamodb-policy.json <<'EOF'
+          {
+            "Version": "2012-10-17",
+            "Statement": [{
+              "Effect": "Allow",
+              "Action": ["dynamodb:*"],
+              "Resource": "*"
+            }]
+          }
+          EOF
+          create_policy "${ROLE_NAME}-dynamodb" /tmp/dynamodb-policy.json
+
+          # 5. IAM Policy
+          cat > /tmp/iam-policy.json <<'EOF'
+          {
+            "Version": "2012-10-17",
+            "Statement": [{
+              "Effect": "Allow",
+              "Action": [
+                "iam:CreateRole", "iam:DeleteRole", "iam:GetRole", "iam:GetRolePolicy",
+                "iam:PutRolePolicy", "iam:DeleteRolePolicy", "iam:AttachRolePolicy",
+                "iam:DetachRolePolicy", "iam:ListAttachedRolePolicies", "iam:ListRolePolicies",
+                "iam:PassRole", "iam:TagRole", "iam:UntagRole",
+                "iam:CreatePolicy", "iam:DeletePolicy", "iam:GetPolicy",
+                "iam:GetPolicyVersion", "iam:ListPolicyVersions"
+              ],
+              "Resource": "*"
+            }]
+          }
+          EOF
+          create_policy "${ROLE_NAME}-iam" /tmp/iam-policy.json
+
+          # 6. Lambda Policy
+          cat > /tmp/lambda-policy.json <<'EOF'
+          {
+            "Version": "2012-10-17",
+            "Statement": [{
+              "Effect": "Allow",
+              "Action": ["lambda:*"],
+              "Resource": "*"
+            }]
+          }
+          EOF
+          create_policy "${ROLE_NAME}-lambda" /tmp/lambda-policy.json
+
+          # 7. S3 Policy
+          cat > /tmp/s3-policy.json <<'EOF'
+          {
+            "Version": "2012-10-17",
+            "Statement": [{
+              "Effect": "Allow",
+              "Action": ["s3:*"],
+              "Resource": "*"
+            }]
+          }
+          EOF
+          create_policy "${ROLE_NAME}-s3" /tmp/s3-policy.json
+
+          # 8. SSM Policy
+          cat > /tmp/ssm-policy.json <<'EOF'
+          {
+            "Version": "2012-10-17",
+            "Statement": [{
+              "Effect": "Allow",
+              "Action": [
+                "ssm:GetParameter", "ssm:GetParameters", "ssm:GetParametersByPath",
+                "ssm:PutParameter", "ssm:DeleteParameter"
+              ],
+              "Resource": "*"
+            }]
+          }
+          EOF
+          create_policy "${ROLE_NAME}-ssm" /tmp/ssm-policy.json
+
+          # 9. Terraform Backend Policy
+          cat > /tmp/terraform-backend-policy.json <<EOF
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "TerraformStateS3Backend",
+                "Effect": "Allow",
+                "Action": [
+                  "s3:CreateBucket", "s3:ListBucket", "s3:GetBucketVersioning",
+                  "s3:PutBucketVersioning", "s3:GetEncryptionConfiguration",
+                  "s3:PutEncryptionConfiguration", "s3:GetBucketPublicAccessBlock",
+                  "s3:PutBucketPublicAccessBlock", "s3:GetObject", "s3:PutObject", "s3:DeleteObject"
+                ],
+                "Resource": [
+                  "arn:aws:s3:::ecokart-terraform-state-*",
+                  "arn:aws:s3:::ecokart-terraform-state-*/*"
+                ]
+              },
+              {
+                "Sid": "TerraformStateLocking",
+                "Effect": "Allow",
+                "Action": [
+                  "dynamodb:CreateTable", "dynamodb:DescribeTable", "dynamodb:GetItem",
+                  "dynamodb:PutItem", "dynamodb:DeleteItem", "dynamodb:DescribeTimeToLive"
+                ],
+                "Resource": "arn:aws:dynamodb:${AWS_REGION}:${ACCOUNT_ID}:table/ecokart-terraform-state-lock"
+              }
+            ]
+          }
+          EOF
+          create_policy "${ROLE_NAME}-terraform-backend" /tmp/terraform-backend-policy.json
+
+          # 10. Cognito Policy
+          cat > /tmp/cognito-policy.json <<'EOF'
+          {
+            "Version": "2012-10-17",
+            "Statement": [{
+              "Effect": "Allow",
+              "Action": ["cognito-idp:*"],
+              "Resource": "*"
+            }]
+          }
+          EOF
+          create_policy "${ROLE_NAME}-cognito" /tmp/cognito-policy.json
+
+          echo "✅ All policies created and attached!"
+
+      # ======================================================================
+      # 4. Summary
+      # ======================================================================
+      - name: 📊 Bootstrap Summary
+        run: |
+          ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/${ROLE_NAME}"
+
+          echo "# 🚀 Bootstrap Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## OIDC Infrastructure Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **GitHub OIDC Provider:** token.actions.githubusercontent.com" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **IAM Role:** $ROLE_NAME" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Role ARN:** \`$ROLE_ARN\`" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **10 Policies Attached**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Add Role ARN to GitHub Secrets:**" >> $GITHUB_STEP_SUMMARY
+          echo "   - Go to: Settings → Secrets → Actions" >> $GITHUB_STEP_SUMMARY
+          echo "   - Create secret: \`AWS_ROLE_ARN\`" >> $GITHUB_STEP_SUMMARY
+          echo "   - Value: \`$ROLE_ARN\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Run Deploy Workflow:** Now you can use OIDC authentication!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Your CI/CD infrastructure is ready!**" >> $GITHUB_STEP_SUMMARY
+
+      - name: ❌ Bootstrap Failed
+        if: failure()
+        run: |
+          echo "# ❌ Bootstrap Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Please check the logs above for details." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Common Issues:**" >> $GITHUB_STEP_SUMMARY
+          echo "- AWS Credentials not set in Secrets" >> $GITHUB_STEP_SUMMARY
+          echo "- Insufficient IAM permissions for bootstrap user" >> $GITHUB_STEP_SUMMARY
+          echo "- OIDC Provider already exists (use force_recreate)" >> $GITHUB_STEP_SUMMARY
