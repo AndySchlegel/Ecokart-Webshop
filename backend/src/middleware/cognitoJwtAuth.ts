@@ -75,11 +75,7 @@ declare global {
  * - clientId: Aus Terraform Output oder AWS Console
  * - tokenUse: "id" (wir nutzen ID Token, nicht Access Token)
  */
-let jwtVerifier: CognitoJwtVerifier<{
-  userPoolId: string;
-  clientId: string;
-  tokenUse: 'id';
-}> | null = null;
+let jwtVerifier: ReturnType<typeof CognitoJwtVerifier.create> | null = null;
 
 /**
  * Initialisiert JWT Verifier mit Cognito Config
