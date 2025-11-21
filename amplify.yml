@@ -1,6 +1,26 @@
 version: 1
 applications:
+  # Customer Frontend
   - appRoot: frontend
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm ci
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+          - .next/cache/**/*
+
+  # Admin Frontend
+  - appRoot: admin-frontend
     frontend:
       phases:
         preBuild:
