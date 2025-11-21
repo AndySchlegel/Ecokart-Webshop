@@ -264,12 +264,12 @@ jobs:
 
           # Clear DynamoDB lock entry
           echo "   🔓 Clearing DynamoDB lock entries..."
-          LOCK_ID="ecokart-terraform-state-729403197965/development/terraform.tfstate-md5"
+          LOCK_ID="$BUCKET_NAME/$STATE_KEY"
 
           aws dynamodb delete-item \
             --table-name "$LOCK_TABLE" \
             --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}" \
-            --region ${{ env.AWS_REGION }} 2>/dev/null || echo "   ℹ️  No lock entry found"
+            --region ${{ env.AWS_REGION }} 2>/dev/null && echo "   ✅ Lock entry deleted" || echo "   ℹ️  No lock entry found"
 
           echo "   ✅ State and lock cleared - ready for fresh start"
         continue-on-error: true
