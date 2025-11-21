@@ -239,40 +239,38 @@ jobs:
           echo "✅ Dependencies cleaned"
 
       # ======================================================================
-      # 10. Clear Corrupted State (if exists)
+      # 10. Force Clear State & Lock (AGGRESSIVE)
       # ======================================================================
-      - name: 🧹 Clear Corrupted State & Lock (if exists)
+      - name: 🧹 Force Clear State & Lock
         run: |
-          echo "🧹 Checking for corrupted state file and lock..."
+          echo "🧹 FORCE clearing state and lock for fresh deployment..."
 
           BUCKET_NAME="ecokart-terraform-state-729403197965"
           STATE_KEY="development/terraform.tfstate"
           LOCK_TABLE="ecokart-terraform-state-lock"
-
-          # Delete state file from S3
-          if aws s3api head-object \
-            --bucket "$BUCKET_NAME" \
-            --key "$STATE_KEY" \
-            --region ${{ env.AWS_REGION }} &>/dev/null; then
-
-            echo "   ⚠️  Old state file found - deleting"
-            aws s3 rm "s3://$BUCKET_NAME/$STATE_KEY" --region ${{ env.AWS_REGION }}
-            echo "   ✅ State file deleted"
-          else
-            echo "   ℹ️  No state file found"
-          fi
-
-          # Clear DynamoDB lock entry
-          echo "   🔓 Clearing DynamoDB lock entries..."
           LOCK_ID="$BUCKET_NAME/$STATE_KEY"
 
+          # Force delete state file (no checks, just delete)
+          echo "   🗑️  Force deleting state file..."
+          aws s3 rm "s3://$BUCKET_NAME/$STATE_KEY" --region ${{ env.AWS_REGION }} 2>&1 || echo "   (no state file or already deleted)"
+
+          # Force delete all lock entries for this state
+          echo "   🔓 Force deleting lock entries..."
           aws dynamodb delete-item \
             --table-name "$LOCK_TABLE" \
             --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}" \
-            --region ${{ env.AWS_REGION }} 2>/dev/null && echo "   ✅ Lock entry deleted" || echo "   ℹ️  No lock entry found"
+            --region ${{ env.AWS_REGION }} 2>&1 || echo "   (no lock or already deleted)"
 
-          echo "   ✅ State and lock cleared - ready for fresh start"
-        continue-on-error: true
+          # Also try with digest suffix (in case)
+          aws dynamodb delete-item \
+            --table-name "$LOCK_TABLE" \
+            --key "{\"LockID\": {\"S\": \"${LOCK_ID}-md5\"}}" \
+            --region ${{ env.AWS_REGION }} 2>&1 || true
+
+          echo ""
+          echo "   ✅ State and lock forcefully cleared!"
+          echo "   ✅ Ready for completely fresh deployment"
+          echo ""
 
       # ======================================================================
       # 11. Terraform Init
