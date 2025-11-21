@@ -88,33 +88,33 @@ jobs:
           echo "✅ Token retrieved"
 
       - name: 🔧 Terraform Init
-        working-directory: terraform/examples/basic
+        working-directory: terraform
         run: |
           echo "📦 Initializing Terraform..."
           terraform init -upgrade
           echo "✅ Terraform initialized"
 
       - name: ✅ Verify Environment Config
-        working-directory: terraform/examples/basic
+        working-directory: terraform
         run: |
-          CONFIG_FILE="../../environments/${{ steps.env.outputs.environment }}.tfvars"
+          CONFIG_FILE="environments/${{ steps.env.outputs.environment }}.tfvars"
           if [ ! -f "$CONFIG_FILE" ]; then
             echo "❌ ERROR: Config file not found: $CONFIG_FILE"
             echo "Available configs:"
-            ls -la ../../environments/
+            ls -la environments/
             exit 1
           fi
           echo "✅ Config file found: $CONFIG_FILE"
 
       - name: 📋 Terraform Plan Destroy (mit Environment-Config!)
         id: plan
-        working-directory: terraform/examples/basic
+        working-directory: terraform
         run: |
           echo "📋 Creating destruction plan for: ${{ steps.env.outputs.environment }}"
           echo "📁 Using config: environments/${{ steps.env.outputs.environment }}.tfvars"
 
           terraform plan -destroy \
-            -var-file="../../environments/${{ steps.env.outputs.environment }}.tfvars" \
+            -var-file="environments/${{ steps.env.outputs.environment }}.tfvars" \
             -var="github_access_token=${{ steps.github-token.outputs.token }}" \
             -var="jwt_secret=dummy-secret-for-destroy-minimum-32-chars-required-padding" \
             -out=tfplan
@@ -152,7 +152,7 @@ jobs:
           fi
 
       - name: 💥 Terraform Destroy
-        working-directory: terraform/examples/basic
+        working-directory: terraform
         run: |
           echo "💥 Destroying infrastructure for: ${{ steps.env.outputs.environment }}"
           terraform apply -auto-approve tfplan
