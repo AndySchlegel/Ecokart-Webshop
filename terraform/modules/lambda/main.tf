@@ -52,7 +52,7 @@ resource "aws_lambda_function" "api" {
   function_name    = var.function_name
   description      = "Ecokart Backend API - Express on Lambda"
   role             = aws_iam_role.lambda_exec.arn
-  handler          = "dist/lambda.handler"
+  handler          = "lambda.handler"
   runtime          = var.runtime
   memory_size      = var.memory_size
   timeout          = var.timeout
