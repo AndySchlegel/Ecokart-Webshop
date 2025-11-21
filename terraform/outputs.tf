@@ -6,16 +6,17 @@
 # ----------------------------------------------------------------------------
 # GitHub Actions IAM Role Outputs
 # ----------------------------------------------------------------------------
+# Auskommentiert, da IAM Role via Bootstrap Workflow verwaltet wird
 
-output "github_actions_role_arn" {
-  description = "ARN of the GitHub Actions IAM role"
-  value       = module.github_actions_role.role_arn
-}
+# output "github_actions_role_arn" {
+#   description = "ARN of the GitHub Actions IAM role"
+#   value       = module.github_actions_role.role_arn
+# }
 
-output "github_actions_role_name" {
-  description = "Name of the GitHub Actions IAM role"
-  value       = module.github_actions_role.role_name
-}
+# output "github_actions_role_name" {
+#   description = "Name of the GitHub Actions IAM role"
+#   value       = module.github_actions_role.role_name
+# }
 
 # ----------------------------------------------------------------------------
 # DynamoDB Outputs
