@@ -253,11 +253,11 @@ jobs:
       - name: ✅ Verify Environment Config
         working-directory: terraform/examples/basic
         run: |
-          CONFIG_FILE="environments/${{ steps.env.outputs.environment }}.tfvars"
+          CONFIG_FILE="../../environments/${{ steps.env.outputs.environment }}.tfvars"
           if [ ! -f "$CONFIG_FILE" ]; then
             echo "❌ ERROR: Config file not found: $CONFIG_FILE"
             echo "Available configs:"
-            ls -la environments/
+            ls -la ../../environments/
             exit 1
           fi
           echo "✅ Config file found: $CONFIG_FILE"
