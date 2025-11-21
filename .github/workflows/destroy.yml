@@ -213,7 +213,27 @@ jobs:
               echo "   ℹ️  $table already deleted"
             fi
           done
+      - name: Delete Cognito User Pools
+        run: |
+          echo "🗑️ Deleting Cognito User Pools..."
 
+          # Liste alle User Pools
+          POOLS=$(aws cognito-idp list-user-pools --max-results 60 --region eu-north-1 --query "UserPools[?contains(Name, 'ecokart-development')].Id" --output text)
+
+          if [ -z "$POOLS" ]; then
+            echo "No Cognito User Pools found"
+          else
+            for POOL_ID in $POOLS; do
+              echo "Deleting User Pool: $POOL_ID"
+              aws cognito-idp delete-user-pool --user-pool-id "$POOL_ID" --region eu-north-1 || true
+            done
+            echo "✅ Cognito User Pools deleted"
+          fi
+        continue-on-error: true
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-north-1 
       - name: 🧹 Cleanup IAM Role (if still exists)
         run: |
           echo "🧹 Checking for remaining IAM role for ${{ steps.env.outputs.environment }}..."
