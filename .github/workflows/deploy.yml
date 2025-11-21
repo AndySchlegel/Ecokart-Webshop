@@ -275,10 +275,10 @@ jobs:
           TF_VAR_jwt_secret: ${{ steps.jwt-secret.outputs.secret }}
         run: |
           echo "📋 Planning deployment for: ${{ steps.env.outputs.environment }}"
-          echo "📁 Using config: ../../environments/${{ steps.env.outputs.environment }}.tfvars"
+          echo "📁 Using config: environments/${{ steps.env.outputs.environment }}.tfvars"
 
           terraform plan \
-            -var-file="../../environments/${{ steps.env.outputs.environment }}.tfvars" \
+            -var-file="environments/${{ steps.env.outputs.environment }}.tfvars" \
             -var="github_access_token=${{ steps.github-token.outputs.token }}" \
             -var="jwt_secret=${{ steps.jwt-secret.outputs.secret }}" \
             -out=tfplan
@@ -306,7 +306,7 @@ jobs:
           echo "💥 Destroying infrastructure for: ${{ steps.env.outputs.environment }}"
 
           terraform destroy -auto-approve \
-            -var-file="../../environments/${{ steps.env.outputs.environment }}.tfvars" \
+            -var-file="environments/${{ steps.env.outputs.environment }}.tfvars" \
             -var="github_access_token=${{ steps.github-token.outputs.token }}" \
             -var="jwt_secret=${{ steps.jwt-secret.outputs.secret }}"
 
