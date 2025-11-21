@@ -241,25 +241,37 @@ jobs:
       # ======================================================================
       # 10. Clear Corrupted State (if exists)
       # ======================================================================
-      - name: 🧹 Clear Corrupted State (if exists)
+      - name: 🧹 Clear Corrupted State & Lock (if exists)
         run: |
-          echo "🧹 Checking for corrupted state file..."
+          echo "🧹 Checking for corrupted state file and lock..."
 
           BUCKET_NAME="ecokart-terraform-state-729403197965"
           STATE_KEY="development/terraform.tfstate"
+          LOCK_TABLE="ecokart-terraform-state-lock"
 
-          # Check if state file exists
+          # Delete state file from S3
           if aws s3api head-object \
             --bucket "$BUCKET_NAME" \
             --key "$STATE_KEY" \
             --region ${{ env.AWS_REGION }} &>/dev/null; then
 
-            echo "   ⚠️  Old state file found - deleting for fresh start"
+            echo "   ⚠️  Old state file found - deleting"
             aws s3 rm "s3://$BUCKET_NAME/$STATE_KEY" --region ${{ env.AWS_REGION }}
-            echo "   ✅ Old state deleted"
+            echo "   ✅ State file deleted"
           else
-            echo "   ℹ️  No state file found (fresh start)"
+            echo "   ℹ️  No state file found"
           fi
+
+          # Clear DynamoDB lock entry
+          echo "   🔓 Clearing DynamoDB lock entries..."
+          LOCK_ID="ecokart-terraform-state-729403197965/development/terraform.tfstate-md5"
+
+          aws dynamodb delete-item \
+            --table-name "$LOCK_TABLE" \
+            --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}" \
+            --region ${{ env.AWS_REGION }} 2>/dev/null || echo "   ℹ️  No lock entry found"
+
+          echo "   ✅ State and lock cleared - ready for fresh start"
         continue-on-error: true
 
       # ======================================================================
