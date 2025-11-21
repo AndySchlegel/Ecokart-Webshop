@@ -1,5 +1,30 @@
 # 🚀 Deployment Quick Reference
 
+## 100% Reproduzierbares System
+
+**Dieses System kann komplett neu aufgebaut werden, auch wenn ALLES gelöscht ist!**
+
+### Bootstrap (Nur bei Disaster Recovery)
+
+**Wenn die IAM Role gelöscht wurde:**
+
+1. Gehe zu: [GitHub Actions](https://github.com/AndySchlegel/Ecokart-Webshop/actions)
+2. Wähle Workflow: **"Bootstrap OIDC Infrastructure"**
+3. Klicke **"Run workflow"**
+4. Gib `bootstrap` ein zur Bestätigung
+5. Klicke **"Run workflow"**
+
+**Was wird erstellt:**
+- ✅ GitHub OIDC Provider
+- ✅ IAM Role für GitHub Actions
+- ✅ 10 IAM Policies (inkl. Terraform Backend)
+
+**Voraussetzung:** AWS Bootstrap Credentials müssen in Secrets sein (siehe [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md))
+
+**Dauer:** ~2-3 Minuten
+
+---
+
 ## S3 Backend für Terraform State
 
 **S3 Backend wird AUTOMATISCH beim ersten Deploy erstellt:**

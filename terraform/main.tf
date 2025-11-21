@@ -38,6 +38,27 @@ locals {
 }
 
 # ----------------------------------------------------------------------------
+# GitHub Actions IAM Role - CI/CD Permissions
+# ----------------------------------------------------------------------------
+# Erstellt IAM Role für GitHub Actions OIDC:
+# - Role mit Trust Policy für GitHub OIDC Provider
+# - 10 Policies: Amplify, API Gateway, CloudWatch, DynamoDB, IAM, Lambda, S3,
+#   SSM, Terraform Backend, Cognito
+#
+# WICHTIG: Nur beim ersten Apply - dann muss existierende Role importiert werden!
+# Import Command: terraform import module.github_actions_role.aws_iam_role.github_actions ecokart-github-actions-role
+
+module "github_actions_role" {
+  source = "./modules/github-actions-role"
+
+  role_name    = "ecokart-github-actions-role"
+  github_repo  = "AndySchlegel/Ecokart-Webshop"
+  aws_region   = var.aws_region
+
+  tags = local.common_tags
+}
+
+# ----------------------------------------------------------------------------
 # DynamoDB Module - Alle Tables
 # ----------------------------------------------------------------------------
 # Erstellt 4 DynamoDB Tabellen:
