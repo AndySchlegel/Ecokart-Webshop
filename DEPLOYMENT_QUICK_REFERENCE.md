@@ -44,36 +44,106 @@ terraform apply -auto-approve
 - ✅ Basic Auth gesetzt (`demo:test1234`, `admin:admin1234`)
 - ✅ DynamoDB mit 31 Produkten befüllt
 - ✅ Test-User erstellt (`demo@ecokart.com / Demo1234!`)
-- ✅ Admin-User erstellt (`admin@ecokart.com / ecokart2025`)
 
 **Was noch manuell ist:**
 - ⚠️ GitHub OAuth Reconnect (nur beim ERSTEN Deployment, dann nie wieder)
 
 ---
 
-## Destroy & Rebuild
+## Destroy Infrastructure
+
+### Via GitHub Actions (Empfohlen)
+
+**Automatisches Löschen aller Ressourcen:**
+
+1. Gehe zu [GitHub Actions](https://github.com/AndySchlegel/Ecokart-Webshop/actions)
+2. Wähle Workflow: **"Destroy Infrastructure"**
+3. Klicke **"Run workflow"**
+4. Gib `destroy` ein zur Bestätigung
+5. Wähle ob Amplify Apps gelöscht werden sollen
+6. Klicke **"Run workflow"**
+
+**Was wird automatisch gelöscht:**
+- ✅ Lambda Functions
+- ✅ API Gateway
+- ✅ DynamoDB Tables (alle 4)
+- ✅ IAM Roles & Policies
+- ✅ CloudWatch Log Groups
+- ✅ **Cognito User Pools** (NEU seit 21.11.2025!)
+- ✅ Amplify Apps (optional)
+
+**Dauer:** ~3-5 Minuten
+
+**Wichtig:** Danach 3-5 Minuten warten bevor Re-Deploy (AWS braucht Zeit zum Löschen!)
+
+---
+
+### Via Terraform (Manuell)
 
 ```bash
 cd terraform/examples/basic
 
-# 1. Alles löschen
+# Alles löschen
 terraform destroy -auto-approve
 
-# 2. Neu deployen (mit Automatisierung)
-export TF_VAR_github_access_token=$(aws ssm get-parameter \
-  --name "/ecokart/development/github-token" \
-  --with-decryption \
-  --query 'Parameter.Value' \
-  --output text \
-  --region eu-north-1)
-
-terraform apply -auto-approve
-
-# 3. GitHub OAuth verbinden
-./connect-github.sh
+# ⏰ WICHTIG: 3-5 Minuten warten!
+# AWS braucht Zeit zum tatsächlichen Löschen
 ```
 
-**Dauer:** ~5-10 Minuten
+**Dauer:** ~2-3 Minuten + 3-5 Min Wait Time
+
+---
+
+### Verifizierung nach Destroy
+
+**Checke ob wirklich alles weg ist:**
+
+```bash
+# Cognito User Pools
+aws cognito-idp list-user-pools --max-results 60 --region eu-north-1
+
+# Lambda Functions
+aws lambda list-functions --region eu-north-1 | grep ecokart
+
+# DynamoDB Tables
+aws dynamodb list-tables --region eu-north-1 | grep ecokart
+
+# API Gateways
+aws apigatewayv2 get-apis --region eu-north-1 | grep ecokart
+```
+
+**Alle Commands sollten KEINE ecokart-Ressourcen mehr zeigen!**
+
+---
+
+## Destroy & Rebuild (Complete Cycle)
+
+```bash
+# 1. Destroy via GitHub Actions
+# (siehe oben)
+
+# 2. ⏰ Warten (3-5 Minuten!)
+sleep 300
+
+# 3. Parameter Store Token prüfen (täglich nötig in Sandbox)
+aws ssm get-parameter \
+  --name "/ecokart/github-token" \
+  --with-decryption \
+  --region eu-north-1
+
+# Falls nicht vorhanden: Token wiederherstellen
+aws ssm put-parameter \
+  --name "/ecokart/github-token" \
+  --value "ghp_YOUR_TOKEN" \
+  --type "SecureString" \
+  --overwrite \
+  --region eu-north-1
+
+# 4. Re-Deploy via GitHub Actions
+# (Deploy Workflow ausführen)
+```
+
+**Gesamtdauer:** ~15-20 Minuten (inkl. Wait Time)
 
 ---
 
@@ -91,12 +161,12 @@ terraform output
 ### Customer Frontend
 - **URL:** `terraform output amplify_app_url`
 - **Basic Auth:** `demo` / `test1234`
-- **App Login:** `demo@ecokart.com` / `Demo1234!`
+- **App Login:** Registriere dich mit deiner Email-Adresse
 
 ### Admin Frontend
 - **URL:** `terraform output admin_amplify_app_url`
 - **Basic Auth:** `admin` / `admin1234`
-- **App Login:** `admin@ecokart.com` / `ecokart2025`
+- **App Login:** Registriere dich mit deiner Email-Adresse
 
 ---
 
