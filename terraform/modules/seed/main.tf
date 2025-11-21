@@ -58,10 +58,6 @@ resource "null_resource" "seed_database" {
       echo "👤 Creating test user..."
       node scripts/create-test-user.js
 
-      # Create admin user
-      echo "👑 Creating admin user..."
-      node scripts/create-admin-user.js
-
       echo "✅ Database seeding completed successfully!"
     EOF
 
