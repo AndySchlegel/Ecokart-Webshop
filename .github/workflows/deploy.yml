@@ -242,7 +242,7 @@ jobs:
       # 10. Terraform Init
       # ======================================================================
       - name: 🔧 Terraform Init
-        working-directory: terraform
+        working-directory: terraform/examples/basic
         run: |
           terraform init
           echo "✅ Terraform initialized"
@@ -251,7 +251,7 @@ jobs:
       # 11. Verify Environment Config exists
       # ======================================================================
       - name: ✅ Verify Environment Config
-        working-directory: terraform
+        working-directory: terraform/examples/basic
         run: |
           CONFIG_FILE="environments/${{ steps.env.outputs.environment }}.tfvars"
           if [ ! -f "$CONFIG_FILE" ]; then
@@ -269,7 +269,7 @@ jobs:
       # ======================================================================
       - name: 📋 Terraform Plan
         if: github.event.inputs.destroy != 'true'
-        working-directory: terraform
+        working-directory: terraform/examples/basic
         env:
           TF_VAR_github_access_token: ${{ steps.github-token.outputs.token }}
           TF_VAR_jwt_secret: ${{ steps.jwt-secret.outputs.secret }}
@@ -278,7 +278,7 @@ jobs:
           echo "📁 Using config: environments/${{ steps.env.outputs.environment }}.tfvars"
 
           terraform plan \
-            -var-file="environments/${{ steps.env.outputs.environment }}.tfvars" \
+            -var-file="../../environments/${{ steps.env.outputs.environment }}.tfvars" \
             -var="github_access_token=${{ steps.github-token.outputs.token }}" \
             -var="jwt_secret=${{ steps.jwt-secret.outputs.secret }}" \
             -out=tfplan
@@ -290,7 +290,7 @@ jobs:
       # ======================================================================
       - name: 🚀 Terraform Apply
         if: github.event.inputs.destroy != 'true'
-        working-directory: terraform
+        working-directory: terraform/examples/basic
         run: |
           echo "🚀 Applying infrastructure for: ${{ steps.env.outputs.environment }}"
           terraform apply -auto-approve tfplan
@@ -301,12 +301,12 @@ jobs:
       # ======================================================================
       - name: 💥 Terraform Destroy
         if: github.event.inputs.destroy == 'true'
-        working-directory: terraform
+        working-directory: terraform/examples/basic
         run: |
           echo "💥 Destroying infrastructure for: ${{ steps.env.outputs.environment }}"
 
           terraform destroy -auto-approve \
-            -var-file="environments/${{ steps.env.outputs.environment }}.tfvars" \
+            -var-file="../../environments/${{ steps.env.outputs.environment }}.tfvars" \
             -var="github_access_token=${{ steps.github-token.outputs.token }}" \
             -var="jwt_secret=${{ steps.jwt-secret.outputs.secret }}"
 
@@ -317,7 +317,7 @@ jobs:
       # ======================================================================
       - name: 📊 Deployment Summary
         if: github.event.inputs.destroy != 'true'
-        working-directory: terraform
+        working-directory: terraform/examples/basic
         run: |
           echo "# 🚀 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
