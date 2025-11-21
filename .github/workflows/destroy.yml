@@ -218,22 +218,19 @@ jobs:
           echo "🗑️ Deleting Cognito User Pools..."
 
           # Liste alle User Pools
-          POOLS=$(aws cognito-idp list-user-pools --max-results 60 --region eu-north-1 --query "UserPools[?contains(Name, 'ecokart-development')].Id" --output text)
+          POOLS=$(aws cognito-idp list-user-pools --max-results 60 --region ${{ env.AWS_REGION }} --query "UserPools[?contains(Name, 'ecokart-${{ steps.env.outputs.environment }}')].Id" --output text)
 
           if [ -z "$POOLS" ]; then
-            echo "No Cognito User Pools found"
+            echo "   ℹ️  No Cognito User Pools found for ${{ steps.env.outputs.environment }}"
           else
             for POOL_ID in $POOLS; do
-              echo "Deleting User Pool: $POOL_ID"
-              aws cognito-idp delete-user-pool --user-pool-id "$POOL_ID" --region eu-north-1 || true
+              echo "   - Deleting User Pool: $POOL_ID"
+              aws cognito-idp delete-user-pool --user-pool-id "$POOL_ID" --region ${{ env.AWS_REGION }} || true
+              echo "   ✅ User Pool deleted: $POOL_ID"
             done
-            echo "✅ Cognito User Pools deleted"
+            echo "✅ All Cognito User Pools deleted"
           fi
         continue-on-error: true
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: eu-north-1
 
       - name: 🧹 Cleanup API Gateways (if still exist)
         run: |
