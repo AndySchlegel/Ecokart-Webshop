@@ -110,33 +110,33 @@ jobs:
           fi
         continue-on-error: true
 
-      - name: 🗑️ Delete API Gateways
+      - name: 🗑️ Delete API Gateways (REST APIs)
         run: |
-          echo "🗑️ Deleting API Gateways for ${{ inputs.environment }}..."
+          echo "🗑️ Deleting REST API Gateways for ${{ inputs.environment }}..."
 
-          # Liste alle API Gateways mit "ecokart" im Namen
-          API_IDS=$(aws apigatewayv2 get-apis \
+          # Liste alle REST API Gateways
+          API_IDS=$(aws apigateway get-rest-apis \
             --region ${{ env.AWS_REGION }} \
-            --query "Items[?contains(Name, 'ecokart-${{ inputs.environment }}')].ApiId" \
+            --query "items[?contains(name, 'ecokart-${{ inputs.environment }}')].id" \
             --output text)
 
           if [ -z "$API_IDS" ]; then
-            echo "   ℹ️  No API Gateways found"
+            echo "   ℹ️  No REST API Gateways found"
           else
             for api_id in $API_IDS; do
-              API_NAME=$(aws apigatewayv2 get-api \
-                --api-id "$api_id" \
+              API_NAME=$(aws apigateway get-rest-api \
+                --rest-api-id "$api_id" \
                 --region ${{ env.AWS_REGION }} \
-                --query 'Name' \
+                --query 'name' \
                 --output text)
 
-              echo "   - Deleting API Gateway: $API_NAME ($api_id)"
+              echo "   - Deleting REST API Gateway: $API_NAME ($api_id)"
 
-              aws apigatewayv2 delete-api \
-                --api-id "$api_id" \
+              aws apigateway delete-rest-api \
+                --rest-api-id "$api_id" \
                 --region ${{ env.AWS_REGION }} || true
 
-              echo "   ✅ API Gateway deleted: $api_id"
+              echo "   ✅ REST API Gateway deleted: $api_id"
             done
           fi
         continue-on-error: true
