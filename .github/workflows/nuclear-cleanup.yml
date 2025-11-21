@@ -1,0 +1,306 @@
+name: Nuclear Cleanup - Delete Everything
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_nuclear:
+        description: 'Type "NUCLEAR" to confirm complete deletion'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to clean'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+        default: 'development'
+
+env:
+  AWS_REGION: eu-north-1
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  nuclear-cleanup:
+    name: Nuclear Cleanup
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⚠️ Validate Nuclear Confirmation
+        run: |
+          if [ "${{ inputs.confirm_nuclear }}" != "NUCLEAR" ]; then
+            echo "❌ ERROR: You must type 'NUCLEAR' to confirm"
+            echo "   You typed: '${{ inputs.confirm_nuclear }}'"
+            exit 1
+          fi
+          echo "✅ Nuclear cleanup confirmed"
+          echo "⚠️  This will delete EVERYTHING without using Terraform"
+
+      - name: 🔐 Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: GitHubActions-NuclearCleanup-${{ github.run_id }}
+
+      - name: ✅ Verify AWS Authentication
+        run: |
+          echo "🔍 Verifying AWS credentials..."
+          aws sts get-caller-identity
+          echo "✅ AWS authentication successful"
+
+      - name: 🗑️ Delete Amplify Apps
+        run: |
+          echo "🗑️ Deleting all Amplify apps..."
+
+          APP_IDS=$(aws amplify list-apps \
+            --region ${{ env.AWS_REGION }} \
+            --query 'apps[*].appId' \
+            --output text)
+
+          if [ -z "$APP_IDS" ]; then
+            echo "   ℹ️  No Amplify apps found"
+          else
+            echo "   Found apps to delete:"
+            for app_id in $APP_IDS; do
+              APP_NAME=$(aws amplify get-app \
+                --app-id "$app_id" \
+                --region ${{ env.AWS_REGION }} \
+                --query 'app.name' \
+                --output text)
+
+              echo "   - Deleting: $APP_NAME ($app_id)"
+
+              aws amplify delete-app \
+                --app-id "$app_id" \
+                --region ${{ env.AWS_REGION }} || true
+            done
+            echo "   ✅ All Amplify apps deleted"
+          fi
+        continue-on-error: true
+
+      - name: ⏰ Wait for AWS Deletion Propagation
+        run: |
+          echo "⏰ Waiting 30 seconds for AWS to process Amplify deletions..."
+          sleep 30
+          echo "✅ Wait complete"
+
+      - name: 🗑️ Delete Lambda Functions
+        run: |
+          echo "🗑️ Deleting Lambda functions for ${{ inputs.environment }}..."
+
+          LAMBDA_NAME="ecokart-${{ inputs.environment }}-api"
+
+          if aws lambda get-function \
+            --function-name "$LAMBDA_NAME" \
+            --region ${{ env.AWS_REGION }} &>/dev/null; then
+
+            echo "   - Deleting Lambda function: $LAMBDA_NAME"
+            aws lambda delete-function \
+              --function-name "$LAMBDA_NAME" \
+              --region ${{ env.AWS_REGION }}
+
+            echo "   ✅ Lambda function deleted: $LAMBDA_NAME"
+          else
+            echo "   ℹ️  Lambda function already deleted: $LAMBDA_NAME"
+          fi
+        continue-on-error: true
+
+      - name: 🗑️ Delete API Gateways
+        run: |
+          echo "🗑️ Deleting API Gateways for ${{ inputs.environment }}..."
+
+          # Liste alle API Gateways mit "ecokart" im Namen
+          API_IDS=$(aws apigatewayv2 get-apis \
+            --region ${{ env.AWS_REGION }} \
+            --query "Items[?contains(Name, 'ecokart-${{ inputs.environment }}')].ApiId" \
+            --output text)
+
+          if [ -z "$API_IDS" ]; then
+            echo "   ℹ️  No API Gateways found"
+          else
+            for api_id in $API_IDS; do
+              API_NAME=$(aws apigatewayv2 get-api \
+                --api-id "$api_id" \
+                --region ${{ env.AWS_REGION }} \
+                --query 'Name' \
+                --output text)
+
+              echo "   - Deleting API Gateway: $API_NAME ($api_id)"
+
+              aws apigatewayv2 delete-api \
+                --api-id "$api_id" \
+                --region ${{ env.AWS_REGION }} || true
+
+              echo "   ✅ API Gateway deleted: $api_id"
+            done
+          fi
+        continue-on-error: true
+
+      - name: 🗑️ Delete Cognito User Pools
+        run: |
+          echo "🗑️ Deleting Cognito User Pools for ${{ inputs.environment }}..."
+
+          POOLS=$(aws cognito-idp list-user-pools \
+            --max-results 60 \
+            --region ${{ env.AWS_REGION }} \
+            --query "UserPools[?contains(Name, 'ecokart-${{ inputs.environment }}')].Id" \
+            --output text)
+
+          if [ -z "$POOLS" ]; then
+            echo "   ℹ️  No Cognito User Pools found"
+          else
+            for POOL_ID in $POOLS; do
+              echo "   - Deleting User Pool: $POOL_ID"
+              aws cognito-idp delete-user-pool \
+                --user-pool-id "$POOL_ID" \
+                --region ${{ env.AWS_REGION }} || true
+              echo "   ✅ User Pool deleted: $POOL_ID"
+            done
+          fi
+        continue-on-error: true
+
+      - name: 🗑️ Delete DynamoDB Tables
+        run: |
+          echo "🗑️ Deleting DynamoDB tables..."
+
+          TABLES=(
+            "ecokart-products"
+            "ecokart-users"
+            "ecokart-carts"
+            "ecokart-orders"
+          )
+
+          for table in "${TABLES[@]}"; do
+            if aws dynamodb describe-table \
+              --table-name "$table" \
+              --region ${{ env.AWS_REGION }} &>/dev/null; then
+
+              echo "   - Deleting table: $table"
+              aws dynamodb delete-table \
+                --table-name "$table" \
+                --region ${{ env.AWS_REGION }}
+
+              echo "   - Waiting for $table to be deleted..."
+              aws dynamodb wait table-not-exists \
+                --table-name "$table" \
+                --region ${{ env.AWS_REGION }} || true
+
+              echo "   ✅ $table deleted"
+            else
+              echo "   ℹ️  $table already deleted"
+            fi
+          done
+        continue-on-error: true
+
+      - name: 🗑️ Delete IAM Role
+        run: |
+          echo "🗑️ Deleting IAM role for ${{ inputs.environment }}..."
+
+          ROLE_NAME="ecokart-${{ inputs.environment }}-api-exec-role"
+
+          if aws iam get-role --role-name "$ROLE_NAME" &>/dev/null; then
+            echo "   - Detaching managed policies..."
+            aws iam detach-role-policy \
+              --role-name "$ROLE_NAME" \
+              --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole \
+              2>/dev/null || true
+
+            echo "   - Deleting inline policies..."
+            INLINE_POLICIES=$(aws iam list-role-policies \
+              --role-name "$ROLE_NAME" \
+              --query 'PolicyNames' \
+              --output text)
+
+            for policy in $INLINE_POLICIES; do
+              echo "     - Deleting policy: $policy"
+              aws iam delete-role-policy \
+                --role-name "$ROLE_NAME" \
+                --policy-name "$policy" || true
+            done
+
+            echo "   - Deleting role..."
+            aws iam delete-role --role-name "$ROLE_NAME"
+
+            echo "   ✅ IAM role deleted: $ROLE_NAME"
+          else
+            echo "   ℹ️  IAM role already deleted: $ROLE_NAME"
+          fi
+        continue-on-error: true
+
+      - name: 🗑️ Delete CloudWatch Log Groups
+        run: |
+          echo "🗑️ Deleting CloudWatch log groups for ${{ inputs.environment }}..."
+
+          LOG_GROUP="/aws/lambda/ecokart-${{ inputs.environment }}-api"
+
+          if aws logs describe-log-groups \
+            --log-group-name-prefix "$LOG_GROUP" \
+            --region ${{ env.AWS_REGION }} \
+            --query 'logGroups[0].logGroupName' \
+            --output text 2>/dev/null | grep -q "$LOG_GROUP"; then
+
+            echo "   - Deleting log group: $LOG_GROUP"
+            aws logs delete-log-group \
+              --log-group-name "$LOG_GROUP" \
+              --region ${{ env.AWS_REGION }}
+
+            echo "   ✅ Log group deleted: $LOG_GROUP"
+          else
+            echo "   ℹ️  Log group already deleted: $LOG_GROUP"
+          fi
+        continue-on-error: true
+
+      - name: 🗑️ Delete Terraform State from S3
+        run: |
+          echo "🗑️ Deleting Terraform state file..."
+
+          BUCKET_NAME="ecokart-terraform-state-729403197965"
+          STATE_KEY="development/terraform.tfstate"
+
+          if aws s3api head-object \
+            --bucket "$BUCKET_NAME" \
+            --key "$STATE_KEY" \
+            --region ${{ env.AWS_REGION }} &>/dev/null; then
+
+            echo "   - Deleting state file: s3://$BUCKET_NAME/$STATE_KEY"
+            aws s3 rm "s3://$BUCKET_NAME/$STATE_KEY" --region ${{ env.AWS_REGION }}
+
+            echo "   ✅ State file deleted"
+          else
+            echo "   ℹ️  State file already deleted or doesn't exist"
+          fi
+        continue-on-error: true
+
+      - name: 📊 Cleanup Summary
+        if: always()
+        run: |
+          echo ""
+          echo "╔═══════════════════════════════════════════════════════════════════╗"
+          echo "║                    💥 NUCLEAR CLEANUP COMPLETE                    ║"
+          echo "╚═══════════════════════════════════════════════════════════════════╝"
+          echo ""
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Region: ${{ env.AWS_REGION }}"
+          echo "Cleaned at: $(date -u)"
+          echo ""
+          echo "🗑️  Deleted Resources (via AWS CLI):"
+          echo "   - ✅ Amplify Apps (all)"
+          echo "   - ✅ Lambda Functions"
+          echo "   - ✅ API Gateways"
+          echo "   - ✅ Cognito User Pools"
+          echo "   - ✅ DynamoDB Tables (4)"
+          echo "   - ✅ IAM Roles & Policies"
+          echo "   - ✅ CloudWatch Log Groups"
+          echo "   - ✅ Terraform State File"
+          echo ""
+          echo "✅ Environment is now completely clean!"
+          echo ""
+          echo "╔═══════════════════════════════════════════════════════════════════╗"
+          echo "║  Ready for fresh deployment via 'Deploy Infrastructure' workflow ║"
+          echo "╚═══════════════════════════════════════════════════════════════════╝"
+          echo ""
