@@ -572,6 +572,78 @@ Trotz Auto-Cleanup Step in `.github/workflows/destroy.yml` musste Lambda mehrfac
 
 ---
 
+### 14. AWS Parameter Store Tokens werden bei Budget-Cleanup gelöscht
+
+**Herausforderung: Tägliche Token-Wiederherstellung nötig**
+
+**Das Problem:**
+- AWS Sandbox-Account hat Budget-Limit
+- Über Nacht werden ALLE Ressourcen gelöscht (Cost-Protection)
+- **ABER:** Auch AWS Systems Manager Parameter Store wird geleert!
+- GitHub Token (`/ecokart/github-token`) ist weg
+- Deploy Workflow schlägt fehl: "Parameter /ecokart/github-token not found"
+
+**Die Symptome:**
+```bash
+# GitHub Actions Deploy Workflow
+Error: Parameter /ecokart/github-token not found
+```
+
+**Die Lösung (täglich nötig bis Monatsende):**
+```bash
+# Token manuell wieder einfügen
+aws ssm put-parameter \
+  --name "/ecokart/github-token" \
+  --value "ghp_DEIN_TOKEN_HIER" \
+  --type "SecureString" \
+  --overwrite \
+  --region eu-north-1
+```
+
+**Was ich gelernt habe:**
+- **Budget-Cleanup ist aggressiv** - löscht mehr als erwartet
+- Parameter Store ist NICHT immun gegen Cleanup
+- Secrets müssen täglich wiederhergestellt werden
+- **Workaround für Sandbox-Accounts:**
+  - Token lokal in `.env` backup halten
+  - Jeden Morgen vor Deploy: Parameter Store Check
+  - Script für schnelle Token-Wiederherstellung
+- **Production-Lösung:**
+  - AWS Account ohne Budget-Limits verwenden
+  - ODER: Secrets in GitHub Secrets statt Parameter Store
+
+**Script für schnelle Wiederherstellung:**
+```bash
+#!/bin/bash
+# restore-github-token.sh
+
+TOKEN="ghp_YOUR_TOKEN_HERE"  # Aus .env oder 1Password
+
+echo "🔑 Restoring GitHub Token to Parameter Store..."
+
+aws ssm put-parameter \
+  --name "/ecokart/github-token" \
+  --value "$TOKEN" \
+  --type "SecureString" \
+  --overwrite \
+  --region eu-north-1
+
+echo "✅ Token restored!"
+echo "ℹ️  Verify with: aws ssm get-parameter --name /ecokart/github-token --with-decryption"
+```
+
+**Best Practice für Production:**
+- GitHub Secrets für CI/CD Tokens verwenden (nicht Parameter Store)
+- Parameter Store nur für Application Runtime Secrets
+- Backup-Strategie für kritische Secrets
+
+**Zeitaufwand:**
+- Manuell: ~2 Minuten pro Tag
+- Mit Script: ~30 Sekunden pro Tag
+- **Bis Monatsende:** Täglich nötig
+
+---
+
 ## 🚀 Roadmap
 
 Für aktuelle Tasks und Roadmap siehe: **[docs/ACTION_PLAN.md](ACTION_PLAN.md)**
