@@ -79,11 +79,6 @@ module "cognito" {
   project_name = var.project_name
   environment  = var.environment
 
-  # Admin User Auto-Provisioning
-  enable_admin_provisioning = var.enable_cognito_admin_provisioning
-  admin_email               = var.cognito_admin_email
-  admin_temp_password       = var.cognito_admin_temp_password
-
   tags = local.common_tags
 }
 
