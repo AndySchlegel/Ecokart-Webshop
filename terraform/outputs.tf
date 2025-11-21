@@ -104,18 +104,6 @@ output "cognito_user_pool_endpoint" {
   value       = module.cognito.user_pool_endpoint
 }
 
-output "cognito_admin_user_credentials" {
-  description = "Admin User Credentials (nur wenn enable_cognito_admin_provisioning=true)"
-  value = var.enable_cognito_admin_provisioning ? {
-    email              = var.cognito_admin_email
-    temporary_password = var.cognito_admin_temp_password
-    note               = "⚠️ Beim ersten Login musst du das Passwort ändern!"
-  } : {
-    note = "Admin Provisioning deaktiviert. Erstelle Admin User manuell in AWS Console."
-  }
-  sensitive = true
-}
-
 # ----------------------------------------------------------------------------
 # Amplify Outputs (conditional)
 # ----------------------------------------------------------------------------
