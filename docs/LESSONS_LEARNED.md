@@ -1031,8 +1031,190 @@ State-File existiert, aber Terraform init schlägt fehl mit "expected content" E
 
 ---
 
+### 21. Auth Type Mismatch - Silent Runtime Failures
+
+**Herausforderung:** 12 Stunden Debugging für 401 Unauthorized Errors
+
+**Das Problem:**
+Nach erfolgreicher Cognito JWT Implementation bekamen alle authenticated Endpoints 401 Errors:
+```
+✅ User Login funktioniert
+✅ Lambda Logs: "JWT validated successfully"
+✅ Authorization Header present
+❌ Browser: 401 Unauthorized für /api/cart, /api/orders
+```
+
+**Die Ursache:**
+Type Mismatch zwischen zwei parallel existierenden Auth-Systemen:
+
+```typescript
+// Altes System (middleware/auth.ts):
+export interface AuthRequest extends Request {
+  userId?: string;  // Setzt req.userId
+}
+
+// Neues System (middleware/cognitoJwtAuth.ts):
+declare global {
+  namespace Express {
+    interface Request {
+      user?: AuthUser;  // Setzt req.user.userId
+    }
+  }
+}
+
+// Routes nutzen NEUES System:
+import { requireAuth } from '../middleware/cognitoJwtAuth';
+router.use(requireAuth);  // Setzt req.user
+
+// Controller nutzen ALTEN Type:
+import { AuthRequest } from '../middleware/auth';
+const userId = req.userId;  // undefined!
+if (!userId) {
+  res.status(401).json({ error: 'Unauthorized' });  // ❌ 401!
+}
+```
+
+**Die Lösung:**
+```typescript
+// Controller Fix:
+import { Request, Response } from 'express';  // Standard Express Type
+const userId = req.user?.userId;  // Nutzt neues Cognito System
+```
+
+**Betroffene Files:**
+- `backend/src/controllers/cartController.ts` (5 functions)
+- `backend/src/controllers/orderController.ts` (4 functions)
+
+**Was ich gelernt habe:**
+- **Type Safety allein reicht nicht** - TypeScript kompiliert ohne Error, aber zur Runtime ist `req.user` undefined
+- **Parallele Auth-Systeme sind gefährlich** - altes System sollte komplett entfernt werden
+- **Bei 401 Errors nach Middleware:** Checken ob Controller die richtigen Request Properties nutzen
+- **Lambda Logs können täuschen:** "JWT validated" bedeutet nur dass Middleware funktioniert, nicht dass Controller den User findet
+- **Best Practice:** Nach Migration zu neuem Auth-System altes System komplett löschen
+
+**Pattern für die Zukunft:**
+```typescript
+// 1. Checken: Welche Middleware wird genutzt?
+router.use(requireAuth);  // Aus cognitoJwtAuth.ts
+
+// 2. Middleware-Code lesen: Was wird gesetzt?
+req.user = { userId, email, role, emailVerified };
+
+// 3. Controller MUSS matchen:
+const userId = req.user?.userId;  // NICHT req.userId!
+```
+
+**Learned from:** 22.11.2025 - Token Storage Bug Session (12 hours)
+
+---
+
+### 22. Missing Backend Build Step - Deploy Without Code
+
+**Herausforderung:** 500 Errors nach "erfolgreichem" Deployment
+
+**Das Problem:**
+Nach Auth Type Fix und Nuclear Cleanup: ALLE Endpoints gaben 500 Errors:
+```
+❌ GET /api/products → 500 Internal Server Error
+❌ GET /api/cart → 500 Internal Server Error
+❌ Response: {"error":"Failed to get cart"}
+❌ Lambda Logs: KEINE Logs! (Requests wurden nicht geloggt)
+```
+
+**Die Ursache:**
+Deploy Workflow hatte KEINEN Backend Build Step:
+
+```yaml
+# Workflow Steps:
+- name: Clean Backend Dependencies
+  run: rm -rf backend/node_modules  ✅
+
+# ❌ FEHLT: Build Backend Step!
+
+- name: Terraform Init
+  run: terraform init  ✅
+
+- name: Terraform Apply
+  run: terraform apply  ✅ (deployed ALTEN Code!)
+```
+
+**Was passierte:**
+1. Workflow löscht `node_modules`
+2. Workflow baut Backend NICHT (kein `npm ci` + `npm run build`)
+3. Terraform packt Lambda Code (aber TypeScript ist nicht kompiliert!)
+4. Lambda läuft mit altem/fehlendem JavaScript Code
+5. Jeder Request crasht → 500 Error
+
+**Die Lösung:**
+```yaml
+# Neuer Step 10 (zwischen Clean und Terraform Init):
+- name: 📦 Build Backend
+  working-directory: backend
+  run: |
+    echo "📦 Installing backend dependencies..."
+    npm ci
+    echo "🔨 Building backend TypeScript..."
+    npm run build
+    echo "✅ Backend built successfully"
+```
+
+**Was ich gelernt habe:**
+- **"Erfolgreiches Deployment" ≠ funktionierender Code** - Terraform deployed was im Verzeichnis liegt
+- **TypeScript MUSS kompiliert werden** - Lambda kann keine .ts Files ausführen
+- **Explizit > Implizit** - jeder Build-Schritt muss im Workflow stehen
+- **Lambda 500 ohne Logs** = wahrscheinlich falscher/alter Code deployed
+- **CI/CD Workflows regelmäßig reviewen** - fehlende Steps fallen erst bei Problemen auf
+
+**Best Practice für CI/CD:**
+```yaml
+# IMMER diese Reihenfolge:
+1. Clean Dependencies (optional)
+2. Install Dependencies (npm ci)        ← PFLICHT!
+3. Build (npm run build)                ← PFLICHT!
+4. Test (npm test) (optional)
+5. Deploy (terraform apply)
+```
+
+**Pattern für neue Projekte:**
+```yaml
+# Template für TypeScript Backend Deploy:
+- name: 🧹 Clean (optional)
+  run: rm -rf backend/node_modules backend/dist
+
+- name: 📦 Install Dependencies
+  working-directory: backend
+  run: npm ci
+
+- name: 🔨 Build TypeScript
+  working-directory: backend
+  run: npm run build
+
+- name: ✅ Verify Build
+  working-directory: backend
+  run: |
+    if [ ! -d "dist" ]; then
+      echo "❌ Build failed - dist/ not found"
+      exit 1
+    fi
+    echo "✅ Build verified"
+
+- name: 🚀 Deploy
+  run: terraform apply -auto-approve
+```
+
+**Debugging Checklist bei Lambda 500 Errors:**
+1. ✅ Check IAM Permissions (DynamoDB, etc.)
+2. ✅ Check Environment Variables
+3. ✅ Check Lambda Logs (CloudWatch)
+4. ✅ **Check ob Code überhaupt gebaut wurde!**
+5. ✅ Check Lambda Last Modified timestamp
+
+**Learned from:** 22.11.2025 - Token Storage Bug Session (resolved after 12 hours)
+
+---
+
 **Erstellt:** 19. November 2025
-**Letzte Updates:** 21. November 2025 (Critical debugging session)
+**Letzte Updates:** 22. November 2025 (Token Storage Bug resolved - 12h session)
 **Autor:** Andy Schlegel
 **Projekt:** Ecokart E-Commerce Platform
 **Status:** Living Document (wird kontinuierlich erweitert)
