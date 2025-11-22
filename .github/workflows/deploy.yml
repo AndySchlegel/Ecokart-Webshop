@@ -239,27 +239,23 @@ jobs:
           echo "✅ Dependencies cleaned"
 
       # ======================================================================
-      # 10. Force Clear State & Lock (AGGRESSIVE)
+      # 10. Clear Lock ONLY (keep state!)
       # ======================================================================
-      - name: 🧹 Force Clear State & Lock
+      - name: 🔓 Clear Lock (preserve state)
         run: |
-          echo "🧹 FORCE clearing state and lock for fresh deployment..."
+          echo "🔓 Clearing lock entries only (keeping state for incremental update)..."
 
           BUCKET_NAME="ecokart-terraform-state-729403197965"
           STATE_KEY="development/terraform.tfstate"
           LOCK_TABLE="ecokart-terraform-state-lock"
           LOCK_ID="$BUCKET_NAME/$STATE_KEY"
 
-          # Force delete state file (no checks, just delete)
-          echo "   🗑️  Force deleting state file..."
-          aws s3 rm "s3://$BUCKET_NAME/$STATE_KEY" --region ${{ env.AWS_REGION }} 2>&1 || echo "   (no state file or already deleted)"
-
           # Force delete all lock entries for this state
-          echo "   🔓 Force deleting lock entries..."
+          echo "   🔓 Deleting lock entries..."
           aws dynamodb delete-item \
             --table-name "$LOCK_TABLE" \
             --key "{\"LockID\": {\"S\": \"$LOCK_ID\"}}" \
-            --region ${{ env.AWS_REGION }} 2>&1 || echo "   (no lock or already deleted)"
+            --region ${{ env.AWS_REGION }} 2>&1 || echo "   (no lock found)"
 
           # Also try with digest suffix (in case)
           aws dynamodb delete-item \
@@ -268,8 +264,8 @@ jobs:
             --region ${{ env.AWS_REGION }} 2>&1 || true
 
           echo ""
-          echo "   ✅ State and lock forcefully cleared!"
-          echo "   ✅ Ready for completely fresh deployment"
+          echo "   ✅ Lock cleared (state preserved)"
+          echo "   ✅ Ready for incremental deployment"
           echo ""
 
       # ======================================================================
