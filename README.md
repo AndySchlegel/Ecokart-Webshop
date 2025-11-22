@@ -7,30 +7,53 @@
 [![Next.js](https://img.shields.io/badge/Frontend-Next.js%2015-black)](https://nextjs.org)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue)](https://github.com/features/actions)
 
-> **Portfolio-Projekt** von Andy Schlegel - Production-Ready E-Commerce mit Inventory Management
+> **Portfolio-Projekt** von Andy Schlegel - Feature-Complete E-Commerce Webshop
+
+---
+
+## 🎯 Projekt-Ziel
+
+**Ein vollständig funktionaler, production-ready E-Commerce Webshop als Bewerbungs-Showcase**
+
+Dieses Projekt demonstriert professionelle Softwareentwicklung nach 6 Monaten intensivem Lernen. Ziel ist ein **theoretisch produktionsreifer Webshop**, der folgende Anforderungen erfüllt:
+
+- ✅ **Feature-Complete** - Alle essentiellen E-Commerce Features implementiert
+- ✅ **100% Reproduzierbar** - Von AWS Sandbox zu eigenem Account portierbar
+- ✅ **Production-Ready** - Mit Tests, Monitoring, Error Handling & Documentation
+- ✅ **Infrastructure as Code** - Komplette Infrastruktur in Terraform definiert
+- ✅ **Best Practices** - CI/CD, Security, Cost Optimization, Clean Code
+
+**Status:** Aktuell funktionsfähig (Auth → Cart → Orders → Stock Management) - in aktiver Entwicklung zu Feature-Completeness
 
 ---
 
 ## 🚦 Current Status
 
-**Last Updated:** 20. November 2025
+**Last Updated:** 22. November 2025
 
-### ✅ Production Features
-- ✅ **Customer Shop** - Next.js 15 auf AWS Amplify
-- ✅ **Admin Panel** - Product & Inventory Management
+### ✅ Implemented Features
+- ✅ **Authentication** - Cognito JWT (User Registration, Login, Email Verification)
+- ✅ **Customer Shop** - Next.js 15 Frontend auf AWS Amplify
+- ✅ **Admin Panel** - Product & Inventory Management Dashboard
 - ✅ **Inventory System** - Stock tracking mit reserved logic
-- ✅ **REST API** - Express.js auf AWS Lambda
+- ✅ **REST API** - Express.js Backend auf AWS Lambda
 - ✅ **DynamoDB** - 4 Tables mit Auto-Seeding (31 products)
-- ✅ **CI/CD Pipeline** - GitHub Actions mit OIDC
+- ✅ **CI/CD Pipeline** - GitHub Actions mit OIDC (Branch-based deployment)
 - ✅ **Multi-Environment** - Development, Staging, Production
+- ✅ **E2E Workflow** - Products → Cart → Checkout → Stock Deduction
 
-### 🚧 Current Sprint
-- 🚧 **AWS Cost Optimization** - Removing unnecessary services
-- 🚧 **Documentation Restructure** - Better organization
-- 🔒 **Cognito Authentication** - Code complete, deployment blocked by AWS Organizations SCP
+### 🚧 In Progress
+- 🚧 **Documentation Cleanup** - Konsolidierung & Strukturierung
+- 🚧 **Code Cleanup** - Removal of legacy auth system
 
-### 📋 Next Up
-See [docs/ACTION_PLAN.md](docs/ACTION_PLAN.md) for detailed roadmap
+### 📋 Next Milestones
+1. **Testing & Quality** - Unit Tests, E2E Tests, Error Handling
+2. **Payment Integration** - Stripe Checkout & Webhooks
+3. **Email Notifications** - Order Confirmation, Shipping Updates
+4. **Monitoring & Alerts** - CloudWatch Dashboards & Alarms
+5. **Production Polish** - Performance, Security Audit, Final Documentation
+
+**Detailed Roadmap:** [docs/ACTION_PLAN.md](docs/ACTION_PLAN.md)
 
 ---
 
@@ -39,10 +62,11 @@ See [docs/ACTION_PLAN.md](docs/ACTION_PLAN.md) for detailed roadmap
 | Metric | Status | Target |
 |--------|--------|--------|
 | **Deployment** | ✅ Automated | - |
+| **Authentication** | ✅ Working | - |
 | **Tests** | ❌ Manual only | 80% coverage |
-| **AWS Costs** | ⚠️ $17/month | <$10/month |
-| **Uptime** | ✅ 99.9% | - |
-| **Last Deploy** | 19.11.2025 | - |
+| **AWS Costs** | ✅ <$10/month | <$10/month |
+| **Documentation** | 🚧 85% complete | 100% |
+| **Last Deploy** | 22.11.2025 | - |
 
 ---
 
@@ -59,7 +83,7 @@ cd Ecokart-Webshop
 git push origin develop  # Auto-deploys to development
 
 # 3. Or deploy locally
-./deploy.sh
+./scripts/deploy.sh
 ```
 
 ### For Users
@@ -182,10 +206,10 @@ Ecokart-Webshop/
 
 ```bash
 # Deploy infrastructure
-./deploy.sh
+./scripts/deploy.sh
 
 # Destroy infrastructure
-./deploy.sh destroy
+./scripts/deploy.sh destroy
 
 # View logs
 aws logs tail /aws/lambda/ecokart-development-api --follow

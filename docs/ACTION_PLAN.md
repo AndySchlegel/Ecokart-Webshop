@@ -1,7 +1,15 @@
 # 🎯 Action Plan - Ecokart Development
 
 **Last Updated:** 22. November 2025
-**Status:** 🎉 Token Storage Bug RESOLVED - E2E Functional!
+**Status:** 🎉 E2E Functional - Ready for Quality & Feature Phase!
+
+> **📖 Struktur dieses Dokuments:**
+> - **Current Sprint** - Was läuft JETZT (diese/nächste Woche)
+> - **Next Milestones** - Nächste 2-4 Wochen
+> - **Feature-Complete Roadmap** - 7-Wochen-Plan zu Production-Ready
+> - **Recent Learnings** - Letzte 5 wichtigsten Lessons (Details → LESSONS_LEARNED.md)
+> - **Known Issues** - Aktuelle Blocker
+> - **Project Health** - Metrics & Status
 
 ---
 
@@ -311,245 +319,285 @@
 
 ---
 
-## 📋 Next Up (Prioritized)
+## 📋 Next Milestones (Nächste 2-4 Wochen)
 
-### Immediate (Tomorrow - 22.11.2025)
+### Woche 1-2: Quality & Reliability 🔥
 
-**🔴 HIGHEST PRIORITY: Fix Frontend Token Storage Bug**
-- [ ] Investigate frontend Authentication Code (AuthContext.tsx oder ähnlich)
-- [ ] Identify where tokens should be persisted after login/registration
-- [ ] Implement token storage to localStorage:
-  ```typescript
-  localStorage.setItem('idToken', token);
-  localStorage.setItem('accessToken', accessToken);
-  localStorage.setItem('refreshToken', refreshToken);
-  ```
-- [ ] Test complete auth flow: Register → Login → Add to Cart → Checkout
-- [ ] Verify tokens persist across page refreshes
-- **Why:** All authenticated features are currently broken
-- **Impact:** CRITICAL - blocks all user functionality
-- **Effort:** 2-4 hours (depends on code complexity)
+**1. Code Cleanup** (ETA: 1 Tag)
+- [ ] Alte Auth-System entfernen (`backend/src/middleware/auth.ts`, `AuthRequest` Types)
+- [ ] Console.logs → CloudWatch Structured Logging
+- [ ] ESLint/Prettier Pass (no warnings)
 
-### This Week
+**2. Automated Testing** (ETA: 5-6 Tage) ← **HÖCHSTE PRIORITÄT**
+- [ ] Backend Unit Tests (Jest + Supertest) - 80% Coverage
+- [ ] API Integration Tests (Auth → Cart → Order Flow)
+- [ ] E2E Tests (Playwright) - 5-10 kritische Journeys
+- [ ] CI/CD Integration (Tests in GitHub Actions)
 
-1. **Branch Management**
-   - [ ] Merge `claude/admin-stock-management-*` in `main`
-   - [ ] develop Branch neu erstellen von main
-   - [ ] Infrastructure neu deployen (optional, zum Testen)
-   - **Why:** Deploy Inventory Management to Production
+**3. Error Handling & UX** (ETA: 2-3 Tage)
+- [ ] Deutsche Error Messages (alle Endpoints)
+- [ ] Loading States (Spinner/Skeletons)
+- [ ] Error Boundaries (React)
+- [ ] Toast Notifications (Success/Error Feedback)
 
-2. **AWS Cost Cleanup**
-   - [ ] Disable AWS Config
-   - [ ] Clean up orphaned resources (RDS, ECS)
-   - **Why:** Reduce AWS costs by 65%
+### Woche 3-4: Essential Features 💳
 
-3. **Documentation Completion**
-   - [ ] Finish documentation restructuring
-   - **Why:** Better organization for future development
+**4. Payment Integration - Stripe** (ETA: 3-4 Tage)
+- [ ] Stripe Checkout Integration
+- [ ] Webhook Handler (payment_intent.succeeded)
+- [ ] Order Creation on Payment Success
+- [ ] Test Mode verifizieren
 
-### Short-Term (Next 2 Weeks)
+**5. Email Notifications - AWS SES** (ETA: 2-3 Tage)
+- [ ] SES Setup (Sandbox → Production)
+- [ ] Order Confirmation Email (HTML Template)
+- [ ] Shipping Notification Email
+- [ ] Email Service in Backend
 
-4. **Automated Testing** (HIGH PRIORITY)
-   - [ ] Unit Tests für Stock-Logik (Jest)
-   - [ ] API Tests (Supertest)
-   - [ ] E2E Tests basics (Playwright)
-   - **Why:** Verhindert Bugs in Production
-   - **Effort:** 5-6 days
-   - **Reference:** See ROADMAP_PLANNING.md Phase 1
-
-5. **Stock-Alert System**
-   - [ ] Backend: SNS Notification bei niedrigem Bestand
-   - [ ] Admin: Stock-Alerts Dashboard
-   - [ ] Email-Benachrichtigung an Admin
-   - **Why:** Proaktive Inventory-Management
-   - **Effort:** 2-3 days
-   - **Depends on:** Inventory Management deployed
-
-6. **Error Handling Improvements**
-   - [ ] Bessere Error-Messages im Admin ("Pattern mismatch" → was genau?)
-   - [ ] Frontend Error Boundaries (React)
-   - [ ] CloudWatch Error Alerting
-   - **Why:** Better debugging und User Experience
-   - **Effort:** 2 days
-
-### Medium-Term (Next Month)
-
-7. **AWS Cognito Authentication** ⚠️ BLOCKED BY SCP (HIGH PRIORITY - Security)
-   - [x] Replace current JWT Auth with Cognito ✅
-   - [x] Email Verification ✅
-   - [x] Password Reset Flow ✅
-   - [x] Auto Admin User Provisioning ✅ (eliminiert manuelles AWS Console Setup!)
-   - [x] Login/Register UI Pages ✅
-   - [x] API Gateway Authorizer Integration ✅
-   - [ ] DEPLOYMENT - **BLOCKED:** AWS Organizations SCP verbietet Cognito
-   - [ ] Optional: Social Login (Google, Facebook) - nach SCP-Fix
-   - [ ] Optional: MFA - nach SCP-Fix
-   - **Status:** Code Complete, Deployment Blocked by AWS Organizations SCP
-   - **Action:** Organization Admin muss SCP Policy updaten
-   - **Why:** Production-ready authentication
-   - **Effort:** 2-3 days (Code ✅ done, Deployment ⏳ waiting for SCP fix)
-   - **Reference:** See ROADMAP_PLANNING.md Phase 2
-
-8. **Email Notifications** (HIGH PRIORITY - Customer Experience)
-   - [ ] AWS SES Setup
-   - [ ] Order Confirmation Email
-   - [ ] Shipping Notification Email
-   - [ ] Email Templates mit Corporate Design
-   - **Why:** Professional customer experience
-   - **Effort:** 3-4 days
-   - **Reference:** See ROADMAP_PLANNING.md Phase 4
-
-9. **Multi-Environment Cleanup**
-   - [ ] Staging Environment nutzen (currently unused)
-   - [ ] Environment-spezifische Configs dokumentieren
-   - [ ] Amplify Branch-Konfiguration überprüfen
-   - **Why:** Better separation of concerns
-   - **Effort:** 2 days
-
-### Long-Term (Next Quarter)
-
-10. **Stripe Payment Integration** (Business Critical)
-    - [ ] Stripe Checkout Session
-    - [ ] Webhook für payment_intent.succeeded
-    - [ ] Order Creation nach erfolgreicher Zahlung
-    - [ ] Test Mode für Development
-    - **Why:** Real revenue!
-    - **Effort:** 3-4 days
-    - **Reference:** See ROADMAP_PLANNING.md Phase 3
-
-11. **Order Lifecycle Management**
-    - [ ] Status Machine (PENDING → PAID → SHIPPED → DELIVERED)
-    - [ ] Admin: Order Status Updates
-    - [ ] Customer: Order Tracking
-    - **Why:** Complete order workflow
-    - **Effort:** 3-4 days
-
-12. **Monitoring & Observability**
-    - [ ] CloudWatch Dashboards (Business + Technical Metrics)
-    - [ ] CloudWatch Alarms (Error Rate, 5xx, etc.)
-    - [ ] X-Ray Distributed Tracing
-    - **Why:** Probleme BEVOR User sie merken
-    - **Effort:** 2-3 days
-    - **Reference:** See ROADMAP_PLANNING.md Phase 5
+**6. Order Lifecycle** (ETA: 2-3 Tage)
+- [ ] Order Status Machine (PENDING → PAID → SHIPPED → DELIVERED)
+- [ ] Admin: Order Management UI
+- [ ] Customer: Order Tracking Page
+- [ ] Email Triggers on Status Change
 
 ---
 
-## 💡 Recent Learnings (Last 30 Days)
+## 🗺️ Feature-Complete Roadmap (7 Wochen zu Production-Ready)
 
-### From Critical Debugging Session (21.11.2025)
+> **Projekt-Ziel:** Vollständig funktionaler, production-ready E-Commerce Webshop für Bewerbungen
+>
+> **Anforderungen:**
+> - Feature-Complete (Alle essentiellen E-Commerce Features)
+> - 100% Reproduzierbar (Portierbar zu eigenem AWS Account)
+> - Production-Ready (Tests, Monitoring, Error Handling, Dokumentation)
+> - Showcase-Quality (Beeindruckend für Arbeitgeber)
 
-**Terraform State Corruption durch Architektur-Änderungen**
-- **Problem:** State created with `examples/basic/` structure, deployment changed to `terraform/` root
-- **Error:** "Provider configuration not present" für alle module.ecokart.* resources
-- **Learning:** Architektur-Änderungen NIEMALS bei existierendem State
-- **Solution:** Complete nuclear cleanup - delete state, lock, and all AWS resources manually
-- **Best Practice:** Bei Architektur-Änderungen:
-  1. Destroy mit alter Architektur
-  2. Architektur ändern
-  3. Deploy mit neuer Architektur
-- **Emergency Tool:** Nuclear cleanup workflow created (.github/workflows/nuclear-cleanup.yml)
+### ✅ Status Quo (Was bereits funktioniert)
 
-**API Gateway Double Slash Problem**
-- **Problem:** `/dev//api/cart` wegen trailing slash in NEXT_PUBLIC_API_URL
-- **Learning:** API Gateway routet double slashes nicht korrekt
-- **Solution:** Trailing slash aus Environment Variable entfernen
-- **Best Practice:** URL-Normalisierung im Frontend: `BASE_URL.replace(/\/$/, '')`
+**Authentication & User Management:**
+- ✅ AWS Cognito JWT Authentication
+- ✅ User Registration mit Email Verification
+- ✅ Login/Logout Flow
+- ✅ Admin User Auto-Provisioning
+- ✅ Role-Based Access Control (Admin/Customer)
 
-**Frontend Token Storage Bug**
-- **Problem:** localStorage/sessionStorage leer trotz erfolgreicher Login
-- **Symptom:** User sieht "eingeloggt" aber Folge-Requests geben 401
-- **Learning:** State Management bei Auth ist kritisch
-- **Debugging:** Storage IMMER checken, nicht nur Console Logs
-- **Next:** Frontend Auth Code muss Tokens nach Login/Registration speichern
+**E-Commerce Core:**
+- ✅ Product Catalog (31 Produkte, Auto-Seeding)
+- ✅ Shopping Cart (Add/Remove/Update Quantity)
+- ✅ Order Placement
+- ✅ Inventory Management (Stock + Reserved Tracking)
+- ✅ Stock Deduction on Order
 
-**AWS CLI vs Terraform für Cleanup**
-- **Problem:** Terraform destroy schlägt bei State-Corruption fehl
-- **Learning:** AWS CLI ist mächtiger für Emergency Cleanup
-- **Pattern:** Idempotent Scripts mit `|| true` für fehlertolerante Ausführung
-- **Workflow:** Nuclear cleanup als "letzter Ausweg" verfügbar
+**Infrastructure:**
+- ✅ 100% Serverless (Lambda, DynamoDB, Amplify)
+- ✅ Infrastructure as Code (Terraform)
+- ✅ Multi-Environment (Dev/Staging/Prod)
+- ✅ CI/CD Pipeline (GitHub Actions + OIDC)
+- ✅ Auto-Deployment (Branch-based)
+- ✅ AWS Costs <$10/Monat
 
-**API Gateway: REST vs HTTP APIs**
-- **Problem:** `apigatewayv2` fand keine APIs, obwohl sie existierten
-- **Learning:** REST APIs nutzen `apigateway`, HTTP APIs nutzen `apigatewayv2`
-- **Check:** Terraform Resource-Typ verrät API-Typ:
-  - `aws_api_gateway_rest_api` → REST → `apigateway`
-  - `aws_apigatewayv2_api` → HTTP → `apigatewayv2`
-
-**Forced State Cleanup in Workflows**
-- **Use Case:** Fresh deployments nach kompletter Cleanup
-- **Implementation:** Deploy Workflow hat jetzt "Force Clear State & Lock" Step
-- **When to use:** Nach Nuclear Cleanup oder bei State Corruption
-- **When NOT to use:** Bei normalen Updates (State geht verloren!)
+**Frontend:**
+- ✅ Customer Shop (Next.js 15, Responsive)
+- ✅ Admin Dashboard (Product & Stock Management)
+- ✅ Basic Error Handling
 
 ---
 
-### From Cognito Implementation Session (20.11.2025)
+### Phase 1: Quality & Reliability (Woche 1-2) 🔥
 
-**AWS Organizations SCP vs. IAM Permissions**
-- **Problem:** IAM Permissions für Cognito waren korrekt, trotzdem `AccessDeniedException`
-- **Learning:** Service Control Policies (SCP) überschreiben IAM auf Organization-Ebene
-- **Error Message:** "with an explicit deny in a service control policy"
-- **Action:** Immer prüfen ob Account in AWS Organization ist, SCP-Rechte vom Organization Admin erforderlich
+**Ziel:** Von "funktioniert" zu "zuverlässig"
 
-**Terraform Count mit Resource-Attributen**
-- **Problem:** `count = var.cognito_user_pool_arn != "" ? 1 : 0` → "Invalid count argument"
-- **Learning:** Count kann keine Resource-Attribute nutzen (unknown at plan-time)
-- **Solution:** Boolean Input Variables nutzen statt Resource-Checks
-- **Pattern:** `count = var.enable_cognito_auth ? 1 : 0` ✅
+| Feature | ETA | Status |
+|---------|-----|--------|
+| Automated Testing (80% Coverage) | 5-6 Tage | ⏳ Pending |
+| Error Handling & UX Polish | 2-3 Tage | ⏳ Pending |
+| Code Cleanup | 1 Tag | ⏳ Pending |
 
-**Terraform Lifecycle Block Constraints**
-- **Problem:** `prevent_destroy = var.environment != "development"` → "Variables not allowed"
-- **Learning:** Lifecycle blocks erlauben keine dynamischen Werte
-- **Solution:** Statischen Wert nutzen (`prevent_destroy = true`) oder manuell kommentieren für Destroy
-- **Rationale:** Besser zu konservativ als versehentlicher Production Data Loss
+**Deliverables:**
+- Backend Unit Tests (Jest + Supertest)
+- E2E Tests (Playwright) - 5-10 critical paths
+- Deutsche Error Messages + Loading States
+- Code: ESLint/Prettier Pass, No console.logs
 
-**Data Source Duplicate Definitions**
-- **Problem:** `data "aws_region" "current"` in 2 Files → "Duplicate data configuration"
-- **Learning:** Data Sources sind module-global, nicht file-scoped
-- **Solution:** Data Source nur einmal definieren, überall referenzieren
-
-**Auto-Provisioning mit Terraform null_resource**
-- **Learning:** `null_resource` mit `local-exec` provisioner kann Shell-Scripts nach Resource-Erstellung ausführen
-- **Use Case:** Admin User automatisch erstellen nach Cognito User Pool Creation
-- **Pattern:** Idempotent Scripts schreiben (prüfen ob Resource existiert vor Erstellung)
-- **Benefit:** Eliminiert manuelles AWS Console Setup komplett
-
-### From Inventory Management Session (19.11.2025)
-
-**Migration Scripts synchron halten**
-- **Problem:** Es gibt 2 Scripts: `migrate-to-dynamodb.js` und `migrate-to-dynamodb-single.js`
-- **Learning:** Deployment nutzt `-single.js` (wegen SCP restrictions), beide müssen identische Felder haben
-- **Action:** Immer beide Scripts updaten bei Schema-Änderungen
-
-**Data vs. Code Mismatch**
-- **Problem:** Frontend-Code hatte Stock-UI ✅, Backend-Code hatte Stock-Logic ✅, DynamoDB-Daten hatten KEINE Stock-Felder ❌
-- **Learning:** Bei DB-Schema-Änderungen IMMER Migration prüfen und re-seed
-- **Action:** Re-Seed Workflow nutzen statt Destroy/Deploy
-
-**API-Routes vollständig implementieren**
-- **Problem:** Admin Frontend hatte keine PUT-Route → "Pattern mismatch" Error
-- **Learning:** Immer GET/POST/PUT/DELETE komplett implementieren
-- **Action:** API-Design-Checklist verwenden
-
-**URL Construction**
-- **Problem:** Doppelter Slash in Backend-URL (`/Prod//api/products`)
-- **Learning:** Trailing Slashes können Probleme machen
-- **Action:** Immer normalisieren: `BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL`
-
-### From Cost Analysis (20.11.2025)
-
-**AWS Config = Cost Trap**
-- **Problem:** AWS Config kostet $5.87/Monat bei Destroy/Rebuild Cycles
-- **Learning:** Config tracked jede Ressourcen-Änderung → teuer bei häufigen Changes
-- **Action:** Disable AWS Config für Development Environment
-
-**Orphaned Resources**
-- **Problem:** RDS + ECS Kosten trotz reinem Serverless-Setup
-- **Learning:** Terraform Destroy löscht nicht immer alles
-- **Action:** Nach Destroy manuell AWS Console checken
+**Warum wichtig:** Zeigt Professionalität, verhindert Bugs, messbare Quality
 
 ---
 
+### Phase 2: Essential E-Commerce Features (Woche 3-4) 💳
+
+**Ziel:** Von "Demo" zu "echter Webshop"
+
+| Feature | ETA | Status |
+|---------|-----|--------|
+| Stripe Payment Integration | 3-4 Tage | ⏳ Pending |
+| Email Notifications (AWS SES) | 2-3 Tage | ⏳ Pending |
+| Order Lifecycle Management | 2-3 Tage | ⏳ Pending |
+
+**Deliverables:**
+- Stripe Checkout + Webhook Handler
+- Order Confirmation & Shipping Emails
+- Order Status Machine (PENDING → PAID → SHIPPED → DELIVERED)
+- Customer Order Tracking
+
+**Kosten:** +$0 (SES first 62k free, Stripe Test Mode)
+
+**Warum wichtig:** Business-kritisch, professionelle Customer Experience
+
+---
+
+### Phase 3: Monitoring & Observability (Woche 5) 📊
+
+**Ziel:** "Probleme finden BEVOR User sie merken"
+
+| Feature | ETA | Status |
+|---------|-----|--------|
+| CloudWatch Dashboards | 1-2 Tage | ⏳ Pending |
+| CloudWatch Alarms | 1 Tag | ⏳ Pending |
+
+**Deliverables:**
+- Business Metrics Dashboard (Orders, Revenue, Top Products)
+- Technical Metrics Dashboard (Lambda, DynamoDB, API Gateway)
+- Critical Alarms (Lambda 500 Errors, High Latency, etc.)
+- SNS Email Notifications
+
+**Kosten:** +$0,50/Monat (erste 10 Alarms gratis)
+
+**Warum wichtig:** Proaktive Fehler-Erkennung, Production Standard
+
+---
+
+### Phase 4: Performance & Security (Woche 6) ⚡
+
+**Ziel:** "Fast, Secure, Scalable"
+
+| Feature | ETA | Status |
+|---------|-----|--------|
+| Performance Optimization | 2-3 Tage | ⏳ Pending |
+| Security Audit | 1-2 Tage | ⏳ Pending |
+
+**Deliverables:**
+- Frontend: Lighthouse Score Optimization
+- Backend: Lambda Memory Sizing, DynamoDB Query Optimization
+- Security: OWASP Top 10 Checklist, Input Validation
+- Performance Report (Before/After)
+
+**Warum wichtig:** User Experience, Security Best Practices
+
+---
+
+### Phase 5: Documentation & Reproducibility (Woche 7) 📚
+
+**Ziel:** "Jeder kann das Projekt verstehen und deployen"
+
+| Feature | ETA | Status |
+|---------|-----|--------|
+| Complete Documentation | 2-3 Tage | ⏳ Pending |
+| Reproducibility Test | 1 Tag | ⏳ Pending |
+
+**Deliverables:**
+- DATABASE_SCHEMA.md, API_ENDPOINTS.md
+- LOCAL_SETUP.md, TESTING.md
+- README mit Screenshots
+- Fresh AWS Account Deployment Test
+
+**Warum wichtig:** Bewerbungs-Showcase, 100% Reproduzierbar
+
+---
+
+### 📈 Timeline & Aufwand
+
+| Woche | Phase | Aufwand | Kosten |
+|-------|-------|---------|--------|
+| 1-2 | Quality & Reliability | 8-11 Tage | $0 |
+| 3-4 | Essential Features | 7-10 Tage | $0 |
+| 5 | Monitoring | 2-3 Tage | +$0,50 |
+| 6 | Optimization | 3-5 Tage | $0 |
+| 7 | Documentation | 3-4 Tage | $0 |
+
+**Gesamt:** ~30-35 Arbeitstage (6-7 Wochen Vollzeit)
+**Kosten:** ~$11-13/Monat (inkl. SES, CloudWatch)
+
+---
+
+### 🎯 Definition of Done ("Feature-Complete")
+
+**Must-Have:**
+- ✅ Authentication (Cognito JWT) ✅ DONE
+- ✅ Product Catalog ✅ DONE
+- ✅ Shopping Cart ✅ DONE
+- ✅ Inventory Management ✅ DONE
+- ⏳ Testing (80% Coverage) - Phase 1
+- ⏳ Payment (Stripe) - Phase 2
+- ⏳ Email Notifications - Phase 2
+- ⏳ Order Lifecycle - Phase 2
+- ⏳ Monitoring - Phase 3
+
+**Should-Have:**
+- ⏳ Error Handling (UX) - Phase 1
+- ⏳ Performance Optimization - Phase 4
+- ⏳ Security Audit - Phase 4
+- ⏳ Complete Documentation - Phase 5
+- ⏳ Reproducibility Test - Phase 5
+
+**Nice-to-Have:**
+- Admin Analytics, Product Search, Wishlist, Reviews, Multi-Language
+
+---
+
+### 💼 Bewerbungs-Relevanz
+
+**Was das Projekt zeigt (nach Completion):**
+
+**Technical Skills:**
+- Full-Stack Development (Next.js + Express + Terraform)
+- AWS Serverless (Lambda, DynamoDB, Cognito, SES, CloudWatch)
+- DevOps/CI/CD (GitHub Actions, OIDC, Multi-Environment)
+- Testing (Unit, Integration, E2E - 80% Coverage)
+- Security (Auth, OWASP Top 10)
+- Payment Integration (Stripe)
+- Email Services (AWS SES)
+
+**Soft Skills:**
+- Strukturiertes Arbeiten (Roadmap, Milestones)
+- Best Practices (Testing, Clean Code, Documentation)
+- Problem-Solving (siehe LESSONS_LEARNED.md - 22 Learnings)
+- Lernfähigkeit (0 → Production-Ready in 6 Monaten)
+
+---
+
+## 💡 Recent Learnings (Letzte 5 Sessions)
+
+> **Detaillierte Learnings mit Code Examples:** Siehe [LESSONS_LEARNED.md](LESSONS_LEARNED.md)
+
+### 22.11.2025 - Token Storage Bug RESOLVED (12h Debugging Epic)
+- ✅ **Auth Type Mismatch:** `req.userId` (old) vs `req.user?.userId` (Cognito)
+- ✅ **Missing Backend Build:** Deploy workflow hatte keinen `npm run build` Step
+- 🎓 **Learning:** Type-Mismatches sind schwer zu debuggen (req ist undefined, kein Error)
+- 🔧 **Solution:** Controllers aligned + Build Step in workflow
+
+### 21.11.2025 - Terraform State Corruption
+- 🐛 **Problem:** Architektur-Änderung bei existierendem State → "Provider configuration not present"
+- 💣 **Solution:** Nuclear Cleanup - manuelles Löschen aller AWS Ressourcen
+- 🎓 **Learning:** NIEMALS Terraform-Architektur ändern bei existierendem State
+- 🔧 **Emergency Tool:** `.github/workflows/nuclear-cleanup.yml` created
+
+### 20.11.2025 - AWS Organizations SCP Blocker
+- 🐛 **Problem:** Cognito Deployment blocked trotz korrekter IAM Permissions
+- 🎓 **Learning:** SCP (Service Control Policy) überschreibt IAM auf Organization-Level
+- 📋 **Action:** Organization Admin muss SCP anpassen
+- ⏳ **Status:** Cognito Code complete, Deployment blocked
+
+### 19.11.2025 - Inventory Management Success
+- ✅ Stock Tracking (stock + reserved)
+- ✅ Admin Stock Management UI
+- ✅ Auto Stock Deduction on Order
+- 🎓 **Learning:** Reserved-Logic verhindert Überverkäufe
+
+### 18.11.2025 - Auto Lambda Cleanup
+- ✅ Automated cleanup in destroy.yml
+- 🎓 **Learning:** AWS braucht Zeit (3-5 Min) - wait commands essential
+
+---
 ## 📊 Project Health Metrics
 
 | Metric | Current | Target | Trend |

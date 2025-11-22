@@ -294,9 +294,10 @@ aws s3 rm s3://bucket/state.tfstate
 
 ## 📚 Documentation
 
-- [LESSONS_LEARNED.md](docs/LESSONS_LEARNED.md) - Was gelernt
-- [ACTION_PLAN.md](docs/ACTION_PLAN.md) - Roadmap
-- [DEVELOPMENT.md](docs/DEVELOPMENT.md) - How to develop
+- [ACTION_PLAN.md](docs/ACTION_PLAN.md) - Current Sprint + Roadmap + Learnings (MAIN DOC)
+- [LESSONS_LEARNED.md](docs/LESSONS_LEARNED.md) - Detaillierte Learnings mit Code
+- [DEPLOYMENT.md](docs/guides/DEPLOYMENT.md) - Complete Deployment Guide
+- [DEVELOPMENT.md](docs/DEVELOPMENT.md) - Technical Reference
 
 ## 🎯 Current Focus
 
@@ -387,29 +388,45 @@ CLAUDE.md              - AI Collaboration Guidelines (allgemein)
 CLAUDE_ECOKART.md      - Project-specific AI Guidelines
 ```
 
-### Ebene 2: Main Docs (docs/)
+### Ebene 2: Main Docs (docs/) - "3 Living Docs"
 ```
 docs/
-├── LESSONS_LEARNED.md     - Chronologische Learnings
-├── ACTION_PLAN.md         - Living Roadmap
-└── DEVELOPMENT.md         - How to develop
+├── ACTION_PLAN.md          ← HAUPT-DOC (One Source of Truth!)
+│   ├── Current Sprint (Was läuft JETZT)
+│   ├── Next Milestones (Nächste 2-4 Wochen)
+│   ├── Feature-Complete Roadmap (7 Wochen Plan)
+│   ├── Recent Learnings (Letzte 5 Sessions - kurz!)
+│   ├── Known Issues
+│   └── Project Health Metrics
+│
+├── LESSONS_LEARNED.md      - Detaillierte Learnings (mit Code Examples)
+├── DEVELOPMENT.md          - Technische Referenz (How to develop)
+└── BOOTSTRAP.md            - Initial Setup Guide
 ```
 
-### Ebene 3: Kategorien (docs/*/
+**Wichtig:**
+- **ACTION_PLAN.md** ist das Haupt-Dokument (alles in einem!)
+- **LESSONS_LEARNED.md** nur für detaillierte Lessons (nicht History!)
+- Keine separaten Roadmap/Status Docs mehr!
 
-)
+### Ebene 3: Supporting Docs (docs/*)
 ```
 docs/
-├── guides/                - How-To Dokumentation
-│   ├── DEPLOYMENT.md
-│   ├── LOCAL_SETUP.md
-│   └── TROUBLESHOOTING.md
-├── architecture/          - System Design
-│   ├── SYSTEM_DESIGN.md
-│   ├── DATABASE_SCHEMA.md
-│   └── API_ENDPOINTS.md
-└── sessions/              - Session Logs
-    └── YYYY-MM-DD_topic.md
+├── guides/                - How-To Guides (konsolidiert)
+│   ├── DEPLOYMENT.md      - Complete Deployment Guide
+│   ├── COGNITO.md         - Complete Cognito Guide
+│   ├── MULTI_ENVIRONMENT_SETUP.md
+│   ├── PRESENTATION_GUIDE.md
+│   └── SESSION_WORKFLOW.md
+│
+├── architecture/          - System Design (stabil)
+│   └── SYSTEM_DESIGN.md
+│
+├── sessions/              - Historie (read-only)
+│   └── YYYY-MM-DD_*.md
+│
+└── archived/              - Obsolete Docs
+    └── [Alte/Überholte Dateien]
 ```
 
 ---
