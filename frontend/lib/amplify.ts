@@ -16,6 +16,8 @@
 // ============================================================================
 
 import { Amplify } from 'aws-amplify';
+import { CookieStorage } from 'aws-amplify/utils';
+import { cognitoUserPoolsTokenProvider } from 'aws-amplify/auth/cognito';
 
 // ============================================================================
 // AMPLIFY KONFIGURATION
@@ -99,9 +101,16 @@ export function configureAmplify() {
     // SSR Configuration (Next.js specific)
     // ----------------------------------------------------------------
     // Amplify soll auch bei Server-Side Rendering funktionieren
-    // Amplify v6 nutzt automatisch localStorage im Browser
     ssr: true
   });
+
+  // ----------------------------------------------------------------
+  // Cookie Storage Configuration (für Token Persistence)
+  // ----------------------------------------------------------------
+  // WICHTIG: Bei Next.js SSR müssen Tokens in Cookies gespeichert werden
+  // localStorage funktioniert nicht mit SSR (Server hat kein window)
+  // CookieStorage speichert Tokens persistent über Browser-Reloads
+  cognitoUserPoolsTokenProvider.setKeyValueStorage(new CookieStorage());
 
   console.log('✅ Amplify Auth konfiguriert:', {
     userPoolId,
