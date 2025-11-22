@@ -99,36 +99,8 @@ export function configureAmplify() {
     // SSR Configuration (Next.js specific)
     // ----------------------------------------------------------------
     // Amplify soll auch bei Server-Side Rendering funktionieren
-    ssr: true,
-
-    // ----------------------------------------------------------------
-    // Storage Configuration (localStorage für Token Persistence)
-    // ----------------------------------------------------------------
-    // WICHTIG: Bei Next.js SSR müssen wir explizit localStorage angeben
-    // Sonst werden Tokens nur im Memory gespeichert (vergessen nach Reload!)
-    //
-    // WARUM der typeof window check?
-    // - Next.js rendert Seiten auf dem Server (SSR)
-    // - Auf dem Server gibt es kein window/localStorage
-    // - Daher prüfen wir erst ob wir im Browser sind
-    storage: {
-      getItem: (key) => {
-        if (typeof window !== 'undefined') {
-          return localStorage.getItem(key);
-        }
-        return null;
-      },
-      setItem: (key, value) => {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(key, value);
-        }
-      },
-      removeItem: (key) => {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem(key);
-        }
-      },
-    }
+    // Amplify v6 nutzt automatisch localStorage im Browser
+    ssr: true
   });
 
   console.log('✅ Amplify Auth konfiguriert:', {
