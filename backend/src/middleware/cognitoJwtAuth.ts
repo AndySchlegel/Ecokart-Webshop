@@ -91,11 +91,20 @@ function getJwtVerifier() {
   const userPoolId = process.env.COGNITO_USER_POOL_ID;
   const clientId = process.env.COGNITO_CLIENT_ID;
 
+  // DEBUG: Alle Environment Variables loggen
+  console.log('🔍 DEBUG: Environment Variables Check');
+  console.log('   COGNITO_USER_POOL_ID:', userPoolId || '❌ NICHT GESETZT');
+  console.log('   COGNITO_CLIENT_ID:', clientId || '❌ NICHT GESETZT');
+  console.log('   NODE_ENV:', process.env.NODE_ENV);
+  console.log('   Available env vars:', Object.keys(process.env).filter(k => k.includes('COGNITO')));
+
   if (!userPoolId || !clientId) {
-    throw new Error(
+    const errorMsg =
       '❌ Cognito Config fehlt! ' +
-      'Setze COGNITO_USER_POOL_ID und COGNITO_CLIENT_ID in Environment Variables.'
-    );
+      'Setze COGNITO_USER_POOL_ID und COGNITO_CLIENT_ID in Environment Variables. ' +
+      `Verfügbare Env Vars: ${Object.keys(process.env).join(', ')}`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
   }
 
   console.log('🔐 Initializing Cognito JWT Verifier...');
@@ -137,7 +146,13 @@ export async function verifyJwtToken(
     // 1. Token aus Authorization Header extrahieren
     const authHeader = req.headers.authorization;
 
+    console.log('🔍 DEBUG: verifyJwtToken called');
+    console.log('   Authorization Header:', authHeader ? `Bearer ${authHeader.substring(7, 30)}...` : '❌ FEHLT');
+    console.log('   Request Path:', req.path);
+    console.log('   Request Method:', req.method);
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('❌ No valid Authorization header');
       res.status(401).json({
         error: 'Unauthorized',
         message: 'Kein Authorization Token gefunden. Bitte melde dich an.',
@@ -146,10 +161,18 @@ export async function verifyJwtToken(
     }
 
     const token = authHeader.substring(7); // Remove "Bearer " prefix
+    console.log('   Token length:', token.length);
+    console.log('   Token preview:', token.substring(0, 50) + '...');
 
     // 2. Token validieren mit Cognito Public Keys
+    console.log('🔐 Attempting to verify token...');
     const verifier = getJwtVerifier();
     const payload = await verifier.verify(token) as unknown as CognitoTokenPayload;
+
+    console.log('✅ Token verified successfully');
+    console.log('   Payload sub:', payload.sub);
+    console.log('   Payload email:', payload.email);
+    console.log('   Payload role:', payload['custom:role']);
 
     // 3. User-Info extrahieren
     const user: AuthUser = {
@@ -167,7 +190,10 @@ export async function verifyJwtToken(
     next();
   } catch (error: any) {
     // JWT Validation fehlgeschlagen
-    console.error('❌ JWT validation failed:', error.message);
+    console.error('❌ JWT validation failed');
+    console.error('   Error name:', error.name);
+    console.error('   Error message:', error.message);
+    console.error('   Error stack:', error.stack);
 
     res.status(401).json({
       error: 'Unauthorized',
