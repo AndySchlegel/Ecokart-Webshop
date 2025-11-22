@@ -239,7 +239,19 @@ jobs:
           echo "✅ Dependencies cleaned"
 
       # ======================================================================
-      # 10. Clear Lock ONLY (keep state!)
+      # 10. Build Backend
+      # ======================================================================
+      - name: 📦 Build Backend
+        working-directory: backend
+        run: |
+          echo "📦 Installing backend dependencies..."
+          npm ci
+          echo "🔨 Building backend TypeScript..."
+          npm run build
+          echo "✅ Backend built successfully"
+
+      # ======================================================================
+      # 11. Clear Lock ONLY (keep state!)
       # ======================================================================
       - name: 🔓 Clear Lock (preserve state)
         run: |
@@ -269,7 +281,7 @@ jobs:
           echo ""
 
       # ======================================================================
-      # 11. Terraform Init
+      # 12. Terraform Init
       # ======================================================================
       - name: 🔧 Terraform Init
         working-directory: terraform
@@ -278,7 +290,7 @@ jobs:
           echo "✅ Terraform initialized"
 
       # ======================================================================
-      # 12. Verify Environment Config exists
+      # 13. Verify Environment Config exists
       # ======================================================================
       - name: ✅ Verify Environment Config
         working-directory: terraform
@@ -295,7 +307,7 @@ jobs:
           head -20 "$CONFIG_FILE"
 
       # ======================================================================
-      # 13. Terraform Plan (mit Environment-spezifischer Config!)
+      # 14. Terraform Plan (mit Environment-spezifischer Config!)
       # ======================================================================
       - name: 📋 Terraform Plan
         if: github.event.inputs.destroy != 'true'
@@ -316,7 +328,7 @@ jobs:
           echo "✅ Terraform plan created for ${{ steps.env.outputs.environment }}"
 
       # ======================================================================
-      # 14. Terraform Apply (mit Environment-spezifischer Config!)
+      # 15. Terraform Apply (mit Environment-spezifischer Config!)
       # ======================================================================
       - name: 🚀 Terraform Apply
         if: github.event.inputs.destroy != 'true'
@@ -327,7 +339,7 @@ jobs:
           echo "✅ Infrastructure deployed successfully to ${{ steps.env.outputs.environment }}!"
 
       # ======================================================================
-      # 15. Terraform Destroy (if requested, mit Environment-Config!)
+      # 16. Terraform Destroy (if requested, mit Environment-Config!)
       # ======================================================================
       - name: 💥 Terraform Destroy
         if: github.event.inputs.destroy == 'true'
@@ -343,7 +355,7 @@ jobs:
           echo "✅ Infrastructure destroyed for ${{ steps.env.outputs.environment }}"
 
       # ======================================================================
-      # 16. Get Outputs and Create Summary
+      # 17. Get Outputs and Create Summary
       # ======================================================================
       - name: 📊 Deployment Summary
         if: github.event.inputs.destroy != 'true'
@@ -380,7 +392,7 @@ jobs:
           echo "✅ **All systems operational!**" >> $GITHUB_STEP_SUMMARY
 
       # ======================================================================
-      # 17. Notify on Failure
+      # 18. Notify on Failure
       # ======================================================================
       - name: ❌ Deployment Failed
         if: failure()
