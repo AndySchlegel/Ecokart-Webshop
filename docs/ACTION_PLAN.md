@@ -1,13 +1,33 @@
 # 🎯 Action Plan - Ecokart Development
 
-**Last Updated:** 20. November 2025
-**Status:** Active Development
+**Last Updated:** 21. November 2025
+**Status:** Recovery from Critical Issues
+
+---
+
+## 🚨 CRITICAL STATUS (21.11.2025)
+
+**Today's Session Summary:**
+- ❌ **Terraform State Corruption** - 4+ hours debugging
+- ✅ **Manual Nuclear Cleanup** - All AWS resources deleted via CLI
+- ✅ **Successful Fresh Deployment** - Infrastructure working again
+- ⚠️ **Frontend Token Storage Bug** - CRITICAL BLOCKER identified
+- 🔧 **Workflow Improvements** - Nuclear cleanup workflow created
+
+**Current Deployment Status:**
+- Infrastructure: ✅ Deployed successfully
+- Frontend URLs: ✅ Online
+- Backend API: ✅ Working
+- Authentication: ❌ **BROKEN** - Tokens not persisting to localStorage
+- Cart/Orders: ❌ **BROKEN** - All authenticated endpoints return 401
+
+**Tomorrow's Priority:** Fix frontend token storage bug (HIGHEST PRIORITY)
 
 ---
 
 ## 🚦 Current Sprint
 
-### In Progress
+### In Progress - CRITICAL
 
 - 🚧 **AWS Cost Optimization**
   - **Problem:** AWS Kosten bei $17.08/Monat (Budget: <$10/Monat)
@@ -39,6 +59,35 @@
   - **ETA:** This week
 
 ### Recently Completed ✅
+
+- ⚡ **Infrastructure Recovery after State Corruption** (21.11.2025)
+  - **Challenge:** Terraform state corruption nach Architektur-Änderung
+  - **Problem:** 4+ Stunden Debugging, multiple failed attempts
+  - **Solution:** Complete manual cleanup via AWS CLI
+  - **Outcome:** ✅ Fresh deployment successful
+  - **Learnings:**
+    - Terraform state is extremely fragile with architecture changes
+    - Manual AWS CLI cleanup sometimes required
+    - Nuclear cleanup workflow created as emergency backup
+  - **Files:** `.github/workflows/nuclear-cleanup.yml` created
+  - **Status:** Infrastructure stable, ready for development
+
+- 🔧 **Workflow Improvements** (21.11.2025)
+  - ✅ Nuclear Cleanup Workflow (emergency AWS resource deletion)
+  - ✅ Forced State Cleanup in Deploy Workflow
+  - ✅ Fixed API Gateway cleanup (REST vs HTTP APIs)
+  - ✅ Fixed destroy.yml with correct API Gateway commands
+  - ✅ Deleted duplicate Amplify apps (4 → 2)
+
+- 🐛 **Bug Identification: Frontend Token Storage** (21.11.2025)
+  - **Problem:** Authenticated endpoints return 401
+  - **Root Cause:** localStorage/sessionStorage empty after login
+  - **Discovery Process:**
+    - Checked Lambda logs → JWT validation SUCCESS ✅
+    - Checked Network → Authorization header present ✅
+    - Checked Browser Storage → EMPTY ❌
+  - **Status:** Identified but not yet fixed
+  - **Next:** Fix tomorrow (highest priority)
 
 - 🔒 **AWS Cognito Authentication** (20.11.2025)
   - ⚠️ **Status:** Code Complete, Deployment Blocked by AWS Organizations SCP
@@ -79,6 +128,31 @@
 ## 🐛 Known Issues & Blockers
 
 ### Critical
+
+**🔴 Frontend Token Storage Bug - Authentication komplett broken** (NEW - 21.11.2025)
+- **Problem:** Tokens werden nach Login/Registration NICHT in localStorage/sessionStorage gespeichert
+- **Symptoms:**
+  - ✅ Login funktioniert (optisch)
+  - ✅ Console zeigt "User eingeloggt"
+  - ✅ Backend JWT Validation erfolgreich (laut Logs)
+  - ❌ localStorage und sessionStorage sind LEER
+  - ❌ Alle Cart/Orders Requests: 401 Unauthorized
+- **Root Cause:** Frontend Auth Code persistiert Tokens nicht
+- **Impact:** ALLE authentifizierten Features sind broken
+- **Files to investigate:**
+  - `frontend/src/contexts/AuthContext.tsx` (oder ähnlich)
+  - Frontend Authentication Flow
+  - Token Storage Implementation
+- **Expected Fix:**
+  ```typescript
+  // Nach Login/Registration:
+  localStorage.setItem('idToken', token);
+  localStorage.setItem('accessToken', accessToken);
+  localStorage.setItem('refreshToken', refreshToken);
+  ```
+- **Priority:** 🔴 HIGHEST - Blocks all authenticated features
+- **Status:** Identified but unresolved
+- **ETA:** Tomorrow (22.11.2025)
 
 **🔴 AWS Organizations SCP blockiert Cognito Deployment**
 - **Problem:** Service Control Policy (SCP) auf Organization-Ebene verbietet Cognito-Service
@@ -123,7 +197,24 @@
 
 ## 📋 Next Up (Prioritized)
 
-### Immediate (This Week)
+### Immediate (Tomorrow - 22.11.2025)
+
+**🔴 HIGHEST PRIORITY: Fix Frontend Token Storage Bug**
+- [ ] Investigate frontend Authentication Code (AuthContext.tsx oder ähnlich)
+- [ ] Identify where tokens should be persisted after login/registration
+- [ ] Implement token storage to localStorage:
+  ```typescript
+  localStorage.setItem('idToken', token);
+  localStorage.setItem('accessToken', accessToken);
+  localStorage.setItem('refreshToken', refreshToken);
+  ```
+- [ ] Test complete auth flow: Register → Login → Add to Cart → Checkout
+- [ ] Verify tokens persist across page refreshes
+- **Why:** All authenticated features are currently broken
+- **Impact:** CRITICAL - blocks all user functionality
+- **Effort:** 2-4 hours (depends on code complexity)
+
+### This Week
 
 1. **Branch Management**
    - [ ] Merge `claude/admin-stock-management-*` in `main`
@@ -229,6 +320,53 @@
 
 ## 💡 Recent Learnings (Last 30 Days)
 
+### From Critical Debugging Session (21.11.2025)
+
+**Terraform State Corruption durch Architektur-Änderungen**
+- **Problem:** State created with `examples/basic/` structure, deployment changed to `terraform/` root
+- **Error:** "Provider configuration not present" für alle module.ecokart.* resources
+- **Learning:** Architektur-Änderungen NIEMALS bei existierendem State
+- **Solution:** Complete nuclear cleanup - delete state, lock, and all AWS resources manually
+- **Best Practice:** Bei Architektur-Änderungen:
+  1. Destroy mit alter Architektur
+  2. Architektur ändern
+  3. Deploy mit neuer Architektur
+- **Emergency Tool:** Nuclear cleanup workflow created (.github/workflows/nuclear-cleanup.yml)
+
+**API Gateway Double Slash Problem**
+- **Problem:** `/dev//api/cart` wegen trailing slash in NEXT_PUBLIC_API_URL
+- **Learning:** API Gateway routet double slashes nicht korrekt
+- **Solution:** Trailing slash aus Environment Variable entfernen
+- **Best Practice:** URL-Normalisierung im Frontend: `BASE_URL.replace(/\/$/, '')`
+
+**Frontend Token Storage Bug**
+- **Problem:** localStorage/sessionStorage leer trotz erfolgreicher Login
+- **Symptom:** User sieht "eingeloggt" aber Folge-Requests geben 401
+- **Learning:** State Management bei Auth ist kritisch
+- **Debugging:** Storage IMMER checken, nicht nur Console Logs
+- **Next:** Frontend Auth Code muss Tokens nach Login/Registration speichern
+
+**AWS CLI vs Terraform für Cleanup**
+- **Problem:** Terraform destroy schlägt bei State-Corruption fehl
+- **Learning:** AWS CLI ist mächtiger für Emergency Cleanup
+- **Pattern:** Idempotent Scripts mit `|| true` für fehlertolerante Ausführung
+- **Workflow:** Nuclear cleanup als "letzter Ausweg" verfügbar
+
+**API Gateway: REST vs HTTP APIs**
+- **Problem:** `apigatewayv2` fand keine APIs, obwohl sie existierten
+- **Learning:** REST APIs nutzen `apigateway`, HTTP APIs nutzen `apigatewayv2`
+- **Check:** Terraform Resource-Typ verrät API-Typ:
+  - `aws_api_gateway_rest_api` → REST → `apigateway`
+  - `aws_apigatewayv2_api` → HTTP → `apigatewayv2`
+
+**Forced State Cleanup in Workflows**
+- **Use Case:** Fresh deployments nach kompletter Cleanup
+- **Implementation:** Deploy Workflow hat jetzt "Force Clear State & Lock" Step
+- **When to use:** Nach Nuclear Cleanup oder bei State Corruption
+- **When NOT to use:** Bei normalen Updates (State geht verloren!)
+
+---
+
 ### From Cognito Implementation Session (20.11.2025)
 
 **AWS Organizations SCP vs. IAM Permissions**
@@ -303,19 +441,20 @@
 | **AWS Costs** | $17.08/month | <$10/month | 🔴 Over budget |
 | **Deployment** | ✅ Automated | - | ✅ Good |
 | **Test Coverage** | 0% | 80% | 🔴 Critical gap |
-| **Uptime** | 99.9% | 99.9% | ✅ Good |
-| **Technical Debt** | Medium | Low | ⚠️ Needs attention |
-| **Documentation** | 70% complete | 90% | 🟡 In progress |
+| **Uptime** | ⚠️ Auth broken | 99.9% | 🔴 Critical issue |
+| **Technical Debt** | High | Low | 🔴 Increased (token storage bug) |
+| **Documentation** | 85% complete | 90% | ✅ Improved |
 
 ### Technical Debt Tracking
 
 | Debt Item | Priority | Effort | Payoff |
 |-----------|----------|--------|--------|
+| **Frontend Token Storage** | 🔴 CRITICAL | 2-4 hours | Unblocks all auth features |
 | Automated Testing | HIGH | 5-6 days | Prevents bugs |
 | AWS Config cleanup | HIGH | 1 day | 65% cost savings |
 | Lambda Cleanup bug | MEDIUM | 2 days | Smoother deploys |
 | Error handling | MEDIUM | 2 days | Better UX |
-| Cognito Auth | HIGH | 2-3 days | Security |
+| Cognito Auth | HIGH | 2-3 days | Security (blocked by SCP) |
 
 ---
 
@@ -382,6 +521,11 @@
 
 | Date | Update | Author |
 |------|--------|--------|
+| 21.11.2025 | **CRITICAL SESSION:** State corruption, Nuclear cleanup, Token storage bug identified | Claude + Andy |
+| 21.11.2025 | Infrastructure recovered via manual AWS CLI cleanup | Claude |
+| 21.11.2025 | Nuclear cleanup workflow created (.github/workflows/nuclear-cleanup.yml) | Claude |
+| 21.11.2025 | Deploy workflow updated with forced state cleanup | Claude |
+| 21.11.2025 | Frontend token storage bug identified as critical blocker | Claude |
 | 20.11.2025 | Cognito implementation completed (code), blocked by SCP (deployment) | Claude |
 | 20.11.2025 | Initial ACTION_PLAN.md creation | Claude |
 | 19.11.2025 | Inventory Management completed | Claude + Andy |
@@ -390,5 +534,5 @@
 
 ---
 
-**Next Review:** End of week (22.11.2025)
-**Status:** 🟢 On Track
+**Next Review:** Tomorrow (22.11.2025) - Token storage fix
+**Status:** 🔴 Critical Issues - Auth Broken
