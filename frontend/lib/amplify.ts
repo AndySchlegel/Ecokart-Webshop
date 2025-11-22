@@ -301,12 +301,6 @@ export async function debugTokenStorage() {
     } else {
       console.log('❌ KEIN Access Token in Session!');
     }
-
-    if (session.tokens?.refreshToken) {
-      console.log('✅ Refresh Token gefunden!');
-    } else {
-      console.log('⚠️  KEIN Refresh Token in Session!');
-    }
   } catch (error) {
     console.log('❌ Fehler beim Abrufen der Session:', error);
   }
