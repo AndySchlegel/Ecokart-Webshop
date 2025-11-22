@@ -1,12 +1,11 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import database from '../config/database-adapter';
-import { AuthRequest } from '../middleware/auth';
 import { Cart, AddToCartInput, UpdateCartItemInput } from '../models/Cart';
 
-export const getCart = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getCart = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.userId;
+    const userId = req.user?.userId;
     if (!userId) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
@@ -33,9 +32,9 @@ export const getCart = async (req: AuthRequest, res: Response): Promise<void> =>
   }
 };
 
-export const addToCart = async (req: AuthRequest, res: Response): Promise<void> => {
+export const addToCart = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.userId;
+    const userId = req.user?.userId;
     if (!userId) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
@@ -118,9 +117,9 @@ export const addToCart = async (req: AuthRequest, res: Response): Promise<void> 
   }
 };
 
-export const updateCartItem = async (req: AuthRequest, res: Response): Promise<void> => {
+export const updateCartItem = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.userId;
+    const userId = req.user?.userId;
     if (!userId) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
@@ -197,9 +196,9 @@ export const updateCartItem = async (req: AuthRequest, res: Response): Promise<v
   }
 };
 
-export const removeFromCart = async (req: AuthRequest, res: Response): Promise<void> => {
+export const removeFromCart = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.userId;
+    const userId = req.user?.userId;
     if (!userId) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
@@ -229,9 +228,9 @@ export const removeFromCart = async (req: AuthRequest, res: Response): Promise<v
   }
 };
 
-export const clearCart = async (req: AuthRequest, res: Response): Promise<void> => {
+export const clearCart = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.userId;
+    const userId = req.user?.userId;
     if (!userId) {
       res.status(401).json({ error: 'Unauthorized' });
       return;

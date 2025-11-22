@@ -1,12 +1,11 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import database from '../config/database-adapter';
-import { AuthRequest } from '../middleware/auth';
 import { Order, CreateOrderInput } from '../models/Order';
 
-export const createOrder = async (req: AuthRequest, res: Response): Promise<void> => {
+export const createOrder = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.userId;
+    const userId = req.user?.userId;
     if (!userId) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
@@ -60,9 +59,9 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<void
   }
 };
 
-export const getOrders = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getOrders = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.userId;
+    const userId = req.user?.userId;
     if (!userId) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
@@ -76,9 +75,9 @@ export const getOrders = async (req: AuthRequest, res: Response): Promise<void> 
   }
 };
 
-export const getOrderById = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getOrderById = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.userId;
+    const userId = req.user?.userId;
     if (!userId) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
@@ -105,9 +104,9 @@ export const getOrderById = async (req: AuthRequest, res: Response): Promise<voi
   }
 };
 
-export const updateOrderStatus = async (req: AuthRequest, res: Response): Promise<void> => {
+export const updateOrderStatus = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.userId;
+    const userId = req.user?.userId;
     if (!userId) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
