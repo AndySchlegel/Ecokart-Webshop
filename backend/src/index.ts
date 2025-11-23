@@ -28,7 +28,6 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import productRoutes from './routes/productRoutes';
-import authRoutes from './routes/authRoutes';
 import cartRoutes from './routes/cartRoutes';
 import orderRoutes from './routes/orderRoutes';
 
@@ -99,11 +98,6 @@ app.get('/api/health', (req: Request, res: Response) => {
 // ➡️ Alle Requests zu /api/products/* werden an productRoutes weitergeleitet
 // Siehe: ./routes/productRoutes.ts für Details
 app.use('/api/products', productRoutes);
-
-// 🔐 Authentifizierungs-Routen
-// ➡️ Login, Register, User-Info
-// Siehe: ./routes/authRoutes.ts für Details
-app.use('/api/auth', authRoutes);
 
 // 🛒 Warenkorb-Routen
 // ➡️ Produkte hinzufügen, entfernen, anzeigen
