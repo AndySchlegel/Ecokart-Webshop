@@ -52,16 +52,18 @@ export default function CartPage() {
   const handleQuantityChange = async (productId: string, newQuantity: number) => {
     try {
       await updateQuantity(productId, newQuantity);
-    } catch (error) {
-      alert('Fehler beim Aktualisieren der Menge');
+    } catch (error: any) {
+      // Error-Message ist bereits auf Deutsch (aus CartContext)
+      alert(error.message || 'Menge konnte nicht aktualisiert werden');
     }
   };
 
   const handleRemove = async (productId: string) => {
     try {
       await removeFromCart(productId);
-    } catch (error) {
-      alert('Fehler beim Entfernen des Artikels');
+    } catch (error: any) {
+      // Error-Message ist bereits auf Deutsch (aus CartContext)
+      alert(error.message || 'Produkt konnte nicht entfernt werden');
     }
   };
 

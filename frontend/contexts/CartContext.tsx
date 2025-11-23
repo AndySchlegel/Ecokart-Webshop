@@ -5,7 +5,13 @@ import { useAuth } from './AuthContext';
 import { API_BASE_URL } from '../lib/config';
 import { fetchAuthSession } from 'aws-amplify/auth';
 
-// Helper function um Cognito Token zu holen
+// ============================================================================
+// 🔧 HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Holt Cognito Authentication Token aus der aktuellen Session
+ */
 async function getAuthToken(): Promise<string | null> {
   try {
     const session = await fetchAuthSession();
@@ -14,6 +20,63 @@ async function getAuthToken(): Promise<string | null> {
     console.error('Failed to get auth token:', error);
     return null;
   }
+}
+
+/**
+ * 🇩🇪 Übersetzt Backend-Errors in user-friendly deutsche Messages
+ *
+ * Backend sendet englische Error-Messages → Frontend zeigt deutsche an
+ */
+function getGermanErrorMessage(errorMessage: string): string {
+  // Check für spezifische Error-Patterns
+
+  // Out of Stock Error
+  if (errorMessage.includes('out of stock')) {
+    return 'Dieses Produkt ist leider ausverkauft';
+  }
+
+  // Limited Stock Error (z.B. "Only 5 units available")
+  const stockMatch = errorMessage.match(/Only (\d+) units? available/i);
+  if (stockMatch) {
+    const available = stockMatch[1];
+    return `Nur noch ${available} ${parseInt(available) === 1 ? 'Stück' : 'Stück'} verfügbar`;
+  }
+
+  // Authorization Errors
+  if (errorMessage.toLowerCase().includes('unauthorized')) {
+    return 'Bitte melde dich an um Produkte in den Warenkorb zu legen';
+  }
+
+  // Product Not Found
+  if (errorMessage.includes('Product not found')) {
+    return 'Produkt nicht gefunden';
+  }
+
+  // Cart Not Found
+  if (errorMessage.includes('Cart not found')) {
+    return 'Warenkorb nicht gefunden';
+  }
+
+  // Session Expired (Token expired)
+  if (errorMessage.toLowerCase().includes('expired') || errorMessage.toLowerCase().includes('token')) {
+    return 'Deine Session ist abgelaufen - bitte melde dich erneut an';
+  }
+
+  // Generic Fallbacks
+  if (errorMessage.includes('Failed to add')) {
+    return 'Produkt konnte nicht hinzugefügt werden';
+  }
+
+  if (errorMessage.includes('Failed to update')) {
+    return 'Menge konnte nicht aktualisiert werden';
+  }
+
+  if (errorMessage.includes('Failed to remove')) {
+    return 'Produkt konnte nicht entfernt werden';
+  }
+
+  // Default: Zeige originale Message (falls neue Error-Types vom Backend)
+  return errorMessage;
 }
 
 interface CartItem {
@@ -90,7 +153,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const addToCart = async (productId: string, quantity: number) => {
     const token = await getAuthToken();
     if (!token) {
-      throw new Error('Please login to add items to cart');
+      throw new Error(getGermanErrorMessage('unauthorized'));
     }
 
     try {
@@ -106,14 +169,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to add to cart');
+        const germanMessage = getGermanErrorMessage(error.error || 'Failed to add to cart');
+        throw new Error(germanMessage);
       }
 
       const data = await response.json();
       setCart(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to add to cart:', error);
-      throw error;
+      // Wenn error.message bereits übersetzt ist → direkt weitergeben
+      // Wenn nicht → nochmal durch Translator
+      const finalMessage = error.message || getGermanErrorMessage('Failed to add to cart');
+      throw new Error(finalMessage);
     } finally {
       setIsLoading(false);
     }
@@ -136,14 +203,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to update cart');
+        const germanMessage = getGermanErrorMessage(error.error || 'Failed to update cart');
+        throw new Error(germanMessage);
       }
 
       const data = await response.json();
       setCart(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update cart:', error);
-      throw error;
+      const finalMessage = error.message || getGermanErrorMessage('Failed to update cart');
+      throw new Error(finalMessage);
     } finally {
       setIsLoading(false);
     }
@@ -164,14 +233,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to remove from cart');
+        const germanMessage = getGermanErrorMessage(error.error || 'Failed to remove from cart');
+        throw new Error(germanMessage);
       }
 
       const data = await response.json();
       setCart(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to remove from cart:', error);
-      throw error;
+      const finalMessage = error.message || getGermanErrorMessage('Failed to remove from cart');
+      throw new Error(finalMessage);
     } finally {
       setIsLoading(false);
     }

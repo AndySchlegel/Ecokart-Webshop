@@ -32,7 +32,8 @@ export function ArticleCard({ article }: ArticleCardProps) {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
     } catch (error: any) {
-      alert(error.message || 'Fehler beim Hinzufügen zum Warenkorb');
+      // Error-Message ist bereits auf Deutsch (aus CartContext)
+      alert(error.message || 'Produkt konnte nicht hinzugefügt werden');
     } finally {
       setIsAdding(false);
     }
