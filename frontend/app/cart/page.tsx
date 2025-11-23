@@ -98,14 +98,18 @@ export default function CartPage() {
                   onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
                   disabled={isLoading || item.quantity <= 1}
                   className="qty-btn"
+                  style={isLoading ? { opacity: 0.6, cursor: 'wait' } : undefined}
                 >
                   -
                 </button>
-                <span className="qty-value">{item.quantity}</span>
+                <span className="qty-value">
+                  {isLoading ? '...' : item.quantity}
+                </span>
                 <button
                   onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
                   disabled={isLoading}
                   className="qty-btn"
+                  style={isLoading ? { opacity: 0.6, cursor: 'wait' } : undefined}
                 >
                   +
                 </button>
@@ -119,8 +123,9 @@ export default function CartPage() {
                 onClick={() => handleRemove(item.productId)}
                 disabled={isLoading}
                 className="item-remove"
+                style={isLoading ? { opacity: 0.6, cursor: 'wait' } : undefined}
               >
-                ✕
+                {isLoading ? '⋯' : '✕'}
               </button>
             </div>
           ))}

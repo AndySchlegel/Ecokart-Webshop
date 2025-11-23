@@ -129,14 +129,37 @@ export function ArticleCard({ article }: ArticleCardProps) {
             disabled={isAdding || isOutOfStock}
             style={isOutOfStock ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
           >
-            {isAdding
-              ? 'Wird hinzugefügt...'
-              : showSuccess
-              ? '✓ Hinzugefügt!'
-              : isOutOfStock
-              ? 'Ausverkauft'
-              : 'In den Warenkorb'}
+            {isAdding ? (
+              <>
+                <span className="spinner"></span>
+                Wird hinzugefügt...
+              </>
+            ) : showSuccess ? (
+              '✓ Hinzugefügt!'
+            ) : isOutOfStock ? (
+              'Ausverkauft'
+            ) : (
+              'In den Warenkorb'
+            )}
           </button>
+
+          {/* Loading Spinner Style */}
+          <style jsx>{`
+            .spinner {
+              display: inline-block;
+              width: 12px;
+              height: 12px;
+              border: 2px solid rgba(255, 255, 255, 0.3);
+              border-top-color: white;
+              border-radius: 50%;
+              animation: spin 0.6s linear infinite;
+              margin-right: 8px;
+            }
+
+            @keyframes spin {
+              to { transform: rotate(360deg); }
+            }
+          `}</style>
         </div>
       </div>
     </article>
