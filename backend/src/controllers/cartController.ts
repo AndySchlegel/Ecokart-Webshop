@@ -35,6 +35,7 @@ import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import database from '../config/database-adapter';
 import { Cart, AddToCartInput, UpdateCartItemInput } from '../models/Cart';
+import { logger } from '../utils/logger';
 
 // ============================================================================
 // 📋 FUNKTION 1: Warenkorb abrufen
@@ -86,7 +87,7 @@ export const getCart = async (req: Request, res: Response): Promise<void> => {
     res.json(cart);
 
   } catch (error) {
-    console.error('Get cart error:', error);
+    logger.error('Failed to get cart', { action: 'getCart', userId: req.user?.userId }, error as Error);
     res.status(500).json({ error: 'Failed to get cart' });
   }
 };
@@ -218,7 +219,12 @@ export const addToCart = async (req: Request, res: Response): Promise<void> => {
     res.json(updated);
 
   } catch (error) {
-    console.error('Add to cart error:', error);
+    logger.error('Failed to add to cart', {
+      action: 'addToCart',
+      userId: req.user?.userId,
+      productId: req.body.productId,
+      quantity: req.body.quantity
+    }, error as Error);
     res.status(500).json({ error: 'Failed to add to cart' });
   }
 };
@@ -311,7 +317,11 @@ export const updateCartItem = async (req: Request, res: Response): Promise<void>
     res.json(updated);
 
   } catch (error) {
-    console.error('Update cart error:', error);
+    logger.error('Failed to update cart', {
+      action: 'updateCartItem',
+      userId: req.user?.userId,
+      productId: req.body.productId
+    }, error as Error);
     res.status(500).json({ error: 'Failed to update cart' });
   }
 };
@@ -353,7 +363,11 @@ export const removeFromCart = async (req: Request, res: Response): Promise<void>
     res.json(updated);
 
   } catch (error) {
-    console.error('Remove from cart error:', error);
+    logger.error('Failed to remove from cart', {
+      action: 'removeFromCart',
+      userId: req.user?.userId,
+      productId: req.params.productId
+    }, error as Error);
     res.status(500).json({ error: 'Failed to remove from cart' });
   }
 };
@@ -391,7 +405,7 @@ export const clearCart = async (req: Request, res: Response): Promise<void> => {
     res.json(updated);
 
   } catch (error) {
-    console.error('Clear cart error:', error);
+    logger.error('Failed to clear cart', { action: 'clearCart', userId: req.user?.userId }, error as Error);
     res.status(500).json({ error: 'Failed to clear cart' });
   }
 };

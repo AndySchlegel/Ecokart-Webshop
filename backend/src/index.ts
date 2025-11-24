@@ -30,6 +30,7 @@ import dotenv from 'dotenv';
 import productRoutes from './routes/productRoutes';
 import cartRoutes from './routes/cartRoutes';
 import orderRoutes from './routes/orderRoutes';
+import { logger } from './utils/logger';
 
 // ============================================================================
 // 📦 KONFIGURATION
@@ -73,9 +74,21 @@ app.use(express.urlencoded({ extended: true }));
 
 // Logging Middleware
 // 💡 Protokolliert jeden eingehenden Request (hilfreich für Debugging)
-// Ausgabe: 2025-11-03T10:30:45.123Z - GET /api/products
+// 📝 Nutzt strukturiertes Logging für CloudWatch Integration
 app.use((req: Request, res: Response, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  const startTime = Date.now();
+
+  // Log request after response is sent
+  res.on('finish', () => {
+    const duration = Date.now() - startTime;
+    logger.info('HTTP Request', {
+      method: req.method,
+      path: req.path,
+      statusCode: res.statusCode,
+      duration,
+    });
+  });
+
   next(); // Wichtig! Leitet Request an nächste Middleware/Route weiter
 });
 
@@ -125,6 +138,14 @@ app.use((req: Request, res: Response) => {
 if (process.env.AWS_EXECUTION_ENV === undefined) {
   // Starte lokalen Server auf Port 4000
   app.listen(PORT, () => {
+    logger.info('EcoKart Backend API started', {
+      port: PORT,
+      environment: process.env.NODE_ENV || 'development',
+      database: 'DynamoDB',
+    });
+
+    // Pretty output for development (only in console, not in logs)
+    /* eslint-disable no-console */
     console.log('┌─────────────────────────────────────────┐');
     console.log('│  🚀 EcoKart Backend API                 │');
     console.log('├─────────────────────────────────────────┤');
@@ -162,6 +183,7 @@ if (process.env.AWS_EXECUTION_ENV === undefined) {
     console.log('│  ❤️  Health Check:                      │');
     console.log('│  GET    /api/health                     │');
     console.log('└─────────────────────────────────────────┘');
+    /* eslint-enable no-console */
   });
 }
 // ⚠️ In Lambda wird KEIN Server gestartet!
