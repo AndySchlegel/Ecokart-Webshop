@@ -18,6 +18,7 @@
 // ============================================================================
 
 import { Request, Response, NextFunction } from 'express';
+import { logger } from '../utils/logger';
 
 // ============================================================================
 // TYPESCRIPT TYPES
@@ -87,7 +88,7 @@ declare global {
 export function extractCognitoUser(event: any): AuthUser | null {
   // Event Context vorhanden?
   if (!event || !event.requestContext) {
-    console.log('[Cognito] Kein Request Context - kein Cognito Token');
+    logger.debug('No request context - no Cognito token', { component: 'cognitoAuth' });
     return null;
   }
 
@@ -96,7 +97,7 @@ export function extractCognitoUser(event: any): AuthUser | null {
   const claims = event.requestContext.authorizer?.claims as CognitoUser;
 
   if (!claims || !claims.sub) {
-    console.log('[Cognito] Keine Authorizer Claims - User nicht eingeloggt');
+    logger.debug('No authorizer claims - user not logged in', { component: 'cognitoAuth' });
     return null;
   }
 
@@ -108,7 +109,12 @@ export function extractCognitoUser(event: any): AuthUser | null {
     emailVerified: claims.email_verified === true        // Email verifiziert?
   };
 
-  console.log(`[Cognito] User eingeloggt: ${user.email} (${user.role})`);
+  logger.info('User authenticated via Cognito', {
+    userId: user.userId,
+    email: user.email,
+    role: user.role,
+    component: 'cognitoAuth'
+  });
   return user;
 }
 
@@ -130,7 +136,7 @@ export function attachCognitoUser(req: Request, res: Response, next: NextFunctio
 
   if (!event) {
     // Kein Lambda Event = lokales Development (npm run dev)
-    console.log('[Cognito] Kein Lambda Event - lokales Development?');
+    logger.debug('No Lambda event - local development mode', { component: 'cognitoAuth' });
     req.user = undefined;
     return next();
   }
@@ -258,9 +264,9 @@ export function requireAuthLegacy(req: Request, res: Response, next: NextFunctio
       // const decoded = jwt.verify(token, process.env.JWT_SECRET);
       // req.user = { userId: decoded.userId, email: decoded.email, ... };
       // return next();
-      console.log('[Auth] JWT Token gefunden, aber noch nicht implementiert');
+      logger.debug('Legacy JWT token found but not implemented', { component: 'cognitoAuth' });
     } catch (err) {
-      console.log('[Auth] Ungültiger JWT Token');
+      logger.debug('Invalid JWT token', { component: 'cognitoAuth' });
     }
   }
 

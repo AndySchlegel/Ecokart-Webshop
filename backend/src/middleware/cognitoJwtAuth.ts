@@ -25,6 +25,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { CognitoJwtVerifier } from 'aws-jwt-verify';
+import { logger } from '../utils/logger';
 
 // ============================================================================
 // TYPESCRIPT TYPES
@@ -92,24 +93,33 @@ function getJwtVerifier() {
   const clientId = process.env.COGNITO_CLIENT_ID;
 
   // DEBUG: Alle Environment Variables loggen
-  console.log('🔍 DEBUG: Environment Variables Check');
-  console.log('   COGNITO_USER_POOL_ID:', userPoolId || '❌ NICHT GESETZT');
-  console.log('   COGNITO_CLIENT_ID:', clientId || '❌ NICHT GESETZT');
-  console.log('   NODE_ENV:', process.env.NODE_ENV);
-  console.log('   Available env vars:', Object.keys(process.env).filter(k => k.includes('COGNITO')));
+  logger.debug('Checking Cognito environment variables', {
+    userPoolId: userPoolId || 'NOT_SET',
+    clientId: clientId || 'NOT_SET',
+    nodeEnv: process.env.NODE_ENV,
+    availableEnvVars: Object.keys(process.env).filter(k => k.includes('COGNITO')),
+    component: 'cognitoJwtAuth'
+  });
 
   if (!userPoolId || !clientId) {
     const errorMsg =
       '❌ Cognito Config fehlt! ' +
       'Setze COGNITO_USER_POOL_ID und COGNITO_CLIENT_ID in Environment Variables. ' +
       `Verfügbare Env Vars: ${Object.keys(process.env).join(', ')}`;
-    console.error(errorMsg);
+    logger.error('Cognito configuration missing', {
+      userPoolId,
+      clientId,
+      availableEnvVars: Object.keys(process.env),
+      component: 'cognitoJwtAuth'
+    });
     throw new Error(errorMsg);
   }
 
-  console.log('🔐 Initializing Cognito JWT Verifier...');
-  console.log(`   User Pool ID: ${userPoolId}`);
-  console.log(`   Client ID: ${clientId}`);
+  logger.info('Initializing Cognito JWT Verifier', {
+    userPoolId,
+    clientId,
+    component: 'cognitoJwtAuth'
+  });
 
   jwtVerifier = CognitoJwtVerifier.create({
     userPoolId,
@@ -146,13 +156,18 @@ export async function verifyJwtToken(
     // 1. Token aus Authorization Header extrahieren
     const authHeader = req.headers.authorization;
 
-    console.log('🔍 DEBUG: verifyJwtToken called');
-    console.log('   Authorization Header:', authHeader ? `Bearer ${authHeader.substring(7, 30)}...` : '❌ FEHLT');
-    console.log('   Request Path:', req.path);
-    console.log('   Request Method:', req.method);
+    logger.debug('JWT token verification started', {
+      hasAuthHeader: !!authHeader,
+      path: req.path,
+      method: req.method,
+      component: 'cognitoJwtAuth'
+    });
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('❌ No valid Authorization header');
+      logger.debug('No valid Authorization header', {
+        path: req.path,
+        component: 'cognitoJwtAuth'
+      });
       res.status(401).json({
         error: 'Unauthorized',
         message: 'Kein Authorization Token gefunden. Bitte melde dich an.',
@@ -161,18 +176,23 @@ export async function verifyJwtToken(
     }
 
     const token = authHeader.substring(7); // Remove "Bearer " prefix
-    console.log('   Token length:', token.length);
-    console.log('   Token preview:', token.substring(0, 50) + '...');
+    logger.debug('Token extracted', {
+      tokenLength: token.length,
+      tokenPreview: token.substring(0, 50) + '...',
+      component: 'cognitoJwtAuth'
+    });
 
     // 2. Token validieren mit Cognito Public Keys
-    console.log('🔐 Attempting to verify token...');
+    logger.debug('Attempting to verify token with Cognito', { component: 'cognitoJwtAuth' });
     const verifier = getJwtVerifier();
     const payload = await verifier.verify(token) as unknown as CognitoTokenPayload;
 
-    console.log('✅ Token verified successfully');
-    console.log('   Payload sub:', payload.sub);
-    console.log('   Payload email:', payload.email);
-    console.log('   Payload role:', payload['custom:role']);
+    logger.debug('Token verified successfully', {
+      sub: payload.sub,
+      email: payload.email,
+      role: payload['custom:role'],
+      component: 'cognitoJwtAuth'
+    });
 
     // 3. User-Info extrahieren
     const user: AuthUser = {
@@ -185,15 +205,21 @@ export async function verifyJwtToken(
     // 4. User in Request speichern
     req.user = user;
 
-    console.log(`✅ JWT validated for user: ${user.email} (${user.role})`);
+    logger.info('JWT validated successfully', {
+      userId: user.userId,
+      email: user.email,
+      role: user.role,
+      component: 'cognitoJwtAuth'
+    });
 
     next();
   } catch (error: any) {
     // JWT Validation fehlgeschlagen
-    console.error('❌ JWT validation failed');
-    console.error('   Error name:', error.name);
-    console.error('   Error message:', error.message);
-    console.error('   Error stack:', error.stack);
+    logger.error('JWT validation failed', {
+      errorName: error.name,
+      path: req.path,
+      component: 'cognitoJwtAuth'
+    }, error);
 
     res.status(401).json({
       error: 'Unauthorized',
