@@ -315,7 +315,12 @@ export async function debugTokenStorage() {
     const user = await getCurrentUser();
     logger.debug('Current user', { component: 'amplify-debug', user });
   } catch (error) {
-    logger.warn('No user logged in', { component: 'amplify-debug', error: error as Error });
+    const err = error as Error;
+    logger.warn('No user logged in', {
+      component: 'amplify-debug',
+      error: err.message,
+      stack: err.stack
+    });
   }
 
   logger.debug('=== TOKEN STORAGE DEBUG END ===', { component: 'amplify-debug' });
