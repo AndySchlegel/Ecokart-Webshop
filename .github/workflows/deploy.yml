@@ -295,43 +295,49 @@ jobs:
       - name: 📥 Import GitHub Actions IAM Role
         working-directory: terraform
         continue-on-error: true
+        env:
+          TF_VAR_github_access_token: ${{ steps.github-token.outputs.token }}
+          TF_VAR_jwt_secret: ${{ steps.jwt-secret.outputs.secret }}
         run: |
           echo "📥 Checking if GitHub Actions IAM Role needs to be imported..."
 
           # Check if role already in state
-          if terraform state list | grep -q "module.github_actions_role.aws_iam_role.github_actions"; then
+          if terraform state list 2>/dev/null | grep -q "module.github_actions_role.aws_iam_role.github_actions"; then
             echo "✅ IAM Role already in Terraform state - skipping import"
             exit 0
           fi
 
           echo "🔄 IAM Role not in state - importing all resources..."
 
+          # Common import args
+          IMPORT_ARGS="-var-file=environments/${{ steps.env.outputs.environment }}.tfvars -var=github_access_token=${{ steps.github-token.outputs.token }} -var=jwt_secret=${{ steps.jwt-secret.outputs.secret }}"
+
           # Import IAM Role
-          terraform import 'module.github_actions_role.aws_iam_role.github_actions' 'ecokart-github-actions-role' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_role.github_actions' 'ecokart-github-actions-role' || true
 
           # Import all IAM Policies
-          terraform import 'module.github_actions_role.aws_iam_policy.amplify' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-amplify' || true
-          terraform import 'module.github_actions_role.aws_iam_policy.apigateway' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-apigateway' || true
-          terraform import 'module.github_actions_role.aws_iam_policy.cloudwatch' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-cloudwatch' || true
-          terraform import 'module.github_actions_role.aws_iam_policy.dynamodb' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-dynamodb' || true
-          terraform import 'module.github_actions_role.aws_iam_policy.iam' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-iam' || true
-          terraform import 'module.github_actions_role.aws_iam_policy.lambda' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-lambda' || true
-          terraform import 'module.github_actions_role.aws_iam_policy.s3' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-s3' || true
-          terraform import 'module.github_actions_role.aws_iam_policy.ssm' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-ssm' || true
-          terraform import 'module.github_actions_role.aws_iam_policy.terraform_backend' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-terraform-backend' || true
-          terraform import 'module.github_actions_role.aws_iam_policy.cognito' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-cognito' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_policy.amplify' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-amplify' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_policy.apigateway' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-apigateway' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_policy.cloudwatch' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-cloudwatch' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_policy.dynamodb' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-dynamodb' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_policy.iam' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-iam' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_policy.lambda' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-lambda' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_policy.s3' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-s3' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_policy.ssm' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-ssm' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_policy.terraform_backend' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-terraform-backend' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_policy.cognito' 'arn:aws:iam::729403197965:policy/ecokart-github-actions-role-cognito' || true
 
           # Import Policy Attachments
-          terraform import 'module.github_actions_role.aws_iam_role_policy_attachment.amplify' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-amplify' || true
-          terraform import 'module.github_actions_role.aws_iam_role_policy_attachment.apigateway' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-apigateway' || true
-          terraform import 'module.github_actions_role.aws_iam_role_policy_attachment.cloudwatch' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-cloudwatch' || true
-          terraform import 'module.github_actions_role.aws_iam_role_policy_attachment.dynamodb' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-dynamodb' || true
-          terraform import 'module.github_actions_role.aws_iam_role_policy_attachment.iam' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-iam' || true
-          terraform import 'module.github_actions_role.aws_iam_role_policy_attachment.lambda' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-lambda' || true
-          terraform import 'module.github_actions_role.aws_iam_role_policy_attachment.s3' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-s3' || true
-          terraform import 'module.github_actions_role.aws_iam_role_policy_attachment.ssm' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-ssm' || true
-          terraform import 'module.github_actions_role.aws_iam_role_policy_attachment.terraform_backend' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-terraform-backend' || true
-          terraform import 'module.github_actions_role.aws_iam_role_policy_attachment.cognito' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-cognito' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_role_policy_attachment.amplify' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-amplify' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_role_policy_attachment.apigateway' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-apigateway' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_role_policy_attachment.cloudwatch' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-cloudwatch' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_role_policy_attachment.dynamodb' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-dynamodb' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_role_policy_attachment.iam' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-iam' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_role_policy_attachment.lambda' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-lambda' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_role_policy_attachment.s3' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-s3' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_role_policy_attachment.ssm' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-ssm' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_role_policy_attachment.terraform_backend' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-terraform-backend' || true
+          terraform import $IMPORT_ARGS 'module.github_actions_role.aws_iam_role_policy_attachment.cognito' 'ecokart-github-actions-role/arn:aws:iam::729403197965:policy/ecokart-github-actions-role-cognito' || true
 
           echo "✅ Import completed - IAM Role now managed by Terraform!"
 
