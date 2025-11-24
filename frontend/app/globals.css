@@ -48,6 +48,11 @@ body {
   }
 }
 
+/* Toast animation utility class */
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out both;
+}
+
 @keyframes glitch {
   0% {
     text-shadow: 2px 2px var(--accent-orange), -2px -2px var(--accent-green);

@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import React from 'react';
+import { Providers } from './providers';
 
 export const metadata: Metadata = {
   title: 'EcoKart Admin',
@@ -15,7 +16,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="de">
       <body>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );
