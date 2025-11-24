@@ -40,26 +40,23 @@ locals {
 # ----------------------------------------------------------------------------
 # GitHub Actions IAM Role - CI/CD Permissions
 # ----------------------------------------------------------------------------
-# Diese IAM Role ermöglicht GitHub Actions via OIDC Zugriff auf AWS.
-# Die Role wird von Terraform verwaltet und kann sich selbst updaten.
+# TEMPORARILY DISABLED: Chicken-egg problem with IAM permissions
 #
-# WICHTIG: Die Role wurde initial via Bootstrap Workflow erstellt und dann
-# in den Terraform State importiert. Dadurch ist sie jetzt vollständig
-# via IaC managed und kann von jedem Deploy Workflow geupdated werden.
+# Die IAM Role existiert in AWS (erstellt via Bootstrap Workflow).
+# Management via Terraform führt zu Permission-Problemen (Role kann sich
+# nicht selbst verwalten ohne Permissions, die wir ihr geben wollen).
 #
-# Import wurde durchgeführt via:
-#   terraform import module.github_actions_role.aws_iam_role.github_actions ecokart-github-actions-role
-#   (und alle Policy Attachments)
-
-module "github_actions_role" {
-  source = "./modules/github-actions-role"
-
-  role_name   = "ecokart-github-actions-role"
-  github_repo = "AndySchlegel/Ecokart-Webshop"
-  aws_region  = var.aws_region
-
-  tags = local.common_tags
-}
+# TODO: Später mit permanent AWS Credentials oder manueller IAM Console-Änderung lösen
+#
+# module "github_actions_role" {
+#   source = "./modules/github-actions-role"
+#
+#   role_name   = "ecokart-github-actions-role"
+#   github_repo = "AndySchlegel/Ecokart-Webshop"
+#   aws_region  = var.aws_region
+#
+#   tags = local.common_tags
+# }
 
 # ----------------------------------------------------------------------------
 # DynamoDB Module - Alle Tables
