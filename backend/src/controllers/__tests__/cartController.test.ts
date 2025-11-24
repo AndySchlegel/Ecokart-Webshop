@@ -237,18 +237,241 @@ describe('CartController - addToCart', () => {
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// WEITERE TEST SUITES (folgen)
+// TEST SUITE: updateCartItem
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//
-// TODO: Tests für:
-// - updateCartItem (quantity ändern)
-// - removeFromCart (Produkt entfernen)
-// - clearCart (ganzen Cart löschen)
-//
-// Jede Funktion braucht:
-// ✅ Happy Path Test
-// ✅ 401 Unauthorized Test
-// ✅ 404 Not Found Test (wenn applicable)
-// ✅ 400 Bad Request Test (invalid input)
-// ✅ 500 Server Error Test
+
+describe('CartController - updateCartItem', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should update cart item quantity successfully', async () => {
+    // ARRANGE
+    const cartWithItem = {
+      ...mockCart,
+      items: [{
+        productId: mockProductId,
+        name: mockProduct.name,
+        price: mockProduct.price,
+        imageUrl: mockProduct.imageUrl,
+        quantity: 2
+      }]
+    };
+
+    const req = mockRequest({
+      body: { productId: mockProductId, quantity: 5 }
+    });
+    const res = mockResponse();
+
+    (database.getCartByUserId as jest.Mock).mockResolvedValue(cartWithItem);
+    (database.getProductById as jest.Mock).mockResolvedValue(mockProduct);
+    (database.updateCart as jest.Mock).mockResolvedValue(cartWithItem);
+    (database.reserveStock as jest.Mock).mockResolvedValue(undefined);
+
+    // ACT
+    await updateCartItem(req, res);
+
+    // ASSERT
+    expect(database.reserveStock).toHaveBeenCalled();
+    expect(database.updateCart).toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalled();
+  });
+
+  it('should return 401 if user not authenticated', async () => {
+    // ARRANGE
+    const req = mockRequest({
+      user: undefined,
+      body: { productId: mockProductId, quantity: 2 }
+    });
+    const res = mockResponse();
+
+    // ACT
+    await updateCartItem(req, res);
+
+    // ASSERT
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+  });
+
+  it('should return 400 for invalid quantity', async () => {
+    // ARRANGE
+    const req = mockRequest({
+      body: { productId: mockProductId, quantity: -1 }
+    });
+    const res = mockResponse();
+
+    // ACT
+    await updateCartItem(req, res);
+
+    // ASSERT
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+});
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// TEST SUITE: removeFromCart
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+describe('CartController - removeFromCart', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should remove item from cart successfully', async () => {
+    // ARRANGE
+    const cartWithItem = {
+      ...mockCart,
+      items: [{
+        productId: mockProductId,
+        name: mockProduct.name,
+        price: mockProduct.price,
+        imageUrl: mockProduct.imageUrl,
+        quantity: 2
+      }]
+    };
+
+    const req = mockRequest({
+      params: { productId: mockProductId }
+    });
+    const res = mockResponse();
+
+    (database.getCartByUserId as jest.Mock).mockResolvedValue(cartWithItem);
+    (database.updateCart as jest.Mock).mockResolvedValue({ ...mockCart, items: [] });
+    (database.releaseReservedStock as jest.Mock).mockResolvedValue(undefined);
+
+    // ACT
+    await removeFromCart(req, res);
+
+    // ASSERT
+    expect(database.releaseReservedStock).toHaveBeenCalledWith(mockProductId, 2);
+    expect(database.updateCart).toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalled();
+  });
+
+  it('should return 401 if user not authenticated', async () => {
+    // ARRANGE
+    const req = mockRequest({
+      user: undefined,
+      params: { productId: mockProductId }
+    });
+    const res = mockResponse();
+
+    // ACT
+    await removeFromCart(req, res);
+
+    // ASSERT
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+  });
+
+  it('should handle removing non-existent item gracefully', async () => {
+    // ARRANGE
+    const req = mockRequest({
+      params: { productId: 'non-existent-product' }
+    });
+    const res = mockResponse();
+
+    (database.getCartByUserId as jest.Mock).mockResolvedValue(mockCart); // Empty cart
+    (database.updateCart as jest.Mock).mockResolvedValue(mockCart);
+
+    // ACT
+    await removeFromCart(req, res);
+
+    // ASSERT
+    // Controller doesn't return error, just removes nothing
+    expect(database.releaseReservedStock).not.toHaveBeenCalled(); // No stock to release
+    expect(database.updateCart).toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalled();
+  });
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// TEST SUITE: clearCart
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+describe('CartController - clearCart', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should handle empty cart gracefully', async () => {
+    // ARRANGE
+    const req = mockRequest();
+    const res = mockResponse();
+
+    // Explicitly create empty cart object
+    const emptyCart = {
+      id: mockCartId,
+      userId: mockUserId,
+      items: [], // Explicitly empty
+      createdAt: '2025-11-23T12:00:00Z',
+      updatedAt: '2025-11-23T12:00:00Z'
+    };
+
+    (database.getCartByUserId as jest.Mock).mockResolvedValue(emptyCart);
+    (database.updateCart as jest.Mock).mockResolvedValue(emptyCart);
+    (database.releaseReservedStock as jest.Mock).mockResolvedValue(undefined);
+
+    // ACT
+    await clearCart(req, res);
+
+    // ASSERT
+    expect(database.releaseReservedStock).not.toHaveBeenCalled(); // No items to release
+    expect(database.updateCart).toHaveBeenCalledWith(mockUserId, { items: [] });
+    expect(res.json).toHaveBeenCalledWith(emptyCart);
+  });
+
+  it('should clear cart successfully', async () => {
+    // ARRANGE
+    const cartWithItems = {
+      ...mockCart,
+      items: [
+        {
+          productId: mockProductId,
+          name: mockProduct.name,
+          price: mockProduct.price,
+          imageUrl: mockProduct.imageUrl,
+          quantity: 2
+        },
+        {
+          productId: 'product-2',
+          name: 'Product 2',
+          price: 29.99,
+          imageUrl: 'https://example.com/image2.jpg',
+          quantity: 1
+        }
+      ]
+    };
+
+    const req = mockRequest();
+    const res = mockResponse();
+
+    (database.getCartByUserId as jest.Mock).mockResolvedValue(cartWithItems);
+    (database.updateCart as jest.Mock).mockResolvedValue({ ...mockCart, items: [] });
+    (database.releaseReservedStock as jest.Mock).mockResolvedValue(undefined);
+
+    // ACT
+    await clearCart(req, res);
+
+    // ASSERT
+    // Should release stock for ALL items
+    expect(database.releaseReservedStock).toHaveBeenCalledTimes(2);
+    expect(database.releaseReservedStock).toHaveBeenCalledWith(mockProductId, 2);
+    expect(database.releaseReservedStock).toHaveBeenCalledWith('product-2', 1);
+    expect(database.updateCart).toHaveBeenCalledWith(mockUserId, { items: [] });
+    expect(res.json).toHaveBeenCalled();
+  });
+
+  it('should return 401 if user not authenticated', async () => {
+    // ARRANGE
+    const req = mockRequest({ user: undefined });
+    const res = mockResponse();
+
+    // ACT
+    await clearCart(req, res);
+
+    // ASSERT
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
+  });
+});
