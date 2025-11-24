@@ -65,7 +65,10 @@ resource "aws_iam_policy" "cloudwatch" {
       {
         Effect = "Allow"
         Action = [
-          "logs:*"
+          "logs:*",
+          "cloudwatch:PutMetricAlarm",
+          "cloudwatch:DeleteAlarms",
+          "cloudwatch:DescribeAlarms"
         ]
         Resource = "*"
       }
