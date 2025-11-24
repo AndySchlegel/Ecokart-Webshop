@@ -18,6 +18,7 @@
 import { Amplify } from 'aws-amplify';
 import { CookieStorage } from 'aws-amplify/utils';
 import { cognitoUserPoolsTokenProvider } from 'aws-amplify/auth/cognito';
+import { logger } from './logger';
 
 // ============================================================================
 // AMPLIFY KONFIGURATION
@@ -38,8 +39,16 @@ export function configureAmplify() {
   // Wenn Cognito nicht konfiguriert → Warnung aber kein Crash
   // Das erlaubt Development ohne Cognito
   if (!userPoolId || !userPoolClientId) {
-    console.warn('⚠️ Cognito nicht konfiguriert - Auth-Features werden nicht funktionieren');
-    console.warn('Setze NEXT_PUBLIC_USER_POOL_ID und NEXT_PUBLIC_USER_POOL_CLIENT_ID in .env.local');
+    logger.warn('Cognito not configured - auth features will not work', {
+      component: 'amplify',
+      missingVars: {
+        userPoolId: !userPoolId,
+        userPoolClientId: !userPoolClientId
+      }
+    });
+    logger.warn('Set NEXT_PUBLIC_USER_POOL_ID and NEXT_PUBLIC_USER_POOL_CLIENT_ID in .env.local', {
+      component: 'amplify'
+    });
     return;
   }
 
@@ -112,10 +121,11 @@ export function configureAmplify() {
   // CookieStorage speichert Tokens persistent über Browser-Reloads
   cognitoUserPoolsTokenProvider.setKeyValueStorage(new CookieStorage());
 
-  console.log('✅ Amplify Auth konfiguriert:', {
+  logger.info('Amplify Auth configured', {
     userPoolId,
     region,
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV,
+    component: 'amplify'
   });
 }
 
@@ -189,7 +199,7 @@ export async function getAuthToken(): Promise<string | null> {
     const session = await fetchAuthSession();
     return session.tokens?.idToken?.toString() || null;
   } catch (error) {
-    console.error('Error getting auth token:', error);
+    logger.error('Error getting auth token', { component: 'amplify' }, error as Error);
     return null;
   }
 }
@@ -219,7 +229,7 @@ export async function getUserInfo() {
       emailVerified: idToken.payload.email_verified as boolean,
     };
   } catch (error) {
-    console.error('Error getting user info:', error);
+    logger.error('Error getting user info', { component: 'amplify' }, error as Error);
     return null;
   }
 }
@@ -235,14 +245,11 @@ export async function getUserInfo() {
  *   window.__debugTokens()
  */
 export async function debugTokenStorage() {
-  console.log('🔍 === TOKEN STORAGE DEBUG ===');
-  console.log('');
+  logger.debug('=== TOKEN STORAGE DEBUG START ===', { component: 'amplify-debug' });
 
   // 1. Prüfe Cookies
-  console.log('📦 Browser Cookies:');
   const cookies = document.cookie;
   if (cookies) {
-    // Filtere nur Cognito/Amplify relevante Cookies
     const cognitoCookies = cookies.split('; ').filter(c =>
       c.includes('CognitoIdentityServiceProvider') ||
       c.includes('amplify') ||
@@ -251,72 +258,67 @@ export async function debugTokenStorage() {
       c.includes('refreshToken')
     );
     if (cognitoCookies.length > 0) {
-      console.log('✅ Cognito Cookies gefunden:');
-      cognitoCookies.forEach(cookie => {
-        const [name] = cookie.split('=');
-        console.log(`  - ${name}`);
+      logger.debug('Cognito Cookies found', {
+        component: 'amplify-debug',
+        cookieNames: cognitoCookies.map(c => c.split('=')[0])
       });
     } else {
-      console.log('⚠️  KEINE Cognito Cookies gefunden!');
-      console.log('Alle Cookies:', cookies);
+      logger.warn('No Cognito cookies found', {
+        component: 'amplify-debug',
+        allCookies: cookies
+      });
     }
   } else {
-    console.log('❌ KEINE Cookies vorhanden!');
+    logger.warn('No cookies present', { component: 'amplify-debug' });
   }
-  console.log('');
 
-  // 2. Prüfe localStorage (sollte leer sein bei CookieStorage!)
-  console.log('💾 localStorage:');
-  console.log(`  Anzahl Items: ${localStorage.length}`);
-  if (localStorage.length > 0) {
-    console.log('⚠️  localStorage ist NICHT leer (das ist OK wenn du nicht CookieStorage nutzt)');
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key) console.log(`  - ${key}`);
-    }
-  } else {
-    console.log('✅ localStorage ist leer (ERWARTET bei CookieStorage)');
+  // 2. Prüfe localStorage
+  const localStorageItems = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key) localStorageItems.push(key);
   }
-  console.log('');
+  logger.debug('localStorage check', {
+    component: 'amplify-debug',
+    itemCount: localStorage.length,
+    items: localStorageItems,
+    isEmpty: localStorage.length === 0
+  });
 
   // 3. Prüfe Amplify Session
-  console.log('🔐 Amplify Auth Session:');
   try {
     const { fetchAuthSession } = await import('aws-amplify/auth');
     const session = await fetchAuthSession();
 
-    console.log('Session Object:', session);
-    console.log('');
+    logger.debug('Amplify Auth Session', {
+      component: 'amplify-debug',
+      hasIdToken: !!session.tokens?.idToken,
+      hasAccessToken: !!session.tokens?.accessToken,
+      tokenPayload: session.tokens?.idToken?.payload
+    });
 
     if (session.tokens?.idToken) {
-      console.log('✅ ID Token gefunden!');
-      console.log('Token Preview:', session.tokens.idToken.toString().substring(0, 50) + '...');
-      console.log('Token Payload:', session.tokens.idToken.payload);
+      logger.debug('ID Token found', {
+        component: 'amplify-debug',
+        tokenPreview: session.tokens.idToken.toString().substring(0, 50) + '...'
+      });
     } else {
-      console.log('❌ KEIN ID Token in Session!');
-    }
-
-    if (session.tokens?.accessToken) {
-      console.log('✅ Access Token gefunden!');
-    } else {
-      console.log('❌ KEIN Access Token in Session!');
+      logger.warn('No ID Token in session', { component: 'amplify-debug' });
     }
   } catch (error) {
-    console.log('❌ Fehler beim Abrufen der Session:', error);
+    logger.error('Failed to fetch auth session', { component: 'amplify-debug' }, error as Error);
   }
-  console.log('');
 
   // 4. Prüfe aktuellen User
-  console.log('👤 Aktueller User:');
   try {
     const { getCurrentUser } = await import('aws-amplify/auth');
     const user = await getCurrentUser();
-    console.log('✅ User eingeloggt:', user);
+    logger.debug('Current user', { component: 'amplify-debug', user });
   } catch (error) {
-    console.log('❌ Kein User eingeloggt:', error);
+    logger.warn('No user logged in', { component: 'amplify-debug' }, error as Error);
   }
-  console.log('');
-  console.log('🔍 === DEBUG ENDE ===');
+
+  logger.debug('=== TOKEN STORAGE DEBUG END ===', { component: 'amplify-debug' });
 }
 
 // Mache Debug-Funktion global verfügbar (nur im Browser)

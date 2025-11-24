@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { confirmSignUp, autoSignIn } from 'aws-amplify/auth';
+import { logger } from '@/lib/logger';
 
 // Inner component that uses useSearchParams
 function VerifyEmailContent() {
@@ -29,7 +30,7 @@ function VerifyEmailContent() {
     }
 
     try {
-      console.log('📧 Versuche Email zu bestätigen für:', email);
+      logger.debug('Attempting email verification', { email, component: 'VerifyEmail' });
 
       // Cognito Confirmation
       const { isSignUpComplete, nextStep } = await confirmSignUp({
@@ -38,31 +39,42 @@ function VerifyEmailContent() {
       });
 
       if (isSignUpComplete) {
-        console.log('✅ Email erfolgreich bestätigt!');
+        logger.info('Email successfully verified', { email, component: 'VerifyEmail' });
         setSuccess(true);
 
         // Auto-Login nach Bestätigung
         try {
           await autoSignIn();
-          console.log('✅ Automatischer Login erfolgreich');
+          logger.info('Auto-login successful', { email, component: 'VerifyEmail' });
 
           // Nach 2 Sekunden zum Shop
           setTimeout(() => {
             router.push('/');
           }, 2000);
         } catch (error) {
-          console.log('⚠️ Auto-Login fehlgeschlagen, manueller Login erforderlich');
+          logger.warn('Auto-login failed, manual login required', {
+            email,
+            component: 'VerifyEmail'
+          });
           // Redirect zu Login nach 3 Sekunden
           setTimeout(() => {
             router.push('/login');
           }, 3000);
         }
       } else {
-        console.warn('⚠️ Confirmation incomplete, next step:', nextStep);
+        logger.warn('Email confirmation incomplete', {
+          email,
+          nextStep,
+          component: 'VerifyEmail'
+        });
         setError('Bestätigung konnte nicht abgeschlossen werden');
       }
     } catch (err: any) {
-      console.error('❌ Verification Error:', err);
+      logger.error('Email verification failed', {
+        email,
+        errorName: err.name,
+        component: 'VerifyEmail'
+      }, err);
 
       // Benutzerfreundliche Fehlermeldungen
       if (err.name === 'CodeMismatchException') {

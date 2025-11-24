@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { API_BASE_URL } from '../lib/config';
+import { logger } from '@/lib/logger';
 
 interface Product {
   id: string;
@@ -79,7 +80,10 @@ export default function Navigation() {
           setShowSuggestions(filtered.length > 0);
         }
       } catch (error) {
-        console.error('Failed to fetch search suggestions:', error);
+        logger.error('Failed to fetch search suggestions', {
+          searchQuery,
+          component: 'Navigation'
+        }, error as Error);
       }
     };
 
