@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Product } from '../models/Product';
+import { logger } from '../utils/logger';
 
 interface Database {
   products: Product[];
@@ -18,7 +19,7 @@ class JSONDatabase {
       const data = fs.readFileSync(this.dbPath, 'utf-8');
       return JSON.parse(data);
     } catch (error) {
-      console.error('Error reading database:', error);
+      logger.error('Failed to read database file', { dbPath: this.dbPath }, error as Error);
       return { products: [] };
     }
   }
@@ -27,7 +28,7 @@ class JSONDatabase {
     try {
       fs.writeFileSync(this.dbPath, JSON.stringify(data, null, 2), 'utf-8');
     } catch (error) {
-      console.error('Error writing database:', error);
+      logger.error('Failed to write database file', { dbPath: this.dbPath }, error as Error);
       throw new Error('Database write failed');
     }
   }

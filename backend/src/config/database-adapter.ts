@@ -9,6 +9,7 @@ import { Product } from '../models/Product';
 import { User } from '../models/User';
 import { Cart } from '../models/Cart';
 import { Order } from '../models/Order';
+import { logger } from '../utils/logger';
 
 import jsonDatabase from './database';
 import jsonExtendedDatabase from './database-extended';
@@ -25,7 +26,10 @@ class DatabaseAdapter {
 
   constructor() {
     this.useDynamoDB = process.env.DB_TYPE === 'dynamodb';
-    console.log(`Database mode: ${this.useDynamoDB ? 'DynamoDB' : 'JSON'}`);
+    logger.info('Database adapter initialized', {
+      mode: this.useDynamoDB ? 'DynamoDB' : 'JSON',
+      dbType: process.env.DB_TYPE
+    });
   }
 
   // ========== PRODUCTS ==========

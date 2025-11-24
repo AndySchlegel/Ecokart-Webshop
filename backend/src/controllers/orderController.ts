@@ -18,6 +18,7 @@ import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import database from '../config/database-adapter';
 import { Order, CreateOrderInput } from '../models/Order';
+import { logger } from '../utils/logger';
 
 // ============================================================================
 // 📋 FUNKTION 1: Bestellung erstellen
@@ -78,7 +79,12 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
 
     res.status(201).json(created);
   } catch (error) {
-    console.error('Create order error:', error);
+    logger.error('Failed to create order', {
+      action: 'createOrder',
+      userId: req.user?.userId,
+      itemCount: req.body.items?.length,
+      total: req.body.total
+    }, error as Error);
     res.status(500).json({ error: 'Failed to create order' });
   }
 };
@@ -103,7 +109,7 @@ export const getOrders = async (req: Request, res: Response): Promise<void> => {
     res.json(orders);
 
   } catch (error) {
-    console.error('Get orders error:', error);
+    logger.error('Failed to get orders', { action: 'getOrders', userId: req.user?.userId }, error as Error);
     res.status(500).json({ error: 'Failed to get orders' });
   }
 };
@@ -142,7 +148,11 @@ export const getOrderById = async (req: Request, res: Response): Promise<void> =
     res.json(order);
 
   } catch (error) {
-    console.error('Get order error:', error);
+    logger.error('Failed to get order', {
+      action: 'getOrderById',
+      userId: req.user?.userId,
+      orderId: req.params.id
+    }, error as Error);
     res.status(500).json({ error: 'Failed to get order' });
   }
 };
@@ -192,7 +202,12 @@ export const updateOrderStatus = async (req: Request, res: Response): Promise<vo
     res.json(updated);
 
   } catch (error) {
-    console.error('Update order status error:', error);
+    logger.error('Failed to update order status', {
+      action: 'updateOrderStatus',
+      userId: req.user?.userId,
+      orderId: req.params.id,
+      newStatus: req.body.status
+    }, error as Error);
     res.status(500).json({ error: 'Failed to update order status' });
   }
 };
