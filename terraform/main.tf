@@ -40,27 +40,26 @@ locals {
 # ----------------------------------------------------------------------------
 # GitHub Actions IAM Role - CI/CD Permissions
 # ----------------------------------------------------------------------------
-# WICHTIG: IAM Role wird via Bootstrap Workflow verwaltet (bootstrap-oidc.yml)
-# Nicht via Terraform, da Bootstrap-Problem (Henne-Ei):
-# - IAM Role muss existieren BEVOR Terraform laufen kann
-# - Terraform kann Role nicht erstellen, da es sich nicht authentifizieren kann
-# - Bootstrap Workflow erstellt Role via AWS Credentials
+# Diese IAM Role ermöglicht GitHub Actions via OIDC Zugriff auf AWS.
+# Die Role wird von Terraform verwaltet und kann sich selbst updaten.
 #
-# Das Modul existiert für zukünftige Verwaltung, ist aber aktuell auskommentiert.
-# Falls du die Role via Terraform verwalten willst:
-# 1. Import durchführen (siehe terraform/IMPORT_IAM_ROLE.md)
-# 2. Dieses Modul aktivieren
-# 3. lifecycle { prevent_destroy = true } hinzufügen
+# WICHTIG: Die Role wurde initial via Bootstrap Workflow erstellt und dann
+# in den Terraform State importiert. Dadurch ist sie jetzt vollständig
+# via IaC managed und kann von jedem Deploy Workflow geupdated werden.
+#
+# Import wurde durchgeführt via:
+#   terraform import module.github_actions_role.aws_iam_role.github_actions ecokart-github-actions-role
+#   (und alle Policy Attachments)
 
-# module "github_actions_role" {
-#   source = "./modules/github-actions-role"
-#
-#   role_name    = "ecokart-github-actions-role"
-#   github_repo  = "AndySchlegel/Ecokart-Webshop"
-#   aws_region   = var.aws_region
-#
-#   tags = local.common_tags
-# }
+module "github_actions_role" {
+  source = "./modules/github-actions-role"
+
+  role_name   = "ecokart-github-actions-role"
+  github_repo = "AndySchlegel/Ecokart-Webshop"
+  aws_region  = var.aws_region
+
+  tags = local.common_tags
+}
 
 # ----------------------------------------------------------------------------
 # DynamoDB Module - Alle Tables
