@@ -14,18 +14,20 @@
 # ----------------------------------------------------------------------------
 # SNS Topic für Alarm Notifications
 # ----------------------------------------------------------------------------
+# TODO: Temporarily disabled - IAM permissions needed for GitHub Actions
+# See ACTION_PLAN.md - Will be re-enabled once IAM policy is extended
 
-resource "aws_sns_topic" "monitoring_alerts" {
-  name = "${local.name_prefix}-monitoring-alerts"
-
-  tags = merge(
-    local.common_tags,
-    {
-      Name = "${local.name_prefix}-monitoring-alerts"
-      Purpose = "CloudWatch Alarm Notifications"
-    }
-  )
-}
+# resource "aws_sns_topic" "monitoring_alerts" {
+#   name = "${local.name_prefix}-monitoring-alerts"
+#
+#   tags = merge(
+#     local.common_tags,
+#     {
+#       Name = "${local.name_prefix}-monitoring-alerts"
+#       Purpose = "CloudWatch Alarm Notifications"
+#     }
+#   )
+# }
 
 # Optional: Email Subscription (kann später via AWS Console oder CLI hinzugefügt werden)
 # resource "aws_sns_topic_subscription" "monitoring_email" {
@@ -55,8 +57,9 @@ resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
     FunctionName = module.lambda.function_name
   }
 
-  alarm_actions = [aws_sns_topic.monitoring_alerts.arn]
-  ok_actions    = [aws_sns_topic.monitoring_alerts.arn]
+  # TODO: Re-enable once SNS topic is created
+  # alarm_actions = [aws_sns_topic.monitoring_alerts.arn]
+  # ok_actions    = [aws_sns_topic.monitoring_alerts.arn]
 
   tags = merge(
     local.common_tags,
@@ -84,8 +87,9 @@ resource "aws_cloudwatch_metric_alarm" "lambda_duration" {
     FunctionName = module.lambda.function_name
   }
 
-  alarm_actions = [aws_sns_topic.monitoring_alerts.arn]
-  ok_actions    = [aws_sns_topic.monitoring_alerts.arn]
+  # TODO: Re-enable once SNS topic is created
+  # alarm_actions = [aws_sns_topic.monitoring_alerts.arn]
+  # ok_actions    = [aws_sns_topic.monitoring_alerts.arn]
 
   tags = merge(
     local.common_tags,
@@ -113,8 +117,9 @@ resource "aws_cloudwatch_metric_alarm" "lambda_throttles" {
     FunctionName = module.lambda.function_name
   }
 
-  alarm_actions = [aws_sns_topic.monitoring_alerts.arn]
-  ok_actions    = [aws_sns_topic.monitoring_alerts.arn]
+  # TODO: Re-enable once SNS topic is created
+  # alarm_actions = [aws_sns_topic.monitoring_alerts.arn]
+  # ok_actions    = [aws_sns_topic.monitoring_alerts.arn]
 
   tags = merge(
     local.common_tags,
@@ -146,8 +151,9 @@ resource "aws_cloudwatch_metric_alarm" "dynamodb_products_read_throttles" {
     TableName = module.dynamodb.products_table_name
   }
 
-  alarm_actions = [aws_sns_topic.monitoring_alerts.arn]
-  ok_actions    = [aws_sns_topic.monitoring_alerts.arn]
+  # TODO: Re-enable once SNS topic is created
+  # alarm_actions = [aws_sns_topic.monitoring_alerts.arn]
+  # ok_actions    = [aws_sns_topic.monitoring_alerts.arn]
 
   tags = merge(
     local.common_tags,
@@ -175,8 +181,9 @@ resource "aws_cloudwatch_metric_alarm" "dynamodb_products_write_throttles" {
     TableName = module.dynamodb.products_table_name
   }
 
-  alarm_actions = [aws_sns_topic.monitoring_alerts.arn]
-  ok_actions    = [aws_sns_topic.monitoring_alerts.arn]
+  # TODO: Re-enable once SNS topic is created
+  # alarm_actions = [aws_sns_topic.monitoring_alerts.arn]
+  # ok_actions    = [aws_sns_topic.monitoring_alerts.arn]
 
   tags = merge(
     local.common_tags,
@@ -204,8 +211,9 @@ resource "aws_cloudwatch_metric_alarm" "dynamodb_carts_write_throttles" {
     TableName = module.dynamodb.carts_table_name
   }
 
-  alarm_actions = [aws_sns_topic.monitoring_alerts.arn]
-  ok_actions    = [aws_sns_topic.monitoring_alerts.arn]
+  # TODO: Re-enable once SNS topic is created
+  # alarm_actions = [aws_sns_topic.monitoring_alerts.arn]
+  # ok_actions    = [aws_sns_topic.monitoring_alerts.arn]
 
   tags = merge(
     local.common_tags,
@@ -233,8 +241,9 @@ resource "aws_cloudwatch_metric_alarm" "dynamodb_orders_write_throttles" {
     TableName = module.dynamodb.orders_table_name
   }
 
-  alarm_actions = [aws_sns_topic.monitoring_alerts.arn]
-  ok_actions    = [aws_sns_topic.monitoring_alerts.arn]
+  # TODO: Re-enable once SNS topic is created
+  # alarm_actions = [aws_sns_topic.monitoring_alerts.arn]
+  # ok_actions    = [aws_sns_topic.monitoring_alerts.arn]
 
   tags = merge(
     local.common_tags,
@@ -267,8 +276,9 @@ resource "aws_cloudwatch_metric_alarm" "api_gateway_5xx_errors" {
     Stage = module.lambda.api_gateway_stage_name
   }
 
-  alarm_actions = [aws_sns_topic.monitoring_alerts.arn]
-  ok_actions    = [aws_sns_topic.monitoring_alerts.arn]
+  # TODO: Re-enable once SNS topic is created
+  # alarm_actions = [aws_sns_topic.monitoring_alerts.arn]
+  # ok_actions    = [aws_sns_topic.monitoring_alerts.arn]
 
   tags = merge(
     local.common_tags,
@@ -297,8 +307,9 @@ resource "aws_cloudwatch_metric_alarm" "api_gateway_4xx_errors" {
     Stage = module.lambda.api_gateway_stage_name
   }
 
-  alarm_actions = [aws_sns_topic.monitoring_alerts.arn]
-  ok_actions    = [aws_sns_topic.monitoring_alerts.arn]
+  # TODO: Re-enable once SNS topic is created
+  # alarm_actions = [aws_sns_topic.monitoring_alerts.arn]
+  # ok_actions    = [aws_sns_topic.monitoring_alerts.arn]
 
   tags = merge(
     local.common_tags,
@@ -313,10 +324,11 @@ resource "aws_cloudwatch_metric_alarm" "api_gateway_4xx_errors" {
 # Outputs
 # ----------------------------------------------------------------------------
 
-output "monitoring_sns_topic_arn" {
-  description = "ARN des SNS Topics für Monitoring Alerts"
-  value       = aws_sns_topic.monitoring_alerts.arn
-}
+# TODO: Re-enable once SNS topic is created
+# output "monitoring_sns_topic_arn" {
+#   description = "ARN des SNS Topics für Monitoring Alerts"
+#   value       = aws_sns_topic.monitoring_alerts.arn
+# }
 
 output "monitoring_alarms_created" {
   description = "Liste aller erstellten CloudWatch Alarms"
