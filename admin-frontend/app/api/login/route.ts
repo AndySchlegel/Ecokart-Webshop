@@ -1,27 +1,27 @@
 import { NextResponse } from 'next/server';
 
 import { createSessionToken, setSessionCookie } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 const ADMIN_EMAIL = process.env.ADMIN_APP_EMAIL || 'admin@ecokart.com';
 const ADMIN_PASSWORD = process.env.ADMIN_APP_PASSWORD || 'ecokart2025';
 
 export async function POST(request: Request) {
   try {
-    console.log('[LOGIN] Environment check:', {
+    logger.debug('Admin login environment check', {
       hasEmail: !!process.env.ADMIN_APP_EMAIL,
       hasPassword: !!process.env.ADMIN_APP_PASSWORD,
       hasSecret: !!process.env.ADMIN_SESSION_SECRET,
-      email: ADMIN_EMAIL,
-      nodeEnv: process.env.NODE_ENV
+      nodeEnv: process.env.NODE_ENV,
+      component: 'admin-login'
     });
 
     const body = await request.json() as { username?: string; password?: string };
 
-    console.log('[LOGIN] Received credentials:', {
+    logger.debug('Admin login attempt', {
       username: body?.username,
       passwordLength: body?.password?.length,
-      expectedEmail: ADMIN_EMAIL,
-      expectedPasswordLength: ADMIN_PASSWORD.length
+      component: 'admin-login'
     });
 
     if (!body?.username || !body?.password) {
@@ -30,28 +30,29 @@ export async function POST(request: Request) {
 
     // Simple email/password check for admin login
     if (body.username !== ADMIN_EMAIL || body.password !== ADMIN_PASSWORD) {
-      console.log('[LOGIN] Credentials mismatch:', {
+      logger.warn('Admin login credentials mismatch', {
         usernameMatch: body.username === ADMIN_EMAIL,
-        passwordMatch: body.password === ADMIN_PASSWORD
+        component: 'admin-login'
       });
       return NextResponse.json({ message: 'Ungültige Zugangsdaten.' }, { status: 401 });
     }
 
-    console.log('[LOGIN] Creating session token...');
+    logger.debug('Creating admin session token', { component: 'admin-login' });
     const token = await createSessionToken(body.username);
-    console.log('[LOGIN] Session token created successfully');
+    logger.info('Admin session token created successfully', {
+      username: body.username,
+      component: 'admin-login'
+    });
 
     const response = NextResponse.json({ message: 'Login erfolgreich.' });
     setSessionCookie(response, token);
-    console.log('[LOGIN] Cookie set, returning response');
+    logger.debug('Admin session cookie set', { component: 'admin-login' });
     return response;
   } catch (error) {
-    console.error('[LOGIN] Error:', error);
-    console.error('[LOGIN] Error stack:', error instanceof Error ? error.stack : 'No stack');
+    logger.error('Admin login error', { component: 'admin-login' }, error as Error);
     return NextResponse.json({
       message: 'Serverfehler beim Login.',
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
+      error: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }

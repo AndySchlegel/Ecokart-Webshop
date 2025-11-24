@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { createArticle, deleteArticle, fetchArticles, type ArticlePayload } from '@/lib/articles';
 import { requireSessionCookie } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 async function ensureAuthenticated(request: Request) {
   const session = await requireSessionCookie(request);
@@ -107,9 +108,11 @@ export async function PUT(request: Request) {
       stock: body.stock ?? 0
     };
 
-    console.log('[PUT] Updating product:', body.id);
-    console.log('[PUT] URL:', updateUrl);
-    console.log('[PUT] Payload:', updatePayload);
+    logger.debug('Updating product', {
+      productId: body.id,
+      url: updateUrl,
+      component: 'admin-articles'
+    });
 
     const response = await fetch(updateUrl, {
       method: 'PUT',
@@ -121,7 +124,12 @@ export async function PUT(request: Request) {
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('[PUT] Backend error:', response.status, error);
+      logger.error('Backend product update failed', {
+        productId: body.id,
+        status: response.status,
+        error,
+        component: 'admin-articles'
+      }, new Error(error));
       throw new Error(`Backend update failed: ${response.status} ${error}`);
     }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 /**
  * Admin Global Error Boundary
@@ -16,12 +17,12 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     // Log critical admin error
-    console.error('CRITICAL: Admin global error:', {
-      error: error.message,
+    logger.error('CRITICAL: Admin global error', {
       digest: error.digest,
-      stack: error.stack,
       timestamp: new Date().toISOString(),
-    });
+      level: 'fatal',
+      component: 'AdminGlobalErrorBoundary'
+    }, error);
 
     // TODO: Send urgent alert to development team
     // Sentry.captureException(error, { level: 'fatal', tags: { area: 'admin', critical: true } });

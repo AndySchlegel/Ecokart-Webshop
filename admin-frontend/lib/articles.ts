@@ -1,3 +1,5 @@
+import { logger } from './logger';
+
 export type Article = {
   id: string;
   name: string;
@@ -21,7 +23,7 @@ const API_URL = BASE_URL?.endsWith('/')
     : `${BASE_URL}/api/products`;
 
 export async function fetchArticles() {
-  console.log('[ARTICLES] Fetching from URL:', API_URL);
+  logger.debug('Fetching articles', { url: API_URL, component: 'admin-articles' });
   if (!API_URL) {
     throw new Error('ADMIN_API_URL ist nicht gesetzt.');
   }

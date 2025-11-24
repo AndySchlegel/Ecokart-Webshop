@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
+import { logger } from './logger';
 
 const SESSION_COOKIE_NAME = 'admin_session';
 
@@ -17,7 +18,7 @@ export async function createSessionToken(username: string) {
       .sign(getJwtSecret());
     return token;
   } catch (error) {
-    console.error('[AUTH] Error creating session token:', error);
+    logger.error('Error creating session token', { component: 'admin-auth' }, error as Error);
     throw error;
   }
 }

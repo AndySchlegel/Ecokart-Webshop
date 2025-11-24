@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 /**
  * Admin Error Boundary
@@ -16,12 +17,12 @@ export default function Error({
 }) {
   useEffect(() => {
     // Log admin error with additional context
-    console.error('Admin dashboard error:', {
-      error: error.message,
+    logger.error('Admin dashboard error', {
       digest: error.digest,
       timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
-    });
+      component: 'AdminErrorBoundary'
+    }, error);
 
     // TODO: Alert admin team about dashboard errors
     // Sentry.captureException(error, { tags: { area: 'admin' } });
