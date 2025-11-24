@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 /**
  * Global Error Boundary
@@ -18,8 +19,12 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log critical error
-    console.error('CRITICAL: Global error boundary caught:', error);
+    // Log critical error with structured logging
+    logger.error('CRITICAL: Global error boundary caught error', {
+      digest: error.digest,
+      component: 'GlobalErrorBoundary',
+      level: 'fatal'
+    }, error);
 
     // TODO: Send to error tracking service with HIGH priority
     // Example: Sentry.captureException(error, { level: 'fatal' });

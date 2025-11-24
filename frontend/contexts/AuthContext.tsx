@@ -19,6 +19,7 @@ import {
   autoSignIn
 } from 'aws-amplify/auth';
 import { useRouter } from 'next/navigation';
+import { logger } from '@/lib/logger';
 
 // ============================================================================
 // TYPES
@@ -84,7 +85,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
 
       setUser(userData);
-      console.log('✅ User eingeloggt:', userData.email, `(${userData.role})`);
+      logger.info('User logged in', {
+        email: userData.email,
+        role: userData.role,
+        userId: userData.userId,
+        component: 'AuthContext'
+      });
 
     } catch (error) {
       // Nicht eingeloggt (ist OK)
@@ -99,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ----------------------------------------------------------------
   const login = async (email: string, password: string) => {
     try {
-      console.log('🔐 Versuche Login für:', email);
+      logger.debug('Attempting login', { email, component: 'AuthContext' });
 
       // Cognito Sign In
       const { isSignedIn, nextStep } = await signIn({
@@ -108,15 +114,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (isSignedIn) {
-        console.log('✅ Login erfolgreich');
+        logger.info('Login successful', { email, component: 'AuthContext' });
         // User-Daten neu laden
         await loadUser();
       } else {
-        console.warn('⚠️ Login incomplete, next step:', nextStep);
+        logger.warn('Login incomplete', { email, nextStep, component: 'AuthContext' });
         throw new Error('Login konnte nicht abgeschlossen werden');
       }
     } catch (error: any) {
-      console.error('❌ Login Error:', error);
+      logger.error('Login failed', {
+        email,
+        errorName: error.name,
+        component: 'AuthContext'
+      }, error);
 
       // Benutzerfreundliche Fehlermeldungen (auf Deutsch)
       if (error.name === 'UserNotFoundException' || error.name === 'NotAuthorizedException') {
@@ -134,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ----------------------------------------------------------------
   const register = async (email: string, password: string, name: string) => {
     try {
-      console.log('📝 Versuche Registrierung für:', email);
+      logger.debug('Attempting registration', { email, component: 'AuthContext' });
 
       // Cognito Sign Up
       const { isSignUpComplete, userId, nextStep } = await signUp({
@@ -150,26 +160,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
 
-      console.log('✅ Registrierung erfolgreich, User ID:', userId);
-      console.log('Next Step:', nextStep);
+      logger.info('Registration successful', {
+        email,
+        userId,
+        nextStep: nextStep.signUpStep,
+        component: 'AuthContext'
+      });
 
       // Bei Cognito mit Email-Verification:
       // User muss Email bestätigen (bekommt Code per Email)
       // Dann automatisch eingeloggt werden
       if (nextStep.signUpStep === 'CONFIRM_SIGN_UP') {
-        console.log('📧 Bestätigungs-Email wurde versendet');
+        logger.info('Confirmation email sent', { email, component: 'AuthContext' });
         // Redirect zur Verification-Page
         router.push(`/verify-email?email=${encodeURIComponent(email)}`);
         return; // Funktion beenden, kein Error werfen
       }
 
       if (isSignUpComplete) {
-        console.log('✅ Sign Up komplett - User kann sich einloggen');
+        logger.info('Sign up complete - user can login', { email, component: 'AuthContext' });
         // User-Daten neu laden
         await loadUser();
       }
     } catch (error: any) {
-      console.error('❌ Registrierungs Error:', error);
+      logger.error('Registration failed', {
+        email,
+        errorName: error.name,
+        component: 'AuthContext'
+      }, error);
 
       // Benutzerfreundliche Fehlermeldungen (auf Deutsch)
       if (error.name === 'UsernameExistsException') {
@@ -192,9 +210,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await amplifySignOut();
       setUser(null);
       router.push('/login');
-      console.log('✅ User ausgeloggt');
+      logger.info('User signed out', { component: 'AuthContext' });
     } catch (error) {
-      console.error('Logout Error:', error);
+      logger.error('Sign out failed', { component: 'AuthContext' }, error as Error);
       setUser(null);
     }
   };
@@ -294,7 +312,11 @@ export function useRequireAdmin() {
     }
 
     if (user?.role !== 'admin') {
-      console.warn('⚠️ Kein Admin-Zugriff');
+      logger.warn('Non-admin user attempted admin access', {
+        userId: user?.userId,
+        role: user?.role,
+        component: 'AuthContext'
+      });
       router.push('/');
     }
   }, [user, isAuthenticated, isLoading, router]);

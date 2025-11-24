@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { API_BASE_URL } from '../lib/config';
 import { fetchAuthSession } from 'aws-amplify/auth';
+import { logger } from '@/lib/logger';
 
 // ============================================================================
 // 🔧 HELPER FUNCTIONS
@@ -17,7 +18,7 @@ async function getAuthToken(): Promise<string | null> {
     const session = await fetchAuthSession();
     return session.tokens?.idToken?.toString() || null;
   } catch (error) {
-    console.error('Failed to get auth token:', error);
+    logger.error('Failed to get auth token', { component: 'CartContext' }, error as Error);
     return null;
   }
 }
@@ -144,7 +145,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setCart(data);
       }
     } catch (error) {
-      console.error('Failed to fetch cart:', error);
+      logger.error('Failed to fetch cart', { component: 'CartContext' }, error as Error);
     } finally {
       setIsLoading(false);
     }
@@ -176,7 +177,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       setCart(data);
     } catch (error: any) {
-      console.error('Failed to add to cart:', error);
+      logger.error('Failed to add to cart', {
+        productId,
+        quantity,
+        component: 'CartContext'
+      }, error);
       // Wenn error.message bereits übersetzt ist → direkt weitergeben
       // Wenn nicht → nochmal durch Translator
       const finalMessage = error.message || getGermanErrorMessage('Failed to add to cart');
@@ -210,7 +215,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       setCart(data);
     } catch (error: any) {
-      console.error('Failed to update cart:', error);
+      logger.error('Failed to update cart', {
+        productId,
+        quantity,
+        component: 'CartContext'
+      }, error);
       const finalMessage = error.message || getGermanErrorMessage('Failed to update cart');
       throw new Error(finalMessage);
     } finally {
@@ -240,7 +249,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       setCart(data);
     } catch (error: any) {
-      console.error('Failed to remove from cart:', error);
+      logger.error('Failed to remove from cart', {
+        productId,
+        component: 'CartContext'
+      }, error);
       const finalMessage = error.message || getGermanErrorMessage('Failed to remove from cart');
       throw new Error(finalMessage);
     } finally {
@@ -269,7 +281,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       setCart(data);
     } catch (error) {
-      console.error('Failed to clear cart:', error);
+      logger.error('Failed to clear cart', { component: 'CartContext' }, error as Error);
       throw error;
     } finally {
       setIsLoading(false);

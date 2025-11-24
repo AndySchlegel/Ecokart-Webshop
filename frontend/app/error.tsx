@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 /**
  * Error Boundary für die App
@@ -18,8 +19,11 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log error to console in development
-    console.error('Error boundary caught:', error);
+    // Log error with structured logging
+    logger.error('Error boundary caught error', {
+      digest: error.digest,
+      component: 'ErrorBoundary'
+    }, error);
 
     // TODO: In production, send to error tracking service (e.g., Sentry)
     // Example: Sentry.captureException(error);

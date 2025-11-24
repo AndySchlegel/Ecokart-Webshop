@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 /**
  * Checkout Error Boundary
@@ -16,12 +17,12 @@ export default function CheckoutError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log checkout error with context
-    console.error('Checkout error occurred:', {
-      error: error.message,
+    // Log checkout error with structured logging
+    logger.error('Checkout error occurred', {
       digest: error.digest,
       timestamp: new Date().toISOString(),
-    });
+      component: 'CheckoutErrorBoundary'
+    }, error);
 
     // TODO: Track checkout abandonment due to errors
     // analytics.track('checkout_error', { error: error.message });
