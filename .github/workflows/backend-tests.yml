@@ -1,0 +1,69 @@
+name: Backend Tests
+
+# Trigger workflow on push and pull requests to main/develop branches
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-tests.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-tests.yml'
+
+jobs:
+  test:
+    name: Run Backend Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run tests with coverage
+        working-directory: backend
+        run: npm run test:coverage
+        env:
+          # Mock environment variables for tests
+          COGNITO_USER_POOL_ID: 'eu-central-1_test123'
+          COGNITO_CLIENT_ID: 'test-client-id'
+          NODE_ENV: test
+
+      - name: Upload coverage reports to Codecov (optional)
+        uses: codecov/codecov-action@v3
+        if: always()
+        with:
+          directory: backend/coverage
+          flags: backend
+          fail_ci_if_error: false
+
+      - name: Archive coverage results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: coverage-report
+          path: backend/coverage/
+          retention-days: 30
+
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "✅ Backend tests completed!"
+          echo "Coverage report available in artifacts"
