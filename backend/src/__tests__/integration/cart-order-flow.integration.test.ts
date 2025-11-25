@@ -16,7 +16,24 @@ import express from 'express';
 import { getDocClient } from '../helpers/localstack';
 import { GetCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
 
-// Import your Express app
+// ============================================================================
+// Mock Authentication Middleware
+// ============================================================================
+// Mock the requireAuth middleware to bypass JWT validation in integration tests
+jest.mock('../../middleware/cognitoJwtAuth', () => ({
+  requireAuth: (req: any, res: any, next: any) => {
+    // Set a test user on the request
+    req.user = {
+      userId: 'integration-test-user',
+      email: 'test@ecokart.com',
+      role: 'customer',
+      emailVerified: true
+    };
+    next();
+  }
+}));
+
+// Import routes AFTER mocking auth (important!)
 import cartRoutes from '../../routes/cartRoutes';
 import orderRoutes from '../../routes/orderRoutes';
 
@@ -27,19 +44,7 @@ import orderRoutes from '../../routes/orderRoutes';
 const app = express();
 app.use(express.json());
 
-// Mock auth middleware for testing
-app.use((req, res, next) => {
-  // Simulate authenticated user
-  req.user = {
-    userId: 'integration-test-user',
-    email: 'test@ecokart.com',
-    role: 'customer',
-    emailVerified: true
-  };
-  next();
-});
-
-// Add routes
+// Add routes (auth is mocked at module level above)
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 
