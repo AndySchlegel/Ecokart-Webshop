@@ -261,6 +261,62 @@ backend/
 
 ## 🧪 Testing
 
+### Unit Tests
+Schnelle Tests für Code-Logik (mocked dependencies).
+
+```bash
+# Run all unit tests
+npm test
+
+# Run with coverage report
+npm run test:coverage
+
+# Watch mode (development)
+npm run test:watch
+```
+
+**Coverage:** 63 tests, 82% code coverage
+
+---
+
+### Integration Tests
+End-to-End Tests mit echtem DynamoDB (LocalStack container).
+
+```bash
+# Run integration tests (requires Docker)
+npm run test:integration
+
+# Run all tests (unit + integration)
+npm run test:all
+```
+
+**What is tested:**
+- ✅ Complete Cart → Order flow
+- ✅ Stock management and reservation
+- ✅ Multi-product orders
+- ✅ Out-of-stock handling
+- ✅ Database state verification
+
+**Requirements:**
+- Docker must be running (uses LocalStack container)
+- Tests create temporary DynamoDB tables
+- Automatic cleanup after tests
+
+---
+
+### CI/CD (GitHub Actions)
+Tests run automatically on every push/PR:
+
+- **Unit Tests:** Run in parallel (~30s)
+- **Integration Tests:** Run with Docker service (~2-3min)
+- **Coverage Reports:** Uploaded to artifacts
+
+View test results: [GitHub Actions](../../actions/workflows/backend-tests.yml)
+
+---
+
+### Manual API Testing
+
 ```bash
 # Test health endpoint
 curl http://localhost:4000/api/health
