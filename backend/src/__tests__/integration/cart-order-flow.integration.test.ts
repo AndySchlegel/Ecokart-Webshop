@@ -15,8 +15,8 @@ import { getDocClient } from '../helpers/localstack';
 import { GetCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
 
 // Import your Express app
-import cartRoutes from '../../routes/cart';
-import orderRoutes from '../../routes/orders';
+import cartRoutes from '../../routes/cartRoutes';
+import orderRoutes from '../../routes/orderRoutes';
 
 // ============================================================================
 // Test App Setup
