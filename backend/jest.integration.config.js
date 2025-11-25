@@ -21,7 +21,7 @@ module.exports = {
   globalTeardown: '<rootDir>/jest.integration.teardown.ts',
 
   // Longer timeout for integration tests (LocalStack startup takes time)
-  testTimeout: 60000, // 60 seconds
+  testTimeout: 120000, // 120 seconds (2 minutes) - LocalStack needs time to start
 
   // Coverage configuration
   collectCoverage: false, // Integration tests don't need coverage
