@@ -47,7 +47,12 @@ app.use('/api/orders', orderRoutes);
 
 describe('Integration: Cart → Order Flow', () => {
   const testUserId = 'integration-test-user';
-  const docClient = getDocClient();
+  let docClient: any;
+
+  beforeAll(() => {
+    // Initialize docClient AFTER globalSetup has run
+    docClient = getDocClient();
+  });
 
   // ============================================================================
   // Test 1: Complete Happy Path
@@ -321,7 +326,12 @@ describe('Integration: Cart → Order Flow', () => {
 // ============================================================================
 
 describe('Integration: Database State Verification', () => {
-  const docClient = getDocClient();
+  let docClient: any;
+
+  beforeAll(() => {
+    // Initialize docClient AFTER globalSetup has run
+    docClient = getDocClient();
+  });
 
   it('should have test products in database', async () => {
     const products = await docClient.send(new ScanCommand({
