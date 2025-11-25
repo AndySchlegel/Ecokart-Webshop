@@ -47,7 +47,7 @@ jobs:
           NODE_ENV: test
 
       - name: Upload coverage reports to Codecov (optional)
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         if: always()
         with:
           directory: backend/coverage
@@ -55,7 +55,7 @@ jobs:
           fail_ci_if_error: false
 
       - name: Archive coverage results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage-report

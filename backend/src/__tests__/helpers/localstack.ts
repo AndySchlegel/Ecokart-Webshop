@@ -254,14 +254,30 @@ export async function seedTestData(): Promise<void> {
 
 export function getDynamoClient(): DynamoDBClient {
   if (!dynamoClient) {
-    throw new Error('LocalStack not started. Call startLocalStack() first.');
+    // Lazy initialization: Create client from environment variable
+    // (globalSetup runs in different process, so we recreate client here)
+    const endpoint = process.env.DYNAMODB_ENDPOINT;
+    if (!endpoint) {
+      throw new Error('DYNAMODB_ENDPOINT not set. globalSetup may not have run.');
+    }
+
+    dynamoClient = new DynamoDBClient({
+      region: 'us-east-1',
+      endpoint,
+      credentials: {
+        accessKeyId: 'test',
+        secretAccessKey: 'test'
+      }
+    });
   }
   return dynamoClient;
 }
 
 export function getDocClient(): DynamoDBDocumentClient {
   if (!docClient) {
-    throw new Error('LocalStack not started. Call startLocalStack() first.');
+    // Lazy initialization: Create document client from regular client
+    const client = getDynamoClient(); // This will lazy-init if needed
+    docClient = DynamoDBDocumentClient.from(client);
   }
   return docClient;
 }
