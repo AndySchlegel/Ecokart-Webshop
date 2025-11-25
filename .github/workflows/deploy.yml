@@ -27,6 +27,13 @@ on:
       - 'frontend/**'
       - 'admin-frontend/**'
       - '.github/workflows/deploy.yml'
+      # Exclude test files and test infrastructure
+      - '!backend/src/**/*.test.ts'
+      - '!backend/src/**/*.integration.test.ts'
+      - '!backend/src/__tests__/**'
+      - '!backend/jest*.config.*'
+      - '!backend/jest*.setup.*'
+      - '!backend/jest*.teardown.*'
 
   # Manual trigger with options
   workflow_dispatch:
