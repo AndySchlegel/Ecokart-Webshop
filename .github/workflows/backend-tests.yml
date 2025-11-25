@@ -102,6 +102,7 @@ jobs:
         run: npm run test:integration
         env:
           NODE_ENV: test
+          DB_TYPE: dynamodb  # Enable DynamoDB mode for controllers
           # Docker is available via GitHub Actions services
 
       - name: Integration Test Summary

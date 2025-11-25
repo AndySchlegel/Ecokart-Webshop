@@ -15,6 +15,13 @@ module.exports = {
     '**/?(*.)+(spec|test).ts'
   ],
 
+  // Exclude integration tests (they run separately with LocalStack)
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/__tests__/integration/',
+    '\\.integration\\.test\\.ts$'
+  ],
+
   // Transform TypeScript files
   transform: {
     '^.+\\.ts$': 'ts-jest'
