@@ -19,7 +19,8 @@ module.exports = {
   testPathIgnorePatterns: [
     '/node_modules/',
     '/__tests__/integration/',
-    '\\.integration\\.test\\.ts$'
+    '\\.integration\\.test\\.ts$',
+    '/__tests__/helpers/'  // Exclude helper files (not actual tests)
   ],
 
   // Transform TypeScript files
