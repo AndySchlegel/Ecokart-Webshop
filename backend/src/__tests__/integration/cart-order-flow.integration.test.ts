@@ -70,7 +70,7 @@ describe('Integration: Cart → Order Flow', () => {
     // Step 1: Add product to cart
     // ----------------------------------------------------------------
     const addToCartResponse = await request(app)
-      .post('/api/cart')
+      .post('/api/cart/items')
       .send({
         productId: 'test-product-1',
         quantity: 2
@@ -194,7 +194,7 @@ describe('Integration: Cart → Order Flow', () => {
   it('should handle cart with multiple products', async () => {
     // Add first product
     await request(app)
-      .post('/api/cart')
+      .post('/api/cart/items')
       .send({
         productId: 'test-product-1',
         quantity: 1
@@ -202,7 +202,7 @@ describe('Integration: Cart → Order Flow', () => {
 
     // Add second product
     await request(app)
-      .post('/api/cart')
+      .post('/api/cart/items')
       .send({
         productId: 'test-product-2',
         quantity: 3
@@ -258,7 +258,7 @@ describe('Integration: Cart → Order Flow', () => {
   it('should reject order if product is out of stock', async () => {
     // Try to add out-of-stock product
     const addToCartResponse = await request(app)
-      .post('/api/cart')
+      .post('/api/cart/items')
       .send({
         productId: 'test-product-out-of-stock',
         quantity: 1
@@ -276,7 +276,7 @@ describe('Integration: Cart → Order Flow', () => {
   it('should retrieve all orders for authenticated user', async () => {
     // Create first order
     await request(app)
-      .post('/api/cart')
+      .post('/api/cart/items')
       .send({ productId: 'test-product-1', quantity: 1 });
 
     await request(app)
