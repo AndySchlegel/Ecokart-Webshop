@@ -62,9 +62,10 @@ if (process.env.DYNAMODB_ENDPOINT) {
   // Beispiel: http://localhost:8000
   config.endpoint = process.env.DYNAMODB_ENDPOINT;
 
-  // Dummy Credentials für DynamoDB Local
+  // Dummy Credentials für DynamoDB Local AND Tests
   // DynamoDB Local prüft keine echten Credentials
-  if (process.env.NODE_ENV === 'development') {
+  // Tests need dummy credentials to avoid dynamic import errors
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
     config.credentials = {
       accessKeyId: 'local',
       secretAccessKey: 'local',
