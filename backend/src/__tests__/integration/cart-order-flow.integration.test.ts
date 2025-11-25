@@ -7,6 +7,8 @@
 //   2. Create order
 //   3. Cart is cleared
 //   4. Stock is decremented
+//
+// NOTE: This test runs in CI/CD via GitHub Actions with Docker-based LocalStack
 // ============================================================================
 
 import request from 'supertest';
