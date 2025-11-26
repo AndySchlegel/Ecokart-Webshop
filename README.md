@@ -29,7 +29,7 @@ Dieses Projekt demonstriert professionelle Softwareentwicklung nach 6 Monaten in
 
 ## 🚦 Current Status
 
-**Last Updated:** 24. November 2025
+**Last Updated:** 25. November 2025
 
 ### ✅ Implemented Features
 - ✅ **Authentication** - AWS Cognito JWT (User Registration, Login, Email Verification)
@@ -45,12 +45,13 @@ Dieses Projekt demonstriert professionelle Softwareentwicklung nach 6 Monaten in
 - ✅ **Loading States** - Visual feedback für Cart Operations
 - ✅ **CloudWatch Monitoring** - 9 Alarms für Lambda, DynamoDB, API Gateway (See [docs/guides/MONITORING.md](docs/guides/MONITORING.md))
 - ✅ **Code Quality** - ESLint/Prettier configured (0 errors, warnings only)
+- ✅ **Unit Tests** - Jest + ts-jest, 63 tests passing, 60-69% coverage (See [backend/jest.config.js](backend/jest.config.js))
 
 ### 🚧 In Progress
-- 🚧 **Automated Testing** - Unit Tests, E2E Tests (Next Priority)
+- 🚧 **E2E Testing** - Playwright für kritische User Journeys (Next Priority)
 
 ### 📋 Next Milestones
-1. **Testing & Quality** - Unit Tests, E2E Tests, Edge Case Testing
+1. **E2E Testing** - Playwright für 5-10 kritische User Journeys
 2. **Payment Integration** - Stripe Checkout & Webhooks
 3. **Email Notifications** - Order Confirmation, Shipping Updates
 4. **Production Polish** - Performance Optimization, Security Audit
@@ -67,10 +68,11 @@ Dieses Projekt demonstriert professionelle Softwareentwicklung nach 6 Monaten in
 | **Authentication** | ✅ Cognito JWT | - |
 | **Monitoring** | ✅ CloudWatch Alarms | - |
 | **Code Quality** | ✅ ESLint configured | - |
-| **Tests** | ❌ Manual only | 80% coverage |
+| **Unit Tests** | ✅ 63 passing (60-69%) | - |
+| **E2E Tests** | ❌ Missing | 5-10 flows |
 | **AWS Costs** | ✅ <$10/month | <$10/month |
 | **Documentation** | ✅ 100% complete | 100% |
-| **Last Deploy** | 24.11.2025 | - |
+| **Last Deploy** | 25.11.2025 | - |
 
 ---
 
@@ -242,19 +244,19 @@ See [docs/ACTION_PLAN.md#known-issues](docs/ACTION_PLAN.md#known-issues) for cur
 ## 📈 Roadmap
 
 ### Recently Completed (Nov 2025)
-- ✅ Inventory Management System
-- ✅ Admin Stock Management UI
-- ✅ Auto Lambda Cleanup in Destroy
-- ✅ Re-Seed Database Workflow
+- ✅ **Unit Tests** - 63 tests passing, CI/CD integration (25.11.2025)
+- ✅ **Error Handling & Code Quality** - ESLint, CloudWatch Monitoring (24.11.2025)
+- ✅ **Inventory Management System** - Stock tracking, Admin UI (19.11.2025)
+- ✅ **AWS Cognito Authentication** - JWT, Email Verification (20.11.2025)
 
 ### Current Sprint
 - 🚧 AWS Cost Optimization
 - 🚧 Documentation Restructure
 
 ### Next Up
-- [ ] Automated Testing (Unit + E2E)
-- [ ] Stock Alert System
-- [ ] Multi-Warehouse Support
+- [ ] E2E Testing (Playwright)
+- [ ] Payment Integration (Stripe)
+- [ ] Email Notifications (AWS SES)
 
 **Full Roadmap:** [docs/ACTION_PLAN.md](docs/ACTION_PLAN.md)
 
