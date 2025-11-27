@@ -178,9 +178,26 @@ export const createCheckoutSession = async (
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     const requestOrigin = typeof req.headers.origin === 'string' ? req.headers.origin : undefined;
-    const baseRedirectUrl = (requestOrigin && requestOrigin.startsWith('http'))
-      ? requestOrigin
-      : FRONTEND_URL;
+    const forwardedProtoHeader = req.headers['x-forwarded-proto'];
+    const forwardedHostHeader = req.headers['x-forwarded-host'];
+    const hostHeader = typeof forwardedHostHeader === 'string'
+      ? forwardedHostHeader
+      : typeof req.headers.host === 'string'
+        ? req.headers.host
+        : undefined;
+    const protoHeader = typeof forwardedProtoHeader === 'string'
+      ? forwardedProtoHeader
+      : req.secure
+        ? 'https'
+        : 'http';
+
+    const derivedHostUrl = hostHeader ? `${protoHeader}://${hostHeader}` : undefined;
+
+    const baseRedirectUrl = [
+      requestOrigin,
+      derivedHostUrl,
+      FRONTEND_URL,
+    ].find((url) => url && url.startsWith('http'));
 
     if (!baseRedirectUrl) {
       logger.error('Cannot determine frontend redirect URL', { userId, requestOrigin });
