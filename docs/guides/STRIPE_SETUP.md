@@ -62,7 +62,7 @@ terraform -chdir=terraform plan -var-file="environments/development.tfvars"
 |-------|---------|--------|
 | `lambda: "STRIPE_SECRET_KEY is not set"` | Secret fehlt komplett | Secrets wie oben gesetzt? Workflow neu triggern |
 | `Terraform plan` verlangt Eingaben | `TF_VAR_*` lokal nicht exportiert | `export TF_VAR_stripe_secret_key=…` setzen |
-| Checkout leitet auf falsche Domain | `FRONTEND_URL` nicht korrekt gesetzt | Terraform `frontend_url` in passender `*.tfvars` anpassen |
+| Checkout leitet auf falsche Domain | `FRONTEND_URL` nicht korrekt gesetzt | `FRONTEND_URL` via `x-forwarded-host` ermittelt – keine Aktion nötig |
 
 ---
 

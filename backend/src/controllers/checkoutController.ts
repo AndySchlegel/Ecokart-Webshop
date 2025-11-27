@@ -177,6 +177,7 @@ export const createCheckoutSession = async (
     // User wird zu Stripe Hosted Checkout Page weitergeleitet.
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+    const frontendUrlHeader = typeof req.headers['x-frontend-url'] === 'string' ? req.headers['x-frontend-url'] : undefined;
     const requestOrigin = typeof req.headers.origin === 'string' ? req.headers.origin : undefined;
     const forwardedProtoHeader = req.headers['x-forwarded-proto'];
     const forwardedHostHeader = req.headers['x-forwarded-host'];
@@ -194,6 +195,7 @@ export const createCheckoutSession = async (
     const derivedHostUrl = hostHeader ? `${protoHeader}://${hostHeader}` : undefined;
 
     const baseRedirectUrl = [
+      frontendUrlHeader,
       requestOrigin,
       derivedHostUrl,
       FRONTEND_URL,
