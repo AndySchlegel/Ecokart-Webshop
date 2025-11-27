@@ -123,7 +123,20 @@ export function configureAmplify() {
   // FÜR LOKALE ENTWICKLUNG: CookieStorage hat manchmal Probleme auf localhost
   // → Nutze defaultStorage (localStorage) in development
   if (process.env.NODE_ENV === 'production') {
-    cognitoUserPoolsTokenProvider.setKeyValueStorage(new CookieStorage());
+    const cookieDomain = process.env.NEXT_PUBLIC_COOKIE_DOMAIN || '.amplifyapp.com';
+
+    cognitoUserPoolsTokenProvider.setKeyValueStorage(
+      new CookieStorage({
+        domain: cookieDomain,
+        sameSite: 'lax',
+        secure: true,
+      })
+    );
+
+    logger.info('Amplify CookieStorage configured', {
+      cookieDomain,
+      component: 'amplify',
+    });
   }
   // In development nutzt Amplify automatisch localStorage (defaultStorage)
 

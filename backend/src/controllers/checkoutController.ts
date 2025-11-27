@@ -177,6 +177,18 @@ export const createCheckoutSession = async (
     // User wird zu Stripe Hosted Checkout Page weitergeleitet.
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+    const requestOrigin = typeof req.headers.origin === 'string' ? req.headers.origin : undefined;
+    const baseRedirectUrl = (requestOrigin && requestOrigin.startsWith('http'))
+      ? requestOrigin
+      : FRONTEND_URL;
+
+    if (!baseRedirectUrl) {
+      logger.error('Cannot determine frontend redirect URL', { userId, requestOrigin });
+      return res.status(500).json({ error: 'Frontend URL not configured' });
+    }
+
+    const normalizedRedirectUrl = baseRedirectUrl.replace(/\/+$/, '');
+
     const session = await stripe.checkout.sessions.create({
       // Line Items (Produkte)
       line_items: lineItems,
@@ -186,10 +198,10 @@ export const createCheckoutSession = async (
 
       // Success URL (nach erfolgreicher Zahlung)
       // 💡 {CHECKOUT_SESSION_ID} wird von Stripe automatisch ersetzt
-      success_url: `${FRONTEND_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${normalizedRedirectUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
 
       // Cancel URL (wenn User abbricht)
-      cancel_url: `${FRONTEND_URL}/checkout/cancel`,
+      cancel_url: `${normalizedRedirectUrl}/checkout/cancel`,
 
       // Metadata (für Webhook Handler)
       // 💡 Diese Daten bekommt der Webhook nach erfolgreicher Zahlung
