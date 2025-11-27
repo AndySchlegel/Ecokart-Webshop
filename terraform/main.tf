@@ -197,8 +197,6 @@ module "amplify" {
     NEXT_PUBLIC_USER_POOL_ID       = module.cognito.user_pool_id
     NEXT_PUBLIC_USER_POOL_CLIENT_ID = module.cognito.user_pool_client_id
     NEXT_PUBLIC_AWS_REGION         = var.aws_region
-    NEXT_PUBLIC_COOKIE_DOMAIN      = ".${replace(module.amplify[0].branch_url, "https://", "")}"
-    NEXT_PUBLIC_FRONTEND_ORIGIN    = module.amplify[0].branch_url
   }
 
   # Basic Auth (optional)
