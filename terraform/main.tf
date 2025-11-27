@@ -133,6 +133,10 @@ module "lambda" {
     # Cognito Configuration for JWT Validation
     COGNITO_USER_POOL_ID    = module.cognito.user_pool_id
     COGNITO_CLIENT_ID       = module.cognito.user_pool_client_id
+    # Stripe Payment Integration
+    STRIPE_SECRET_KEY       = var.stripe_secret_key
+    STRIPE_WEBHOOK_SECRET   = var.stripe_webhook_secret
+    FRONTEND_URL            = var.frontend_url
   }
 
   # DynamoDB Table Names für IAM Permissions

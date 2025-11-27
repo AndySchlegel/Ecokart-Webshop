@@ -112,6 +112,45 @@ variable "jwt_secret" {
   }
 }
 
+# ----------------------------------------------------------------------------
+# Stripe Payment Integration
+# ----------------------------------------------------------------------------
+
+variable "stripe_secret_key" {
+  description = "Stripe API Secret Key für Payment Processing (ERFORDERLICH - Test oder Live Key)"
+  type        = string
+  sensitive   = true
+  default     = ""
+
+  validation {
+    condition     = var.stripe_secret_key == "" || can(regex("^sk_(test|live)_", var.stripe_secret_key))
+    error_message = "Stripe Secret Key muss mit 'sk_test_' oder 'sk_live_' beginnen."
+  }
+}
+
+variable "stripe_webhook_secret" {
+  description = "Stripe Webhook Secret für Signatur-Verifizierung (ERFORDERLICH für Webhook-Handler)"
+  type        = string
+  sensitive   = true
+  default     = ""
+
+  validation {
+    condition     = var.stripe_webhook_secret == "" || can(regex("^whsec_", var.stripe_webhook_secret))
+    error_message = "Stripe Webhook Secret muss mit 'whsec_' beginnen."
+  }
+}
+
+variable "frontend_url" {
+  description = "Frontend URL für Stripe Checkout Success/Cancel Redirects (z.B. https://main.d1d14e6pdoz4r.amplifyapp.com)"
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.frontend_url == "" || can(regex("^https?://", var.frontend_url))
+    error_message = "Frontend URL muss mit http:// oder https:// beginnen."
+  }
+}
+
 variable "lambda_source_path" {
   description = "Pfad zum Lambda-Quellcode (relativ zum Terraform-Root)"
   type        = string
