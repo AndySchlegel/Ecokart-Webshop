@@ -133,6 +133,7 @@ git push origin develop  # Auto-deploys to development
 | [ACTION_PLAN.md](docs/ACTION_PLAN.md) | Current tasks & roadmap | 24.11.2025 |
 | [DEVELOPMENT.md](docs/DEVELOPMENT.md) | Technical documentation | 20.11.2025 |
 | [LESSONS_LEARNED.md](docs/LESSONS_LEARNED.md) | Best practices & pitfalls | 24.11.2025 |
+| [STRIPE_SETUP.md](docs/guides/STRIPE_SETUP.md) | Stripe Keys & Deployment Secrets | 25.11.2025 |
 
 ### 📂 Documentation Structure
 

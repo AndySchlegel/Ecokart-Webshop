@@ -103,6 +103,24 @@ jobs:
           echo "🎯 Deploying to: $ENV"
 
       # ======================================================================
+      # 2.5 Validate required Stripe secrets early
+      # ======================================================================
+      - name: ✅ Validate Stripe Secrets
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+        run: |
+          if [ -z "$STRIPE_SECRET_KEY" ]; then
+            echo "::error::STRIPE_SECRET_KEY is not configured in GitHub Secrets."
+            exit 1
+          fi
+          if [ -z "$STRIPE_WEBHOOK_SECRET" ]; then
+            echo "::error::STRIPE_WEBHOOK_SECRET is not configured in GitHub Secrets."
+            exit 1
+          fi
+          echo "✅ Stripe secrets detected (values hidden for security)."
+
+      # ======================================================================
       # 3. Configure AWS Credentials via OIDC
       # ======================================================================
       - name: 🔐 Configure AWS Credentials (OIDC)

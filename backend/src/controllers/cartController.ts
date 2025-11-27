@@ -205,7 +205,7 @@ export const addToCart = async (req: Request, res: Response): Promise<void> => {
     // SCHRITT 7: Cart in DynamoDB speichern
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    const updated = await database.updateCart(userId, { items: cart.items });
+    const updated = await database.updateCart(cart.id, { items: cart.items });
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // SCHRITT 8: STOCK RESERVIEREN in DynamoDB
@@ -313,7 +313,7 @@ export const updateCartItem = async (req: Request, res: Response): Promise<void>
       }
     }
 
-    const updated = await database.updateCart(userId, { items: cart.items });
+    const updated = await database.updateCart(cart.id, { items: cart.items });
     res.json(updated);
 
   } catch (error) {
@@ -359,7 +359,7 @@ export const removeFromCart = async (req: Request, res: Response): Promise<void>
 
     // Produkt aus Cart entfernen
     cart.items = cart.items.filter(item => item.productId !== productId);
-    const updated = await database.updateCart(userId, { items: cart.items });
+    const updated = await database.updateCart(cart.id, { items: cart.items });
     res.json(updated);
 
   } catch (error) {

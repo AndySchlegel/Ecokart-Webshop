@@ -119,7 +119,13 @@ export function configureAmplify() {
   // WICHTIG: Bei Next.js SSR müssen Tokens in Cookies gespeichert werden
   // localStorage funktioniert nicht mit SSR (Server hat kein window)
   // CookieStorage speichert Tokens persistent über Browser-Reloads
-  cognitoUserPoolsTokenProvider.setKeyValueStorage(new CookieStorage());
+  //
+  // FÜR LOKALE ENTWICKLUNG: CookieStorage hat manchmal Probleme auf localhost
+  // → Nutze defaultStorage (localStorage) in development
+  if (process.env.NODE_ENV === 'production') {
+    cognitoUserPoolsTokenProvider.setKeyValueStorage(new CookieStorage());
+  }
+  // In development nutzt Amplify automatisch localStorage (defaultStorage)
 
   logger.info('Amplify Auth configured', {
     userPoolId,

@@ -120,10 +120,9 @@ variable "stripe_secret_key" {
   description = "Stripe API Secret Key für Payment Processing (ERFORDERLICH - Test oder Live Key)"
   type        = string
   sensitive   = true
-  default     = ""
 
   validation {
-    condition     = var.stripe_secret_key == "" || can(regex("^sk_(test|live)_", var.stripe_secret_key))
+    condition     = can(regex("^sk_(test|live)_", var.stripe_secret_key))
     error_message = "Stripe Secret Key muss mit 'sk_test_' oder 'sk_live_' beginnen."
   }
 }
@@ -132,10 +131,9 @@ variable "stripe_webhook_secret" {
   description = "Stripe Webhook Secret für Signatur-Verifizierung (ERFORDERLICH für Webhook-Handler)"
   type        = string
   sensitive   = true
-  default     = ""
 
   validation {
-    condition     = var.stripe_webhook_secret == "" || can(regex("^whsec_", var.stripe_webhook_secret))
+    condition     = can(regex("^whsec_", var.stripe_webhook_secret))
     error_message = "Stripe Webhook Secret muss mit 'whsec_' beginnen."
   }
 }

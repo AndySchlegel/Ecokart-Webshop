@@ -154,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           userAttributes: {
             email,
             name, // Optional: Name speichern
-            'custom:role': 'customer', // Standard-Role = customer
+            // 'custom:role': 'customer', // DISABLED für dev-local (Custom Attribute fehlt)
           },
           autoSignIn: true, // Auto-Login nach Bestätigung
         },
