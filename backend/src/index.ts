@@ -30,6 +30,8 @@ import dotenv from 'dotenv';
 import productRoutes from './routes/productRoutes';
 import cartRoutes from './routes/cartRoutes';
 import orderRoutes from './routes/orderRoutes';
+import checkoutRoutes from './routes/checkoutRoutes';
+import * as webhookController from './controllers/webhookController';
 import { logger } from './utils/logger';
 
 // ============================================================================
@@ -62,6 +64,22 @@ app.use(cors({
   ],
   credentials: true               // Erlaube Cookies/Authorization Headers
 }));
+
+// ============================================================================
+// 🪝 STRIPE WEBHOOK ROUTE (MUSS VOR express.json() stehen!)
+// ============================================================================
+// ⚠️ WICHTIG: Diese Route braucht RAW Body für Signature Verification!
+// Deshalb MUSS sie VOR express.json() registriert werden.
+//
+// express.raw() gibt uns den Body als Buffer (nicht als JSON Object)
+// Das ist notwendig für stripe.webhooks.constructEvent()
+// ============================================================================
+
+app.post(
+  '/api/webhooks/stripe',
+  express.raw({ type: 'application/json' }),
+  webhookController.handleStripeWebhook
+);
 
 // JSON Parser Middleware
 // 💡 Wandelt eingehende JSON-Requests in JavaScript-Objekte um
@@ -122,6 +140,11 @@ app.use('/api/cart', cartRoutes);
 // Siehe: ./routes/orderRoutes.ts für Details
 app.use('/api/orders', orderRoutes);
 
+// 💳 Checkout-Routen (Stripe Payment)
+// ➡️ Stripe Checkout Session erstellen, Payment verarbeiten
+// Siehe: ./routes/checkoutRoutes.ts für Details
+app.use('/api/checkout', checkoutRoutes);
+
 // 404 Handler
 // 💡 Fängt alle Requests zu nicht existierenden Routen ab
 // ⚠️ Muss NACH allen anderen Routen definiert werden!
@@ -172,6 +195,13 @@ if (process.env.AWS_EXECUTION_ENV === undefined) {
     console.log('│  GET    /api/orders                     │');
     console.log('│  GET    /api/orders/:id                 │');
     console.log('│  PATCH  /api/orders/:id/status          │');
+    console.log('│                                         │');
+    console.log('│  💳 Checkout (Stripe):                  │');
+    console.log('│  POST   /api/checkout                   │');
+    console.log('│  GET    /api/checkout/session/:id       │');
+    console.log('│                                         │');
+    console.log('│  🪝 Webhooks:                           │');
+    console.log('│  POST   /api/webhooks/stripe            │');
     console.log('│                                         │');
     console.log('│  🏷️  Products:                          │');
     console.log('│  GET    /api/products                   │');

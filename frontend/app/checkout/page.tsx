@@ -9,20 +9,20 @@ import { API_BASE_URL } from '../../lib/config';
 import { fetchAuthSession } from 'aws-amplify/auth';
 
 export default function CheckoutPage() {
-  const { cart, cartTotal, isLoading: cartLoading, clearCart } = useCart();
+  const { cart, cartTotal, isLoading: cartLoading } = useCart();
   const { user } = useAuth();
   const router = useRouter();
 
-  const [shippingAddress, setShippingAddress] = useState({
-    name: '', // User gibt Namen im Formular ein
-    street: '',
-    city: '',
-    postalCode: '',
-    country: 'Deutschland'
-  });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  // Shipping Address State
+  const [shippingAddress, setShippingAddress] = useState({
+    street: '',
+    city: '',
+    zipCode: '',
+    country: 'Deutschland'
+  });
 
   if (!user) {
     return (
@@ -66,34 +66,33 @@ export default function CheckoutPage() {
         throw new Error('Nicht eingeloggt - bitte melde dich erneut an');
       }
 
-      const orderData = {
-        items: cart.items,
-        total: cartTotal,
-        shippingAddress
-      };
+      // Validiere Shipping Address
+      if (!shippingAddress.street || !shippingAddress.city || !shippingAddress.zipCode || !shippingAddress.country) {
+        throw new Error('Bitte fülle alle Adressfelder aus');
+      }
 
-      const response = await fetch(`${API_BASE_URL}/api/orders`, {
+      // Erstelle Stripe Checkout Session
+      // Der Cart wird vom Backend direkt aus der Datenbank geholt
+      const response = await fetch(`${API_BASE_URL}/api/checkout`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(orderData)
+        body: JSON.stringify({ shippingAddress })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Bestellung fehlgeschlagen');
+        throw new Error(errorData.error || 'Checkout fehlgeschlagen');
       }
 
-      const order = await response.json();
+      const { url } = await response.json();
 
-      // Clear cart after successful order
-      await clearCart();
-
-      router.push(`/order-confirmation/${order.id}`);
+      // Leite zu Stripe Checkout weiter
+      window.location.href = url;
     } catch (err: any) {
-      setError(err.message || 'Bestellung konnte nicht abgeschlossen werden');
+      setError(err.message || 'Checkout konnte nicht gestartet werden');
       setIsSubmitting(false);
     }
   };
@@ -110,62 +109,40 @@ export default function CheckoutPage() {
           <div className="form-section">
             <h2>LIEFERADRESSE</h2>
 
-            {error && (
-              <div className="form-error">
-                {error}
-              </div>
-            )}
-
-            <div className="form-group">
-              <label htmlFor="name">Vollständiger Name *</label>
-              <input
-                id="name"
-                type="text"
-                value={shippingAddress.name}
-                onChange={(e) => setShippingAddress({ ...shippingAddress, name: e.target.value })}
-                placeholder="Max Mustermann"
-                required
-                disabled={isSubmitting}
-              />
-            </div>
-
             <div className="form-group">
               <label htmlFor="street">Straße und Hausnummer *</label>
               <input
-                id="street"
                 type="text"
+                id="street"
                 value={shippingAddress.street}
                 onChange={(e) => setShippingAddress({ ...shippingAddress, street: e.target.value })}
-                placeholder="Musterstraße 123"
+                placeholder="z.B. Musterstraße 123"
                 required
-                disabled={isSubmitting}
               />
             </div>
 
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="postalCode">PLZ *</label>
+                <label htmlFor="zipCode">Postleitzahl *</label>
                 <input
-                  id="postalCode"
                   type="text"
-                  value={shippingAddress.postalCode}
-                  onChange={(e) => setShippingAddress({ ...shippingAddress, postalCode: e.target.value })}
+                  id="zipCode"
+                  value={shippingAddress.zipCode}
+                  onChange={(e) => setShippingAddress({ ...shippingAddress, zipCode: e.target.value })}
                   placeholder="12345"
                   required
-                  disabled={isSubmitting}
                 />
               </div>
 
               <div className="form-group">
                 <label htmlFor="city">Stadt *</label>
                 <input
-                  id="city"
                   type="text"
+                  id="city"
                   value={shippingAddress.city}
                   onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
-                  placeholder="Berlin"
+                  placeholder="z.B. Berlin"
                   required
-                  disabled={isSubmitting}
                 />
               </div>
             </div>
@@ -177,13 +154,27 @@ export default function CheckoutPage() {
                 value={shippingAddress.country}
                 onChange={(e) => setShippingAddress({ ...shippingAddress, country: e.target.value })}
                 required
-                disabled={isSubmitting}
               >
                 <option value="Deutschland">Deutschland</option>
                 <option value="Österreich">Österreich</option>
                 <option value="Schweiz">Schweiz</option>
               </select>
             </div>
+
+            {error && (
+              <div className="form-error">
+                {error}
+              </div>
+            )}
+          </div>
+
+          <div className="form-section">
+            <h2>ZAHLUNGSABWICKLUNG</h2>
+
+            <p className="payment-info">
+              Nach Eingabe der Lieferadresse wirst du zu unserem sicheren Zahlungspartner <strong>Stripe</strong> weitergeleitet,
+              um die Zahlung abzuschließen.
+            </p>
           </div>
 
           <button
@@ -191,7 +182,7 @@ export default function CheckoutPage() {
             className="btn-submit"
             disabled={isSubmitting || cartLoading}
           >
-            {isSubmitting ? 'BESTELLUNG WIRD VERARBEITET...' : 'JETZT KAUFEN'}
+            {isSubmitting ? 'WEITERLEITUNG ZU STRIPE...' : 'JETZT BEZAHLEN'}
           </button>
         </form>
 
@@ -311,6 +302,20 @@ export default function CheckoutPage() {
           margin-bottom: 1.5rem;
           color: var(--accent-green);
           letter-spacing: 2px;
+        }
+
+        .payment-info {
+          color: #ccc;
+          line-height: 1.6;
+          margin-bottom: 2rem;
+          padding: 1.5rem;
+          background: rgba(255, 255, 255, 0.05);
+          border-left: 4px solid var(--accent-orange);
+          border-radius: 4px;
+        }
+
+        .payment-info strong {
+          color: var(--accent-orange);
         }
 
         .form-error {
