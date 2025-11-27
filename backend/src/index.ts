@@ -67,6 +67,7 @@ app.use(cors({
     'Content-Type',
     'Authorization',
     'X-Frontend-URL',
+    'x-frontend-url',
     'X-Amz-Date',
     'X-Api-Key',
     'X-Amz-Security-Token',
