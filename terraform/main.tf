@@ -136,7 +136,8 @@ module "lambda" {
     # Stripe Payment Integration
     STRIPE_SECRET_KEY       = var.stripe_secret_key
     STRIPE_WEBHOOK_SECRET   = var.stripe_webhook_secret
-    FRONTEND_URL            = var.frontend_url
+    # Use Amplify URL if frontend_url is not set, otherwise use the provided URL
+    FRONTEND_URL            = var.frontend_url != "" ? var.frontend_url : (var.enable_amplify ? module.amplify[0].branch_url : "http://localhost:3000")
   }
 
   # DynamoDB Table Names für IAM Permissions
@@ -197,7 +198,8 @@ module "amplify" {
     NEXT_PUBLIC_USER_POOL_ID       = module.cognito.user_pool_id
     NEXT_PUBLIC_USER_POOL_CLIENT_ID = module.cognito.user_pool_client_id
     NEXT_PUBLIC_AWS_REGION         = var.aws_region
-    FRONTEND_URL = module.amplify_admin.default_domain
+    # Use own Amplify URL if frontend_url is not set
+    FRONTEND_URL                   = var.frontend_url != "" ? var.frontend_url : module.amplify[0].branch_url
   }
 
   # Basic Auth (optional)
