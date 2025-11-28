@@ -61,12 +61,7 @@ app.use(cors({
     'http://localhost:3002',      // Alternatives Frontend (lokal)
     /https:\/\/.*\.amplifyapp\.com$/  // Alle Amplify URLs (z.B. develop.d123.amplifyapp.com)
   ],
-  credentials: true,              // Erlaube Cookies/Authorization Headers
-  allowedHeaders: [               // Erlaube diese Headers
-    'Content-Type',
-    'Authorization',
-    'x-frontend-url'              // Custom Header für Frontend URL Detection
-  ]
+  credentials: true               // Erlaube Cookies/Authorization Headers
 }));
 
 // ============================================================================
