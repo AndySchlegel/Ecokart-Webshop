@@ -91,9 +91,8 @@ export const createCheckoutSession = async (
     // SCHRITT 1.5: Shipping Address validieren
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    const { shippingAddress, frontendUrl } = req.body as {
+    const { shippingAddress } = req.body as {
       shippingAddress?: ShippingAddress;
-      frontendUrl?: string;
     };
 
     if (!shippingAddress) {
@@ -172,65 +171,32 @@ export const createCheckoutSession = async (
     });
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // SCHRITT 4: Stripe Checkout Session erstellen
+    // SCHRITT 3.5: Frontend URL ermitteln (für Stripe Redirects)
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // Erstelle temporäre Checkout Session bei Stripe.
-    //
-    // 💡 Session = Temporärer Zahlungs-Link (läuft nach 24h ab)
-    // User wird zu Stripe Hosted Checkout Page weitergeleitet.
+    // Simplified approach: Use Origin header (always present in CORS requests)
+    // Fallback to FRONTEND_URL environment variable
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    const frontendUrlHeader = typeof req.headers['x-frontend-url'] === 'string' ? req.headers['x-frontend-url'] : undefined;
     const requestOrigin = typeof req.headers.origin === 'string' ? req.headers.origin : undefined;
-    const forwardedProtoHeader = req.headers['x-forwarded-proto'];
-    const forwardedHostHeader = req.headers['x-forwarded-host'];
-    const hostHeader = typeof forwardedHostHeader === 'string'
-      ? forwardedHostHeader
-      : typeof req.headers.host === 'string'
-        ? req.headers.host
-        : undefined;
-    const protoHeader = typeof forwardedProtoHeader === 'string'
-      ? forwardedProtoHeader
-      : req.secure
-        ? 'https'
-        : 'http';
+    const frontendUrl = requestOrigin || FRONTEND_URL;
 
-    const derivedHostUrl = hostHeader ? `${protoHeader}://${hostHeader}` : undefined;
-
-    // Try to find a valid URL from multiple sources (in priority order)
-    const urlSources = [
-      { name: 'frontendUrl (request body)', url: frontendUrl },
-      { name: 'x-frontend-url (header)', url: frontendUrlHeader },
-      { name: 'origin (header)', url: requestOrigin },
-      { name: 'derived host URL', url: derivedHostUrl },
-      { name: 'FRONTEND_URL (env var)', url: FRONTEND_URL },
-    ];
-
-    const selectedSource = urlSources.find((source) => source.url && source.url.startsWith('http'));
-    const baseRedirectUrl = selectedSource?.url;
-
-    if (!baseRedirectUrl) {
+    if (!frontendUrl) {
       logger.error('Cannot determine frontend redirect URL', {
         userId,
         requestOrigin,
-        allSources: urlSources.map(s => ({ name: s.name, url: s.url }))
+        fallbackFrontendUrl: FRONTEND_URL
       });
       return res.status(500).json({ error: 'Frontend URL not configured' });
     }
 
-    const normalizedRedirectUrl = baseRedirectUrl.replace(/\/+$/, '');
+    const normalizedRedirectUrl = frontendUrl.replace(/\/+$/, '');
 
     logger.info('Checkout redirect URL resolved', {
       userId,
-      selectedSource: selectedSource?.name,
-      selectedUrl: selectedSource?.url,
-      normalizedRedirectUrl,
-      // Log ALL sources for debugging
-      frontendUrl_body: frontendUrl,
-      x_frontend_url_header: frontendUrlHeader,
+      source: requestOrigin ? 'origin header' : 'FRONTEND_URL env var',
       origin_header: requestOrigin,
-      derived_host_url: derivedHostUrl,
       fallback_frontend_url: FRONTEND_URL,
+      normalizedRedirectUrl,
     });
 
     const session = await stripe.checkout.sessions.create({

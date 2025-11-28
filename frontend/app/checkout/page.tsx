@@ -73,19 +73,15 @@ export default function CheckoutPage() {
 
       // Erstelle Stripe Checkout Session
       // Der Cart wird vom Backend direkt aus der Datenbank geholt
-      const currentOrigin = typeof window !== 'undefined' ? window.location.origin : undefined;
-
+      // Backend nutzt den Origin-Header (automatisch vom Browser gesetzt)
       const response = await fetch(`${API_BASE_URL}/api/checkout`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-          // WICHTIG: Explizit Frontend-URL mitschicken für Stripe Redirects
-          ...(currentOrigin && { 'X-Frontend-URL': currentOrigin }),
         },
         body: JSON.stringify({
           shippingAddress,
-          frontendUrl: currentOrigin,
         })
       });
 
