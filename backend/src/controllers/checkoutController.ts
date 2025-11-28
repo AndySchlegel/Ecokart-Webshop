@@ -212,6 +212,15 @@ export const createCheckoutSession = async (
 
     const normalizedRedirectUrl = baseRedirectUrl.replace(/\/+$/, '');
 
+    logger.info('Checkout redirect URL resolved', {
+      userId,
+      frontendUrlBody: frontendUrl,
+      frontendUrlHeader,
+      requestOrigin,
+      derivedHostUrl,
+      normalizedRedirectUrl,
+    });
+
     const session = await stripe.checkout.sessions.create({
       // Line Items (Produkte)
       line_items: lineItems,
