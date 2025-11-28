@@ -223,8 +223,14 @@ export const createCheckoutSession = async (
     logger.info('Checkout redirect URL resolved', {
       userId,
       selectedSource: selectedSource?.name,
+      selectedUrl: selectedSource?.url,
       normalizedRedirectUrl,
-      allSources: urlSources.map(s => ({ name: s.name, url: s.url }))
+      // Log ALL sources for debugging
+      frontendUrl_body: frontendUrl,
+      x_frontend_url_header: frontendUrlHeader,
+      origin_header: requestOrigin,
+      derived_host_url: derivedHostUrl,
+      fallback_frontend_url: FRONTEND_URL,
     });
 
     const session = await stripe.checkout.sessions.create({
