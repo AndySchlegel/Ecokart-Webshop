@@ -77,7 +77,9 @@ export default function CheckoutPage() {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          // Send frontend URL in header as backup for URL detection
+          'x-frontend-url': typeof window !== 'undefined' ? window.location.origin : ''
         },
         body: JSON.stringify({
           shippingAddress,

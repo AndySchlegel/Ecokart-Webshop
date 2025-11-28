@@ -197,16 +197,24 @@ export const createCheckoutSession = async (
 
     const derivedHostUrl = hostHeader ? `${protoHeader}://${hostHeader}` : undefined;
 
-    const baseRedirectUrl = [
-      frontendUrl,
-      frontendUrlHeader,
-      requestOrigin,
-      derivedHostUrl,
-      FRONTEND_URL,
-    ].find((url) => url && url.startsWith('http'));
+    // Try to find a valid URL from multiple sources (in priority order)
+    const urlSources = [
+      { name: 'frontendUrl (request body)', url: frontendUrl },
+      { name: 'x-frontend-url (header)', url: frontendUrlHeader },
+      { name: 'origin (header)', url: requestOrigin },
+      { name: 'derived host URL', url: derivedHostUrl },
+      { name: 'FRONTEND_URL (env var)', url: FRONTEND_URL },
+    ];
+
+    const selectedSource = urlSources.find((source) => source.url && source.url.startsWith('http'));
+    const baseRedirectUrl = selectedSource?.url;
 
     if (!baseRedirectUrl) {
-      logger.error('Cannot determine frontend redirect URL', { userId, requestOrigin });
+      logger.error('Cannot determine frontend redirect URL', {
+        userId,
+        requestOrigin,
+        allSources: urlSources.map(s => ({ name: s.name, url: s.url }))
+      });
       return res.status(500).json({ error: 'Frontend URL not configured' });
     }
 
@@ -214,11 +222,9 @@ export const createCheckoutSession = async (
 
     logger.info('Checkout redirect URL resolved', {
       userId,
-      frontendUrlBody: frontendUrl,
-      frontendUrlHeader,
-      requestOrigin,
-      derivedHostUrl,
+      selectedSource: selectedSource?.name,
       normalizedRedirectUrl,
+      allSources: urlSources.map(s => ({ name: s.name, url: s.url }))
     });
 
     const session = await stripe.checkout.sessions.create({

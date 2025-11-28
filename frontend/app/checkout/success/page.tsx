@@ -33,15 +33,18 @@ function SuccessContent() {
 
     const fetchSessionDetails = async () => {
       try {
-        // Cognito Token holen
+        // Try to get Cognito Token (optional - might not be available after Stripe redirect)
         const authSession = await fetchAuthSession();
         const token = authSession.tokens?.idToken?.toString();
 
         if (!token) {
-          throw new Error('Nicht eingeloggt');
+          // User not authenticated - this is OK after Stripe redirect
+          // Just show success message without session details
+          setLoading(false);
+          return;
         }
 
-        // Session Details vom Backend holen
+        // Session Details vom Backend holen (only if authenticated)
         const response = await fetch(`${API_BASE_URL}/api/checkout/session/${sessionId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -56,7 +59,8 @@ function SuccessContent() {
         setSession(data);
       } catch (err: any) {
         console.error('Error fetching session:', err);
-        setError(err.message || 'Fehler beim Laden der Bestelldaten');
+        // Don't set error - just show success without details
+        // setError(err.message || 'Fehler beim Laden der Bestelldaten');
       } finally {
         setLoading(false);
       }
@@ -99,8 +103,8 @@ function SuccessContent() {
       <div className="success-content">
         <div className="success-icon">
           <svg viewBox="0 0 52 52" className="checkmark">
-            <circle className="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
-            <path className="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            <circle className="checkmark-circle" cx="26" cy="26" r="25" fill="none" />
+            <path className="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
           </svg>
         </div>
 
@@ -109,7 +113,7 @@ function SuccessContent() {
           Vielen Dank für deine Bestellung bei EcoKart
         </p>
 
-        {session && (
+        {session ? (
           <div className="order-details">
             <h2>BESTELLDETAILS</h2>
 
@@ -145,6 +149,23 @@ function SuccessContent() {
               </p>
               <p>
                 📦 Deine Artikel werden in den nächsten 2-3 Werktagen versandt.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="order-details">
+            <div className="info-box success-info">
+              <p>
+                ✅ Deine Zahlung wurde erfolgreich verarbeitet!
+              </p>
+              <p>
+                📧 Du erhältst in Kürze eine Bestätigungs-E-Mail mit allen Details zu deiner Bestellung.
+              </p>
+              <p>
+                📦 Deine Artikel werden in den nächsten 2-3 Werktagen versandt.
+              </p>
+              <p style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                💡 <Link href="/login" style={{ color: 'var(--accent-orange)', textDecoration: 'underline' }}>Melde dich an</Link>, um deine Bestelldetails einzusehen.
               </p>
             </div>
           </div>
