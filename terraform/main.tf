@@ -136,13 +136,10 @@ module "lambda" {
     # Stripe Payment Integration
     STRIPE_SECRET_KEY       = var.stripe_secret_key
     STRIPE_WEBHOOK_SECRET   = var.stripe_webhook_secret
-    # FRONTEND_URL: Dynamic selection based on deployment method
-    # Priority:
-    # 1. Use Amplify Branch URL if Amplify is enabled (deployed frontend)
-    # 2. Use var.frontend_url if explicitly provided
-    # 3. Fallback to localhost for local development
-    # NOTE: Backend will also auto-detect from request headers (origin, x-frontend-url)
-    FRONTEND_URL            = var.enable_amplify ? module.amplify[0].branch_url : (var.frontend_url != "" ? var.frontend_url : "http://localhost:3000")
+    # FRONTEND_URL: Use provided URL or fallback to localhost
+    # NOTE: Backend will auto-detect the actual frontend URL from request headers (origin, x-frontend-url)
+    # This is just a fallback for local development
+    FRONTEND_URL            = var.frontend_url != "" ? var.frontend_url : "http://localhost:3000"
   }
 
   # DynamoDB Table Names für IAM Permissions
