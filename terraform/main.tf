@@ -190,6 +190,8 @@ module "amplify" {
   # AMPLIFY_MONOREPO_APP_ROOT ist erforderlich für Monorepo-Setup
   # Amplify nutzt dies um package.json im richtigen Pfad zu finden
   # Cognito Credentials für Amplify Auth
+  # NOTE: FRONTEND_URL is NOT set here to avoid circular dependency
+  # Frontend can determine its own URL at runtime using window.location.origin
   environment_variables = {
     AMPLIFY_MONOREPO_APP_ROOT      = var.amplify_monorepo_app_root
     NEXT_PUBLIC_API_URL            = module.lambda.api_gateway_url
@@ -198,8 +200,6 @@ module "amplify" {
     NEXT_PUBLIC_USER_POOL_ID       = module.cognito.user_pool_id
     NEXT_PUBLIC_USER_POOL_CLIENT_ID = module.cognito.user_pool_client_id
     NEXT_PUBLIC_AWS_REGION         = var.aws_region
-    # Use own Amplify URL if frontend_url is not set
-    FRONTEND_URL                   = var.frontend_url != "" ? var.frontend_url : module.amplify[0].branch_url
   }
 
   # Basic Auth (optional)
