@@ -77,10 +77,12 @@ export default function CheckoutPage() {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'X-Frontend-URL': window.location.origin
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ shippingAddress })
+        body: JSON.stringify({
+          shippingAddress,
+          frontendUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
+        })
       });
 
       if (!response.ok) {

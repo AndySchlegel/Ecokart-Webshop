@@ -91,7 +91,10 @@ export const createCheckoutSession = async (
     // SCHRITT 1.5: Shipping Address validieren
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    const { shippingAddress } = req.body as { shippingAddress?: ShippingAddress };
+    const { shippingAddress, frontendUrl } = req.body as {
+      shippingAddress?: ShippingAddress;
+      frontendUrl?: string;
+    };
 
     if (!shippingAddress) {
       logger.warn('Checkout attempted without shipping address', { userId });
@@ -195,6 +198,7 @@ export const createCheckoutSession = async (
     const derivedHostUrl = hostHeader ? `${protoHeader}://${hostHeader}` : undefined;
 
     const baseRedirectUrl = [
+      frontendUrl,
       frontendUrlHeader,
       requestOrigin,
       derivedHostUrl,

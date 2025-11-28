@@ -62,16 +62,7 @@ app.use(cors({
     'https://main.d1d14e6pdoz4r.amplifyapp.com', // Deine Amplify URL
     /\.amplifyapp\.com$/          // Alle Amplify URLs (Regex-Pattern)
   ],
-  credentials: true,              // Erlaube Cookies/Authorization Headers
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Frontend-URL',
-    'x-frontend-url',
-    'X-Amz-Date',
-    'X-Api-Key',
-    'X-Amz-Security-Token',
-  ]
+  credentials: true               // Erlaube Cookies/Authorization Headers
 }));
 
 // ============================================================================
