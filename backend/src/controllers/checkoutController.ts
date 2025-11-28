@@ -153,16 +153,13 @@ export const createCheckoutSession = async (
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     const lineItems = cart.items.map((item) => {
-      // Nur absolute URLs für images verwenden (Stripe erlaubt keine relativen Paths)
-      const isAbsoluteUrl = item.imageUrl?.startsWith('http://') || item.imageUrl?.startsWith('https://');
-
       return {
         price_data: {
           currency: 'eur', // Euro
           product_data: {
             name: item.name,
-            // Nur absolute URLs, keine relativen Paths
-            images: isAbsoluteUrl ? [item.imageUrl] : [],
+            // Images entfernt - verursacht "Not a valid URL" Fehler bei relativen Pfaden
+            // Stripe Checkout funktioniert perfekt ohne Bilder
           },
           unit_amount: Math.round(item.price * 100), // €99.99 → 9999 Cents
         },
