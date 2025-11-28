@@ -59,8 +59,7 @@ app.use(cors({
     'http://localhost:3000',      // Customer Frontend (lokal)
     'http://localhost:3001',      // Admin Frontend (lokal)
     'http://localhost:3002',      // Alternatives Frontend (lokal)
-    'https://main.d1d14e6pdoz4r.amplifyapp.com', // Deine Amplify URL
-    /\.amplifyapp\.com$/          // Alle Amplify URLs (Regex-Pattern)
+    /https:\/\/.*\.amplifyapp\.com$/  // Alle Amplify URLs (z.B. develop.d123.amplifyapp.com)
   ],
   credentials: true               // Erlaube Cookies/Authorization Headers
 }));
