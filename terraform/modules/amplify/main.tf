@@ -43,14 +43,15 @@ resource "aws_amplify_app" "frontend" {
                   AMPLIFY_URL="https://$${AWS_BRANCH}.$${AWS_APP_ID}.amplifyapp.com"
                   ENVIRONMENT=$${AWS_BRANCH:-development}
                   PARAM_NAME="/ecokart/$${ENVIRONMENT}/frontend-url"
+                  REGION=$${AWS_REGION:-eu-north-1}
                   echo "URL: $AMPLIFY_URL"
                   echo "Parameter: $PARAM_NAME"
+                  echo "Region: $REGION"
+                  # Use JSON input to avoid AWS CLI interpreting URL as file path
                   aws ssm put-parameter \
-                    --name "$PARAM_NAME" \
-                    --value "$AMPLIFY_URL" \
-                    --type String \
-                    --overwrite \
-                    --region $${AWS_REGION:-eu-north-1} || echo "Warning: Could not write to SSM (check IAM permissions)"
+                    --cli-input-json "{\"Name\":\"$PARAM_NAME\",\"Value\":\"$AMPLIFY_URL\",\"Type\":\"String\",\"Overwrite\":true}" \
+                    --region "$REGION" || echo "Warning: Could not write to SSM (check IAM permissions)"
+                  echo "✅ SSM Parameter written successfully"
           artifacts:
             baseDirectory: .next
             files:
