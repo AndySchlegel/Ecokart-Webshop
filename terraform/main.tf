@@ -129,7 +129,7 @@ module "lambda" {
   environment_variables = {
     NODE_ENV                = "production"
     ENVIRONMENT             = var.environment
-    AWS_REGION              = var.aws_region
+    # AWS_REGION is automatically set by Lambda (reserved key)
     DB_TYPE                 = "dynamodb"
     JWT_SECRET              = var.jwt_secret
     # Cognito Configuration for JWT Validation
