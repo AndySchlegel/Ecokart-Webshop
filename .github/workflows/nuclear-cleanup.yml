@@ -89,6 +89,57 @@ jobs:
           sleep 30
           echo "✅ Wait complete"
 
+      - name: 🗑️ Delete Amplify IAM Service Roles
+        run: |
+          echo "🗑️ Deleting Amplify IAM Service Roles for ${{ inputs.environment }}..."
+
+          ROLES=(
+            "ecokart-${{ inputs.environment }}-frontend-amplify-role"
+            "ecokart-${{ inputs.environment }}-admin-frontend-amplify-role"
+          )
+
+          for ROLE_NAME in "${ROLES[@]}"; do
+            if aws iam get-role --role-name "$ROLE_NAME" &>/dev/null; then
+              echo "   - Found role: $ROLE_NAME"
+
+              # Detach managed policies
+              echo "     - Detaching managed policies..."
+              MANAGED_POLICIES=$(aws iam list-attached-role-policies \
+                --role-name "$ROLE_NAME" \
+                --query 'AttachedPolicies[*].PolicyArn' \
+                --output text)
+
+              for policy_arn in $MANAGED_POLICIES; do
+                echo "       - Detaching: $policy_arn"
+                aws iam detach-role-policy \
+                  --role-name "$ROLE_NAME" \
+                  --policy-arn "$policy_arn" || true
+              done
+
+              # Delete inline policies
+              echo "     - Deleting inline policies..."
+              INLINE_POLICIES=$(aws iam list-role-policies \
+                --role-name "$ROLE_NAME" \
+                --query 'PolicyNames' \
+                --output text)
+
+              for policy_name in $INLINE_POLICIES; do
+                echo "       - Deleting: $policy_name"
+                aws iam delete-role-policy \
+                  --role-name "$ROLE_NAME" \
+                  --policy-name "$policy_name" || true
+              done
+
+              # Delete role
+              echo "     - Deleting role..."
+              aws iam delete-role --role-name "$ROLE_NAME"
+              echo "   ✅ IAM role deleted: $ROLE_NAME"
+            else
+              echo "   ℹ️  IAM role already deleted: $ROLE_NAME"
+            fi
+          done
+        continue-on-error: true
+
       - name: 🗑️ Delete Lambda Functions
         run: |
           echo "🗑️ Deleting Lambda functions for ${{ inputs.environment }}..."
