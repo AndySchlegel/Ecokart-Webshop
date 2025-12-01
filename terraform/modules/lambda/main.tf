@@ -6,41 +6,14 @@
 # ----------------------------------------------------------------------------
 # Lambda Deployment Package
 # ----------------------------------------------------------------------------
-# Kompiliert TypeScript Backend und erstellt ZIP-Archive
-
-# Zuerst: Build Command ausführen (TypeScript kompilieren + ZIP erstellen)
-resource "null_resource" "build_lambda" {
-  triggers = {
-    # Re-build bei Änderungen im Source Code
-    source_hash = sha256(join("", [for f in fileset(var.source_path, "src/**/*.ts") : filesha256("${var.source_path}/${f}")]))
-  }
-
-  provisioner "local-exec" {
-    command = <<-EOT
-      set -e
-      echo "🔨 Building Lambda..."
-
-      # Install ALL dependencies first (for build tools like TypeScript)
-      npm ci
-
-      # Build TypeScript
-      npm run build
-
-      # Clean node_modules and install ONLY production dependencies
-      rm -rf node_modules
-      npm ci --production
-
-      # Create ZIP from dist/ folder with production node_modules
-      echo "📦 Creating Lambda ZIP..."
-      cd dist
-      zip -r ${path.module}/builds/${var.function_name}.zip . ../node_modules ../package.json -x "*.test.js" -q
-
-      echo "✅ Lambda package ready!"
-    EOT
-
-    working_dir = var.source_path
-  }
-}
+# ZIP wird vom GitHub Actions Workflow erstellt (NICHT von Terraform!)
+# Das verhindert Chicken-Egg Probleme wo terraform plan die ZIP lesen will
+# bevor sie von terraform apply erstellt wird.
+#
+# Die ZIP-Erstellung erfolgt im Deploy Workflow in diesem Step:
+# - "Create Lambda ZIP" (nach Backend Build, VOR Terraform Plan)
+#
+# WICHTIG: ZIP muss in ${path.module}/builds/${var.function_name}.zip existieren!
 
 # ----------------------------------------------------------------------------
 # Lambda Function
@@ -67,7 +40,6 @@ resource "aws_lambda_function" "api" {
 
   # CloudWatch Logs Retention (14 Tage)
   depends_on = [
-    null_resource.build_lambda,
     aws_cloudwatch_log_group.lambda_logs,
     aws_iam_role_policy_attachment.lambda_logs
   ]

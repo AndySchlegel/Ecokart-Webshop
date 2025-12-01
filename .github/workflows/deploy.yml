@@ -276,6 +276,32 @@ jobs:
           echo "✅ Backend built successfully"
 
       # ======================================================================
+      # 10.5. Create Lambda Deployment Package
+      # ======================================================================
+      - name: 📦 Create Lambda ZIP
+        run: |
+          echo "📦 Creating Lambda deployment package..."
+
+          # Create builds directory in Terraform module
+          mkdir -p terraform/modules/lambda/builds
+
+          # Install ONLY production dependencies in backend
+          echo "📥 Installing production dependencies..."
+          cd backend
+          rm -rf node_modules
+          npm ci --production
+
+          # Create ZIP from dist/ folder with production node_modules
+          echo "🗜️ Creating ZIP archive..."
+          cd dist
+          zip -r ../../terraform/modules/lambda/builds/ecokart-${{ steps.env.outputs.environment }}-api.zip . ../node_modules ../package.json -x "*.test.js" -q
+
+          echo "✅ Lambda ZIP created: terraform/modules/lambda/builds/ecokart-${{ steps.env.outputs.environment }}-api.zip"
+
+          # Show ZIP size
+          ls -lh ../../terraform/modules/lambda/builds/ecokart-${{ steps.env.outputs.environment }}-api.zip
+
+      # ======================================================================
       # 11. Clear Lock ONLY (keep state!)
       # ======================================================================
       - name: 🔓 Clear Lock (preserve state)
