@@ -87,6 +87,17 @@ export const createCheckoutSession = async (
 
     const userId = req.user.userId;
 
+    // 🔍 DEBUG: Log ALL headers to see what Lambda receives
+    logger.info('🔍 CHECKOUT REQUEST DEBUG', {
+      userId,
+      allHeaders: req.headers,
+      origin: req.headers.origin,
+      host: req.headers.host,
+      referer: req.headers.referer,
+      'x-forwarded-proto': req.headers['x-forwarded-proto'],
+      'x-forwarded-host': req.headers['x-forwarded-host'],
+    });
+
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // SCHRITT 1.5: Shipping Address validieren
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
