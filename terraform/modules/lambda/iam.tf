@@ -72,6 +72,37 @@ resource "aws_iam_role_policy" "dynamodb_access" {
 }
 
 # ----------------------------------------------------------------------------
+# SSM Parameter Store Access (für Frontend URL)
+# ----------------------------------------------------------------------------
+# Erlaubt Lambda das Lesen von SSM Parameters unter /ecokart/*
+# Wird benötigt für dynamische Frontend URL Resolution (Stripe Redirects)
+
+resource "aws_iam_role_policy" "ssm_access" {
+  name = "${var.function_name}-ssm-policy"
+  role = aws_iam_role.lambda_exec.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters"
+        ]
+        Resource = [
+          "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/ecokart/*"
+        ]
+      }
+    ]
+  })
+}
+
+# Data Sources für dynamische ARN-Erstellung
+data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
+
+# ----------------------------------------------------------------------------
 # Optional: VPC Access (falls Lambda in VPC laufen soll)
 # ----------------------------------------------------------------------------
 # Aktuell NICHT benötigt, da DynamoDB über Public Endpoint erreichbar ist.

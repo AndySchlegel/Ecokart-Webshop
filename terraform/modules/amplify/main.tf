@@ -16,6 +16,9 @@ resource "aws_amplify_app" "frontend" {
   # GitHub Access Token (für Private Repos oder Auto-Deploy)
   access_token = var.github_access_token
 
+  # IAM Service Role (für Build Operations + SSM Parameter Write)
+  iam_service_role_arn = aws_iam_role.amplify_service_role.arn
+
   # Platform: WEB_COMPUTE (für SSR) vs WEB (für Static)
   platform = "WEB_COMPUTE"
 
