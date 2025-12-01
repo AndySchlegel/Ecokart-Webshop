@@ -8,7 +8,7 @@
 # ----------------------------------------------------------------------------
 # Kompiliert TypeScript Backend und erstellt ZIP-Archive
 
-# Zuerst: Build Command ausführen (TypeScript kompilieren)
+# Zuerst: Build Command ausführen (TypeScript kompilieren + ZIP erstellen)
 resource "null_resource" "build_lambda" {
   triggers = {
     # Re-build bei Änderungen im Source Code
@@ -16,31 +16,30 @@ resource "null_resource" "build_lambda" {
   }
 
   provisioner "local-exec" {
-    command     = "npm ci && npm run build"
+    command = <<-EOT
+      set -e
+      echo "🔨 Building Lambda..."
+
+      # Install ALL dependencies first (for build tools like TypeScript)
+      npm ci
+
+      # Build TypeScript
+      npm run build
+
+      # Clean node_modules and install ONLY production dependencies
+      rm -rf node_modules
+      npm ci --production
+
+      # Create ZIP from dist/ folder with production node_modules
+      echo "📦 Creating Lambda ZIP..."
+      cd dist
+      zip -r ${path.module}/builds/${var.function_name}.zip . ../node_modules ../package.json -x "*.test.js" -q
+
+      echo "✅ Lambda package ready!"
+    EOT
+
     working_dir = var.source_path
   }
-}
-
-# ZIP-Archive erstellen (dist/ Ordner + node_modules)
-data "archive_file" "lambda_zip" {
-  type        = "zip"
-  output_path = "${path.module}/builds/${var.function_name}.zip"
-
-  # Nur Production Dependencies
-  source_dir  = var.source_path
-
-  excludes = [
-    ".git",
-    ".gitignore",
-    "node_modules/.cache",
-    "src",
-    "*.md",
-    "*.yaml",
-    "scripts",
-    "aws"
-  ]
-
-  depends_on = [null_resource.build_lambda]
 }
 
 # ----------------------------------------------------------------------------
@@ -58,8 +57,8 @@ resource "aws_lambda_function" "api" {
   timeout          = var.timeout
   architectures    = ["x86_64"]
 
-  filename         = data.archive_file.lambda_zip.output_path
-  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+  filename         = "${path.module}/builds/${var.function_name}.zip"
+  source_code_hash = filebase64sha256("${path.module}/builds/${var.function_name}.zip")
 
   # Environment Variables
   environment {
@@ -68,6 +67,7 @@ resource "aws_lambda_function" "api" {
 
   # CloudWatch Logs Retention (14 Tage)
   depends_on = [
+    null_resource.build_lambda,
     aws_cloudwatch_log_group.lambda_logs,
     aws_iam_role_policy_attachment.lambda_logs
   ]
