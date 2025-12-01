@@ -128,6 +128,8 @@ module "lambda" {
   # Environment Variables für Lambda
   environment_variables = {
     NODE_ENV                = "production"
+    ENVIRONMENT             = var.environment
+    AWS_REGION              = var.aws_region
     DB_TYPE                 = "dynamodb"
     JWT_SECRET              = var.jwt_secret
     # Cognito Configuration for JWT Validation
