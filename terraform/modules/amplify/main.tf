@@ -36,6 +36,21 @@ resource "aws_amplify_app" "frontend" {
             build:
               commands:
                 - npm run build
+            postBuild:
+              commands:
+                - |
+                  echo "Writing Amplify URL to SSM Parameter Store..."
+                  AMPLIFY_URL="https://$${AWS_BRANCH}.$${AWS_APP_ID}.amplifyapp.com"
+                  ENVIRONMENT=$${AWS_BRANCH:-development}
+                  PARAM_NAME="/ecokart/$${ENVIRONMENT}/frontend-url"
+                  echo "URL: $AMPLIFY_URL"
+                  echo "Parameter: $PARAM_NAME"
+                  aws ssm put-parameter \
+                    --name "$PARAM_NAME" \
+                    --value "$AMPLIFY_URL" \
+                    --type String \
+                    --overwrite \
+                    --region $${AWS_REGION:-eu-north-1} || echo "Warning: Could not write to SSM (check IAM permissions)"
           artifacts:
             baseDirectory: .next
             files:
