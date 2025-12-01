@@ -170,11 +170,15 @@ resource "null_resource" "trigger_initial_build" {
   # AWS CLI Command um Build zu starten
   provisioner "local-exec" {
     command = <<-EOT
+      echo "⏳ Waiting 30 seconds for buildSpec to propagate in AWS..."
+      sleep 30
+      echo "🚀 Triggering Amplify build with updated buildSpec..."
       aws amplify start-job \
         --app-id ${aws_amplify_app.frontend.id} \
         --branch-name ${aws_amplify_branch.main.branch_name} \
         --job-type RELEASE \
         --region ${var.aws_region}
+      echo "✅ Build triggered successfully"
     EOT
   }
 
