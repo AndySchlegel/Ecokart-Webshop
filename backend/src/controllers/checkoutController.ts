@@ -34,7 +34,6 @@ import { Request, Response } from 'express';
 import { stripe, FRONTEND_URL } from '../config/stripe';
 import database from '../config/database-adapter';
 import { logger } from '../utils/logger';
-import { SSMClient, GetParameterCommand } from '@aws-sdk/client-ssm';
 
 // ============================================================================
 // 🔐 TYPE DEFINITIONS
@@ -44,86 +43,70 @@ import { SSMClient, GetParameterCommand } from '@aws-sdk/client-ssm';
 // Wir können direkt req.user nutzen mit Typ: { userId, email, role, emailVerified }
 
 // ============================================================================
-// 🌐 FRONTEND URL RESOLVER (SSM Parameter Store)
+// 🌐 FRONTEND URL RESOLVER (Origin Header)
 // ============================================================================
-// Holt die Frontend URL dynamisch aus SSM Parameter Store (AWS).
+// Holt die Frontend URL direkt aus dem Origin Header des Requests.
 //
-// 💡 WARUM SSM Parameter Store?
-// - ✅ 100% reproduzierbar für jeden AWS Account
-// - ✅ Keine Circular Dependency in Terraform
-// - ✅ Amplify schreibt URL automatisch nach Deployment
-// - ✅ Lambda liest URL zur Laufzeit (cached für Performance)
-// - ✅ Funktioniert für development, staging, production
-//
-// 📌 SSM Parameter Pfad:
-// /ecokart/{ENVIRONMENT}/frontend-url
-// z.B. /ecokart/development/frontend-url → https://develop.d123.amplifyapp.com
+// 💡 WARUM Origin Header?
+// - ✅ 100% reproduzierbar - keine AWS Dependencies
+// - ✅ Keine Circular Dependency in Terraform (Lambda ↔ Amplify)
+// - ✅ Browser sendet Origin automatisch mit CORS Requests
+// - ✅ Immer die korrekte URL (egal ob localhost, Amplify, Custom Domain)
+// - ✅ Keine IAM Permissions nötig (kein SSM)
+// - ✅ Keine Environment Variables nötig
 //
 // 🔄 Fallback-Strategie:
-// 1. Local Development (NODE_ENV=development) → localhost:3000
-// 2. AWS Production → SSM Parameter Store
-// 3. Fehler beim SSM Read → localhost:3000 (Fallback)
+// 1. req.headers.origin (Browser sendet automatisch)
+// 2. req.headers.referer (falls Origin fehlt)
+// 3. FRONTEND_URL env var (Terraform Fallback)
+// 4. localhost:3000 (Development Fallback)
 // ============================================================================
 
-let cachedFrontendUrl: string | null = null;
-
 /**
- * Holt die Frontend URL für Stripe Redirects.
- * - Local: localhost:3000
- * - AWS: SSM Parameter Store (cached)
+ * Holt die Frontend URL für Stripe Redirects aus Request Headers.
+ * - Priorität 1: Origin Header (CORS-safe, von Browser gesendet)
+ * - Priorität 2: Referer Header (falls Origin fehlt)
+ * - Priorität 3: FRONTEND_URL env var
+ * - Priorität 4: localhost:3000
  */
-async function getFrontendUrl(): Promise<string> {
+function getFrontendUrl(req: Request): string {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // FALL 1: Local Development
+  // FALL 1: Origin Header (Best Option - CORS-safe)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  if (process.env.NODE_ENV === 'development') {
-    logger.debug('Frontend URL: Using localhost (development mode)');
-    return 'http://localhost:3000';
+  const origin = req.headers.origin;
+  if (origin) {
+    logger.info('Frontend URL: Using Origin header', { url: origin });
+    return origin;
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // FALL 2: AWS Production - Check Cache
+  // FALL 2: Referer Header (Fallback wenn Origin fehlt)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  if (cachedFrontendUrl) {
-    logger.debug('Frontend URL: Using cached value', { url: cachedFrontendUrl });
-    return cachedFrontendUrl;
-  }
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // FALL 3: AWS Production - Read from SSM
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  try {
-    const environment = process.env.ENVIRONMENT || 'development';
-    const parameterName = `/ecokart/${environment}/frontend-url`;
-
-    logger.info('Fetching frontend URL from SSM', { parameterName });
-
-    const ssmClient = new SSMClient({ region: process.env.AWS_REGION || 'eu-central-1' });
-    const command = new GetParameterCommand({ Name: parameterName });
-    const response = await ssmClient.send(command);
-
-    if (!response.Parameter?.Value) {
-      throw new Error('SSM Parameter has no value');
+  const referer = req.headers.referer;
+  if (referer) {
+    try {
+      const refererUrl = new URL(referer);
+      const refererOrigin = `${refererUrl.protocol}//${refererUrl.host}`;
+      logger.info('Frontend URL: Using Referer header', { url: refererOrigin });
+      return refererOrigin;
+    } catch (error) {
+      logger.warn('Failed to parse Referer header', { referer });
     }
-
-    cachedFrontendUrl = response.Parameter.Value;
-    logger.info('Frontend URL fetched from SSM', { url: cachedFrontendUrl });
-
-    return cachedFrontendUrl;
-  } catch (error) {
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // FALL 4: Fallback bei SSM Error
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    logger.error('Failed to fetch frontend URL from SSM, falling back to FRONTEND_URL env var', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-
-    // Fallback zu FRONTEND_URL env var (aus Terraform)
-    const fallbackUrl = FRONTEND_URL || 'http://localhost:3000';
-    logger.warn('Using fallback frontend URL', { url: fallbackUrl });
-
-    return fallbackUrl;
   }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // FALL 3: FRONTEND_URL Environment Variable
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  if (FRONTEND_URL) {
+    logger.warn('Frontend URL: Using env var fallback (Origin/Referer missing)', { url: FRONTEND_URL });
+    return FRONTEND_URL;
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // FALL 4: Localhost Fallback
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  logger.error('Frontend URL: All methods failed, using localhost fallback');
+  return 'http://localhost:3000';
 }
 
 // ============================================================================
@@ -265,13 +248,14 @@ export const createCheckoutSession = async (
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // SCHRITT 3.5: Frontend URL ermitteln (für Stripe Redirects)
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // ✅ NEUE LÖSUNG: SSM Parameter Store (100% reproduzierbar!)
-    // - Local: localhost:3000
-    // - AWS: Liest URL aus /ecokart/{ENVIRONMENT}/frontend-url
-    // - Cached für Performance
+    // ✅ FINAL SOLUTION: Origin Header (100% reproduzierbar, keine Circular Dependency!)
+    // - Nutzt req.headers.origin (Browser sendet automatisch)
+    // - Fallback zu Referer Header oder FRONTEND_URL env var
+    // - Keine AWS Dependencies, keine IAM Permissions nötig
+    // - Bricht Terraform Circular Dependency zwischen Lambda ↔ Amplify
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    const frontendUrl = await getFrontendUrl();
+    const frontendUrl = getFrontendUrl(req);
     const normalizedRedirectUrl = frontendUrl.replace(/\/+$/, '');
 
     logger.info('Checkout redirect URL resolved', {
