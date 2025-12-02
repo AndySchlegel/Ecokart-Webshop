@@ -10,27 +10,7 @@ applications:
         build:
           commands:
             - npm run build
-        postBuild:
-          commands:
-            # Schreibe Amplify URL in SSM Parameter Store (für Lambda Stripe Redirects)
-            # AWS_APP_ID und AWS_BRANCH sind Amplify Build Environment Variables
-            - |
-              echo "Writing Amplify URL to SSM Parameter Store..."
-              AMPLIFY_URL="https://${AWS_BRANCH}.${AWS_APP_ID}.amplifyapp.com"
-              ENVIRONMENT=${AWS_BRANCH:-development}
-              PARAM_NAME="/ecokart/${ENVIRONMENT}/frontend-url"
-              REGION=${AWS_REGION:-eu-north-1}
-
-              echo "URL: $AMPLIFY_URL"
-              echo "Parameter: $PARAM_NAME"
-              echo "Region: $REGION"
-
-              # Use JSON input to avoid AWS CLI interpreting URL as file path
-              aws ssm put-parameter \
-                --cli-input-json '{"Name":"'"$PARAM_NAME"'","Value":"'"$AMPLIFY_URL"'","Type":"String","Overwrite":true}' \
-                --region "$REGION" || echo "Warning: Could not write to SSM (check IAM permissions)"
-
-              echo "✅ SSM Parameter written successfully"
+        # postBuild removed: SSM Parameter is now set by Terraform in amplify/ssm.tf
       artifacts:
         baseDirectory: .next
         files:
