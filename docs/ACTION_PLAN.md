@@ -1,7 +1,7 @@
 # 🎯 Action Plan - Ecokart Development
 
-**Last Updated:** 25. November 2025
-**Status:** ✅ Phase 2 Testing COMPLETE (Unit Tests) - E2E Testing & Features Next!
+**Last Updated:** 2. Dezember 2025
+**Status:** 🎉 **STRIPE REDIRECT PROBLEM GELÖST!** - Webshop auf der Zielgeraden! 🚀
 
 > **📖 Struktur dieses Dokuments:**
 > - **Current Sprint** - Was läuft JETZT (diese/nächste Woche)
@@ -13,9 +13,18 @@
 
 ---
 
-## 🎉 SUCCESS STATUS (25.11.2025)
+## 🎉 SUCCESS STATUS (02.12.2025)
 
-**Today's Session Summary:**
+**🏆 HEUTE'S EPIC WIN - STRIPE REDIRECT GELÖST! (nach 180+ Versuchen)**
+- ✅ **Problem:** Stripe Checkout redirect zu falscher URL (localhost statt Amplify)
+- ✅ **5 gescheiterte Ansätze:** Hardcoded, Env Vars, SSM (6-8 IAM iterations!), Lambda Env Var (Circular Dependency!)
+- ✅ **Finale Lösung:** Origin Header - Browser sendet automatisch Frontend URL
+- ✅ **100% Reproduzierbar:** 2/2 Tests erfolgreich (inkl. Nuclear + Deploy)
+- ✅ **Terraform Circular Dependency gebrochen** - Lambda ↔ Amplify dependency gelöst
+- ✅ **Dokumentation:** Umfassende Session Doc erstellt (2025-12-02_stripe_redirect_final_solution.md)
+- 🎯 **Key Takeaway:** "Die einfachste Lösung ist oft die beste - nutze HTTP Standards!"
+
+**Previous Session (25.11.2025):**
 - ✅ **Phase 2 Testing COMPLETE** - Automated Unit Tests running in CI/CD!
 - ✅ **Unit Tests** - 63 tests passing, 60-69% coverage achieved
 - ✅ **CI/CD Integration** - GitHub Actions workflow operational
@@ -39,16 +48,18 @@
 
 **Current Deployment Status:**
 - Infrastructure: ✅ Deployed successfully
-- Frontend URLs: ✅ Online
+- Frontend URLs: ✅ Online (Customer: d1gmfue5ca0dd, Admin: d2nztaj6zgakqy)
 - Backend API: ✅ Working perfectly
 - Authentication: ✅ **WORKING** - Cognito JWT fully functional
 - Cart/Orders: ✅ **WORKING** - All endpoints return 200 OK
 - Stock Management: ✅ **WORKING** - Inventory tracking operational
+- **Stripe Payment: ✅ WORKING** - Checkout redirect funktioniert! (Origin Header)
 - Error Handling: ✅ **IMPROVED** - Deutsche user-friendly messages
 - UX: ✅ **IMPROVED** - Visual loading feedback
 - Monitoring: ✅ **PRODUCTION READY** - CloudWatch Alarms configured
+- Testing: ✅ **UNIT TESTS** - 63 tests passing, 60-69% coverage
 
-**Next Priority:** E2E Testing (Playwright) + Payment Integration (Stripe)
+**Next Priority:** Stripe Webhook Handler (Order Creation) + E2E Testing (Playwright)
 
 ---
 
@@ -124,8 +135,21 @@
 
 ### 🔥 Next High Priority Tasks
 
-1. **E2E Testing mit Playwright** (ETA: 3-4 Tage) ← **HÖCHSTE PRIORITÄT**
-   - **User Journeys:** 5-10 kritische Flows (Login → Browse → Add to Cart → Checkout)
+1. **Stripe Webhook Handler - Order Creation** (ETA: 1-2 Tage) ← **HÖCHSTE PRIORITÄT**
+   - ✅ Checkout Session Creation: **DONE**
+   - ✅ Stripe Redirect: **DONE** (Origin Header)
+   - ⏳ **Webhook Handler:** `POST /api/webhooks/stripe`
+     - Event: `payment_intent.succeeded`
+     - Action: Create Order in DynamoDB
+     - Action: Clear User's Cart
+     - Action: Deduct Stock (from reserved to actual)
+   - ⏳ **Webhook Signature Verification** (Stripe Secret)
+   - ⏳ **Success Page:** Display Order Details
+   - **Why Critical:** Komplettiert Payment Flow, Orders werden erstellt
+   - **Files:** `backend/src/controllers/webhookController.ts`, `backend/src/routes/webhook.ts`
+
+2. **E2E Testing mit Playwright** (ETA: 3-4 Tage)
+   - **User Journeys:** 5-10 kritische Flows (Login → Browse → Add to Cart → Checkout → Payment)
    - **Cross-Browser:** Chrome, Firefox, Safari
    - **CI/CD Integration:** Playwright in GitHub Actions
    - **Visual Testing:** Screenshots bei Failures
@@ -723,12 +747,14 @@
 | **Unit Tests** | ✅ 63 passing | - | ✅ Complete (25.11) |
 | **E2E Tests** | ❌ Missing | 5-10 flows | 🔴 Next priority |
 | **Authentication** | ✅ Working | - | ✅ Fixed (22.11) |
+| **Stripe Payment** | ✅ **WORKING** | - | ✅ **Fixed (02.12)** |
+| **Stripe Webhook** | ⏳ Pending | - | 🟡 Next priority |
 | **Error Handling** | ✅ German UX | - | ✅ Improved (23.11) |
 | **Monitoring** | ✅ CloudWatch | - | ✅ Complete (24.11) |
 | **Code Quality** | ✅ ESLint | - | ✅ Complete (24.11) |
-| **Technical Debt** | Low | Low | ✅ Reduced (cleanup done) |
+| **Technical Debt** | **Very Low** | Low | ✅ Excellent |
 | **Documentation** | 100% complete | 100% | ✅ Excellent |
-| **Last Deploy** | 25.11.2025 | - | ✅ Success |
+| **Last Deploy** | 02.12.2025 | - | ✅ Success |
 
 ### Technical Debt Tracking
 
@@ -810,6 +836,7 @@
 
 | Date | Update | Author |
 |------|--------|--------|
+| 02.12.2025 | **🏆 STRIPE REDIRECT GELÖST (nach 180+ Versuchen!):** Origin Header Solution, Terraform Circular Dependency gebrochen, 100% reproduzierbar, Session Doc erstellt | Claude + Andy |
 | 25.11.2025 | **Phase 2 Testing COMPLETE:** Unit tests (63 passing), CI/CD integration, pragmatic integration test decision | Claude + Andy |
 | 24.11.2025 | **Phase 1 COMPLETE:** ESLint config, CloudWatch operational, IAM hybrid approach, docs updated | Claude + Andy |
 | 24.11.2025 | Updated LESSONS_LEARNED.md with #27-#28 (IAM hybrid, Logger/Amplify builds) | Claude |
@@ -831,5 +858,5 @@
 
 ---
 
-**Next Review:** 25.11.2025 - Start Automated Testing
-**Status:** ✅ Phase 1 COMPLETE - Ready for Testing Phase
+**Next Review:** 03.12.2025 - Stripe Webhook Handler Implementation
+**Status:** 🎉 Stripe Checkout COMPLETE - Webhook Handler Next!
