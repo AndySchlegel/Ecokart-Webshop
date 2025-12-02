@@ -138,10 +138,10 @@ module "lambda" {
     # Stripe Payment Integration
     STRIPE_SECRET_KEY       = var.stripe_secret_key
     STRIPE_WEBHOOK_SECRET   = var.stripe_webhook_secret
-    # FRONTEND_URL: Use Amplify branch URL directly from module output
-    # This ensures Lambda always has the correct frontend URL for Stripe redirects
-    # Fallback to localhost if Amplify is disabled
-    FRONTEND_URL            = var.enable_amplify ? module.amplify[0].branch_url : "http://localhost:3000"
+    # FRONTEND_URL: Use provided URL or fallback to localhost
+    # NOTE: Backend will auto-detect the actual frontend URL from request headers (origin, x-frontend-url)
+    # This is just a fallback for local development
+    FRONTEND_URL            = var.frontend_url != "" ? var.frontend_url : "http://localhost:3000"
   }
 
   # DynamoDB Table Names für IAM Permissions
