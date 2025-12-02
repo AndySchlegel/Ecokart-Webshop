@@ -27,7 +27,7 @@ applications:
 
               # Use JSON input to avoid AWS CLI interpreting URL as file path
               aws ssm put-parameter \
-                --cli-input-json "{\"Name\":\"$PARAM_NAME\",\"Value\":\"$AMPLIFY_URL\",\"Type\":\"String\",\"Overwrite\":true}" \
+                --cli-input-json '{"Name":"'"$PARAM_NAME"'","Value":"'"$AMPLIFY_URL"'","Type":"String","Overwrite":true}' \
                 --region "$REGION" || echo "Warning: Could not write to SSM (check IAM permissions)"
 
               echo "✅ SSM Parameter written successfully"
