@@ -10,8 +10,8 @@ resource "aws_ssm_parameter" "frontend_url" {
   type        = "String"
   value       = "https://${var.branch_name}.${aws_amplify_app.frontend.id}.amplifyapp.com"
 
-  tags = var.tags
+  # tags removed: GitHub Actions Role hat keine AddTagsToResource Permission
+  # tags = var.tags
 
-  # Depends on: App muss existieren bevor URL gesetzt wird
   depends_on = [aws_amplify_app.frontend]
 }
