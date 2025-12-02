@@ -327,6 +327,34 @@ jobs:
           fi
         continue-on-error: true
 
+      - name: 🗑️ Delete SSM Parameters
+        run: |
+          echo "🗑️ Deleting SSM Parameters for ${{ inputs.environment }}..."
+
+          PARAMS=(
+            "/ecokart/${{ inputs.environment }}/frontend-url"
+            "/ecokart/develop/frontend-url"
+            "/ecokart/staging/frontend-url"
+            "/ecokart/production/frontend-url"
+          )
+
+          for PARAM_NAME in "${PARAMS[@]}"; do
+            if aws ssm get-parameter \
+              --name "$PARAM_NAME" \
+              --region ${{ env.AWS_REGION }} &>/dev/null; then
+
+              echo "   - Deleting parameter: $PARAM_NAME"
+              aws ssm delete-parameter \
+                --name "$PARAM_NAME" \
+                --region ${{ env.AWS_REGION }}
+
+              echo "   ✅ Parameter deleted: $PARAM_NAME"
+            else
+              echo "   ℹ️  Parameter already deleted: $PARAM_NAME"
+            fi
+          done
+        continue-on-error: true
+
       - name: 📊 Cleanup Summary
         if: always()
         run: |
@@ -347,6 +375,7 @@ jobs:
           echo "   - ✅ DynamoDB Tables (4)"
           echo "   - ✅ IAM Roles & Policies"
           echo "   - ✅ CloudWatch Log Groups"
+          echo "   - ✅ SSM Parameters"
           echo "   - ✅ Terraform State File"
           echo ""
           echo "✅ Environment is now completely clean!"
