@@ -235,7 +235,7 @@ async function handleCheckoutSessionCompleted(
       }
 
       // Calculate new stock values
-      const newStock = Math.max(0, product.stock - item.quantity);
+      const newStock = Math.max(0, (product.stock || 0) - item.quantity);
       const newReserved = Math.max(0, (product.reserved || 0) - item.quantity);
 
       // Update product stock
@@ -248,9 +248,9 @@ async function handleCheckoutSessionCompleted(
         productId: product.id,
         productName: product.name,
         quantity: item.quantity,
-        oldStock: product.stock,
+        oldStock: product.stock || 0,
         newStock,
-        oldReserved: product.reserved,
+        oldReserved: product.reserved || 0,
         newReserved,
         orderId: order.id,
       });
