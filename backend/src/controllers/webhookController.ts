@@ -272,7 +272,7 @@ async function handleCheckoutSessionCompleted(
   // SCHRITT 5: Cart leeren
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  await database.updateCart(cart.id, { items: [] });
+  await database.updateCart(userId, { items: [] });
 
   logger.info('Cart cleared after order creation', { userId, orderId: order.id });
 
