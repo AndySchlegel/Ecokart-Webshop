@@ -215,17 +215,74 @@ async function handleCheckoutSessionCompleted(
   });
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // SCHRITT 4: Cart leeren
+  // SCHRITT 4: Stock abziehen
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Für jedes Item im Cart: Stock final verbuchen
+  // - Reserved Stock zurücksetzen
+  // - Actual Stock abziehen
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  for (const item of cart.items) {
+    try {
+      const product = await database.getProductById(item.productId);
+
+      if (!product) {
+        logger.warn('Product not found for stock deduction', {
+          productId: item.productId,
+          orderId: order.id,
+        });
+        continue;
+      }
+
+      // Calculate new stock values
+      const newStock = Math.max(0, product.stock - item.quantity);
+      const newReserved = Math.max(0, (product.reserved || 0) - item.quantity);
+
+      // Update product stock
+      await database.updateProduct(product.id, {
+        stock: newStock,
+        reserved: newReserved,
+      });
+
+      logger.info('Stock deducted for product', {
+        productId: product.id,
+        productName: product.name,
+        quantity: item.quantity,
+        oldStock: product.stock,
+        newStock,
+        oldReserved: product.reserved,
+        newReserved,
+        orderId: order.id,
+      });
+    } catch (err: any) {
+      logger.error('Failed to deduct stock for product', {
+        productId: item.productId,
+        orderId: order.id,
+      }, err);
+      // Continue with other items even if one fails
+    }
+  }
+
+  logger.info('Stock deduction completed', {
+    orderId: order.id,
+    itemCount: cart.items.length,
+  });
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // SCHRITT 5: Cart leeren
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   await database.updateCart(cart.id, { items: [] });
 
   logger.info('Cart cleared after order creation', { userId, orderId: order.id });
 
-  // Optional: Hier könnten weitere Aktionen stattfinden:
-  // - Stock abziehen
-  // - Bestätigungs-Email senden
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // SCHRITT 6: Weitere Aktionen (Optional - für später)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // TODO für Phase 3:
+  // - Bestätigungs-Email senden (AWS SES)
   // - Notification an Admin
+  // - Analytics Event tracken
   // etc.
 }
 
